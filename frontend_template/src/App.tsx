@@ -14,7 +14,7 @@ export default function App() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">L</span>
+                <span className="text-white text-sm">L</span>
               </div>
               <span className="text-white text-xl">legaltech</span>
             </div>
@@ -27,4 +27,3 @@ export default function App() {
     </div>
   );
 }
-

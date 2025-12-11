@@ -1,0 +1,71 @@
+import { LucideIcon } from 'lucide-react';
+
+interface ContractCardProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  price: string;
+  isPopular?: boolean;
+  onPersonalize: () => void;
+}
+
+export function ContractCard({ 
+  icon: Icon, 
+  title, 
+  description, 
+  price, 
+  isPopular,
+  onPersonalize 
+}: ContractCardProps) {
+  return (
+    <div className={`group relative bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 ${
+      isPopular 
+        ? 'border-2 border-blue-600 shadow-lg shadow-blue-100' 
+        : 'border border-slate-200 hover:border-cyan-200'
+    }`}>
+      {isPopular && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+          <span className="bg-gradient-to-r from-blue-600 to-lime-500 text-white px-5 py-1.5 rounded-full text-sm shadow-lg">
+            Más Popular
+          </span>
+        </div>
+      )}
+      
+      <div className="flex flex-col h-full">
+        <div className="mb-6">
+          <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+            isPopular 
+              ? 'bg-gradient-to-br from-blue-600 to-cyan-600 shadow-lg shadow-blue-200' 
+              : 'bg-slate-100 group-hover:bg-cyan-50'
+          } transition-all duration-300`}>
+            <Icon className={`w-7 h-7 ${isPopular ? 'text-white' : 'text-slate-700 group-hover:text-blue-600'}`} />
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-4 mb-8">
+          <h3 className="text-slate-900">{title}</h3>
+          <p className="text-slate-600 leading-relaxed">{description}</p>
+        </div>
+
+        <div className="space-y-5">
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm text-slate-500">Desde</span>
+            <span className="text-3xl text-slate-900">{price}</span>
+            <span className="text-sm text-slate-500">CLP</span>
+          </div>
+
+          <button 
+            onClick={onPersonalize}
+            className={`w-full py-3.5 rounded-xl transition-all duration-200 ${
+              isPopular
+                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg shadow-blue-200 hover:shadow-xl'
+                : 'bg-slate-900 hover:bg-blue-600 text-white shadow-md hover:shadow-lg'
+            }`}
+          >
+            Personalizar ahora
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
