@@ -1,8 +1,20 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/shared/ProtectedRoute';
+
+// Public
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { ContractCatalog } from './components/ContractCatalog';
+import { LoginPage } from './pages/public/LoginPage';
 
-export default function App() {
+// Admin
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+
+// Notary
+import { NotaryDashboard } from './pages/notary/NotaryDashboard';
+
+function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -28,3 +40,39 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* Admin routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Notary routes */}
+          <Route
+            path="/notary"
+            element={
+              <ProtectedRoute requiredRole="notario">
+                <NotaryDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Redirect por defecto */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
