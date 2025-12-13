@@ -1,6 +1,6 @@
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Package, DollarSign, FileCheck, LogOut } from 'lucide-react';
+import { Users, FileText, Package, DollarSign, FileCheck, LogOut } from 'lucide-react';
 
 export function AdminDashboard() {
   const { user, logout } = useAuth();

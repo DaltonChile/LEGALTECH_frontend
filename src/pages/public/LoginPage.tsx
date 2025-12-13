@@ -17,15 +17,12 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      
-      // El usuario ya está en el context, redirigir según rol
-      const userStr = localStorage.getItem('user');
-      const user = userStr ? JSON.parse(userStr) : null;
-      
-      if (user.role === 'admin') {
+      // Usar el usuario retornado por login (evita depender del timing del state)
+      const loggedInUser = await login(email, password);
+
+      if (loggedInUser.role === 'admin') {
         navigate('/admin');
-      } else if (user.role === 'notario') {
+      } else if (loggedInUser.role === 'notario') {
         navigate('/notary');
       }
     } catch (err: any) {
