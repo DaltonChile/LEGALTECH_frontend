@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { authService } from '../services/authService';
 
 interface User {
@@ -13,8 +14,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isNotario: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<User>;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -24,18 +25,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar usuario al iniciar
+  // Cargar usuario al iniciar (desde backend, usando cookie)
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser as User);
-    }
-    setLoading(false);
+    let mounted = true;
+
+    (async () => {
+      try {
+        const currentUser = await authService.me();
+        if (mounted) {
+          setUser(currentUser as User);
+        }
+      } catch {
+        if (mounted) {
+          setUser(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const response = await authService.login({ email, password });
-    setUser(response.data as User);
+    const nextUser = response.data as User;
+    setUser(nextUser);
+    return nextUser;
   };
 
   const logout = async () => {
