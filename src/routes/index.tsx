@@ -7,6 +7,7 @@ import { LoginPage } from '../pages/public/LoginPage';
 
 // Admin
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
+import { TemplatesPage } from '../pages/admin/TemplatesPage';
 
 // Notary
 import { NotaryDashboard } from '../pages/notary/NotaryDashboard';
@@ -24,6 +25,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="admin">
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/templates"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <TemplatesPage />
           </ProtectedRoute>
         }
       />

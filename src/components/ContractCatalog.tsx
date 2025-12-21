@@ -48,9 +48,7 @@ export function ContractCatalog() {
   }, []);
 
   const handlePersonalize = (templateSlug: string) => {
-    console.log('Personalizar contrato:', templateSlug);
-    // TODO: Navegar al flujo de personalización
-    // navigate(`/templates/${templateSlug}/customize`);
+    alert(`Funcionalidad de personalización para ${templateSlug} próximamente`);
   };
 
   if (loading) {
@@ -112,15 +110,15 @@ export function ContractCatalog() {
           </p>
         </div>
 
+        {/* Grid de contratos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {templates.map((template, index) => (
+          {templates.map((template) => (
             <ContractCard
               key={template.id}
-              icon={getIconForTemplate(template.slug)}
               title={template.title}
-              description={template.description || 'Contrato legal profesional'}
+              description={template.description || 'Personaliza este contrato con tu información'}
               price={template.base_price}
-              isPopular={index === 0} // Primer template como popular
+              icon={getIconForTemplate(template.slug)}
               onPersonalize={() => handlePersonalize(template.slug)}
             />
           ))}
