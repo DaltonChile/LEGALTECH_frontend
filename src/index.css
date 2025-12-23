@@ -1597,3 +1597,144 @@ p {
     opacity: .5;
   }
 }
+
+/* ================================================
+   Estilos personalizados para el Editor de Contratos
+   ================================================ */
+
+/* Estilos para el contrato renderizado */
+.contract-content {
+  font-family: 'Times New Roman', Times, serif;
+  line-height: 1.8;
+  color: #1a202c;
+  font-size: 14px;
+}
+
+.contract-content h1,
+.contract-content .contract-title {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+  text-transform: uppercase;
+  color: #2d3748;
+}
+
+.contract-content h2,
+.contract-content .contract-heading {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  color: #2d3748;
+  text-transform: uppercase;
+}
+
+.contract-content h3,
+.contract-content .contract-subheading {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #4a5568;
+}
+
+.contract-content p {
+  margin-bottom: 1rem;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.contract-content ul,
+.contract-content ol {
+  margin-left: 2rem;
+  margin-bottom: 1rem;
+}
+
+.contract-content li {
+  margin-bottom: 0.5rem;
+}
+
+.contract-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.contract-content td,
+.contract-content th {
+  border: 1px solid #cbd5e0;
+  padding: 0.75rem;
+}
+
+.contract-content th {
+  background-color: #f7fafc;
+  font-weight: 600;
+}
+
+/* Resaltar campos vacíos */
+.contract-content .empty-field,
+.contract-content span[data-field] {
+  background-color: #fef3c7;
+  color: #92400e;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  border: 1px dashed #f59e0b;
+  display: inline-block;
+  animation: pulse-yellow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-yellow {
+  0%, 100% {
+    background-color: #fef3c7;
+  }
+  50% {
+    background-color: #fde68a;
+  }
+}
+
+/* Estilos para campos completados (valores reales) */
+.contract-content strong {
+  font-weight: 600;
+  color: #1a202c;
+}
+
+/* Espaciado entre secciones */
+.contract-content > *:first-child {
+  margin-top: 0;
+}
+
+.contract-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Firmas al final del documento */
+.contract-content .signature-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+/* Estilo para fechas */
+.contract-content .date {
+  font-style: italic;
+  color: #4a5568;
+}
+
+/* Responsive para el editor */
+@media (max-width: 768px) {
+  .contract-content {
+    font-size: 13px;
+    padding: 1rem;
+  }
+  
+  .contract-content h1 {
+    font-size: 1.5rem;
+  }
+  
+  .contract-content h2 {
+    font-size: 1.1rem;
+  }
+}
