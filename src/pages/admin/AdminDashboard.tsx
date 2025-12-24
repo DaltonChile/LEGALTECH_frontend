@@ -104,7 +104,7 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen h-full bg-slate-50">
+    <div className="min-h-screen h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30">
       {/* Top Bar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center gap-4">
