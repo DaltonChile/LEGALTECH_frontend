@@ -130,11 +130,13 @@ export const TemplatesPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div>Cargando...</div>;
+    return <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 flex items-center justify-center">
+      <div className="text-gray-600">Cargando...</div>
+    </div>;
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 

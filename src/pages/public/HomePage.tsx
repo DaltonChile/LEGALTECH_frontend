@@ -4,7 +4,7 @@ import { ContractCatalog } from '../../components/ContractCatalog';
 
 export function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30">
       <Navbar />
       <Hero />
       <ContractCatalog />

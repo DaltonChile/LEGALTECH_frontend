@@ -4,6 +4,8 @@ import { ProtectedRoute } from '../components/shared/ProtectedRoute';
 // Public
 import { HomePage } from '../pages/public/HomePage';
 import { LoginPage } from '../pages/public/LoginPage';
+import { ContractCatalogPage } from '../pages/public/ContractCatalogPage';
+import { ContractEditorPage } from '../pages/public/ContractEditorPage';
 
 // Admin
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
@@ -18,6 +20,7 @@ export function AppRoutes() {
       {/* Public routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/:slug" element={<ContractEditorPage />} />
 
       {/* Admin routes */}
       <Route

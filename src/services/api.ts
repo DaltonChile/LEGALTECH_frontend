@@ -94,6 +94,10 @@ export const deleteTemplateVersion = async (versionId: number) => {
   return await api.delete(`/admin/versions/${versionId}`);
 };
 
+export const setCapsulePrices = async (versionId: string, capsules: any[]) => {
+  return await api.post(`/admin/versions/${versionId}/capsules/set-prices`, { capsules });
+};
+
 // ============================================
 // APIs para Editor de Contratos
 // ============================================
