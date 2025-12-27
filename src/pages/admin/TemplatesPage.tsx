@@ -1,15 +1,27 @@
 // LEGALTECH_frontend/src/pages/admin/TemplatesPage.tsx
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 import { ContractUploader } from '../../components/admin/ContractUpload';
 import { 
   getAdminTemplates, 
   createTemplate, 
   publishVersion,
-  assignCapsulesToVersion,
   getTemplateVersionDownloadUrl,
   deleteTemplateVersion
 } from '../../services/api';
+import { 
+  Search, 
+  Plus, 
+  FileText, 
+  CheckCircle, 
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Trash2,
+  Upload,
+  X
+} from 'lucide-react';
 
 interface Template {
   id: number;
@@ -40,11 +52,12 @@ interface Version {
 }
 
 export const TemplatesPage: React.FC = () => {
-  const navigate = useNavigate();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showNewTemplateForm, setShowNewTemplateForm] = useState(false);
-  const [expandedVersions, setExpandedVersions] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('all');
+  const [showNewTemplateModal, setShowNewTemplateModal] = useState(false);
+  const [expandedTemplate, setExpandedTemplate] = useState<number | null>(null);
   const [newTemplate, setNewTemplate] = useState({
     title: '',
     slug: '',
@@ -71,7 +84,7 @@ export const TemplatesPage: React.FC = () => {
     e.preventDefault();
     try {
       await createTemplate(newTemplate);
-      setShowNewTemplateForm(false);
+      setShowNewTemplateModal(false);
       setNewTemplate({ title: '', slug: '', description: '' });
       loadTemplates();
     } catch (error) {
@@ -130,482 +143,310 @@ export const TemplatesPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 flex items-center justify-center">
-      <div className="text-gray-600">Cargando...</div>
-    </div>;
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Cargando templates...</div>
+        </div>
+      </AdminLayout>
+    );
   }
 
+  // Filter templates
+  const filteredTemplates = templates.filter(template => {
+    const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          template.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filterActive === 'all' || 
+                          (filterActive === 'active' && template.is_active) ||
+                          (filterActive === 'inactive' && !template.is_active);
+    return matchesSearch && matchesFilter;
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '30px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button
-            onClick={() => navigate('/admin')}
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#757575',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px'
-            }}
-            title="Volver al dashboard"
+    <AdminLayout>
+      {/* Header with search and filters */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4 flex-1 w-full sm:w-auto">
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar templates..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            />
+          </div>
+
+          {/* Active filter */}
+          <select
+            value={filterActive}
+            onChange={(e) => setFilterActive(e.target.value as 'all' | 'active' | 'inactive')}
+            className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-blue-500"
           >
-            ← Volver
-          </button>
-          <h1 style={{ margin: 0 }}>Gestión de Templates</h1>
+            <option value="all">Todos</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+          </select>
         </div>
+
+        {/* New template button */}
         <button
-          onClick={() => setShowNewTemplateForm(!showNewTemplateForm)}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
+          onClick={() => setShowNewTemplateModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
         >
-          {showNewTemplateForm ? 'Cancelar' : '+ Nuevo Template'}
+          <Plus className="w-4 h-4" />
+          Nuevo Template
         </button>
       </div>
 
-      {showNewTemplateForm && (
-        <form 
-          onSubmit={handleCreateTemplate}
-          style={{
-            marginBottom: '30px',
-            padding: '25px',
-            border: '1px solid #e0e0e0',
-            borderRadius: '8px',
-            backgroundColor: 'white',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}
-        >
-          <h3 style={{ 
-            margin: '0 0 20px 0', 
-            fontSize: '20px', 
-            fontWeight: '600',
-            color: '#1976d2'
-          }}>
-            Crear Nuevo Template
-          </h3>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '500',
-              color: '#424242',
-              fontSize: '14px'
-            }}>
-              Título:
-            </label>
-            <input
-              type="text"
-              value={newTemplate.title}
-              onChange={(e) => setNewTemplate({ ...newTemplate, title: e.target.value })}
-              required
-              placeholder="Ej: Contrato de Arrendamiento"
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                fontSize: '14px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                transition: 'border-color 0.3s',
-                outline: 'none'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#1976d2'}
-              onBlur={(e) => e.target.style.borderColor = '#ddd'}
-            />
-          </div>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '500',
-              color: '#424242',
-              fontSize: '14px'
-            }}>
-              Slug:
-            </label>
-            <input
-              type="text"
-              value={newTemplate.slug}
-              onChange={(e) => setNewTemplate({ ...newTemplate, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-              required
-              placeholder="ej: contrato-arrendamiento"
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                fontSize: '14px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontFamily: 'monospace',
-                backgroundColor: '#f9f9f9',
-                outline: 'none'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#1976d2'}
-              onBlur={(e) => e.target.style.borderColor = '#ddd'}
-            />
-            <small style={{ fontSize: '12px', color: '#666', marginTop: '4px', display: 'block' }}>
-              Identificador único (solo letras minúsculas, números y guiones)
-            </small>
-          </div>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '500',
-              color: '#424242',
-              fontSize: '14px'
-            }}>
-              Descripción:
-            </label>
-            <textarea
-              value={newTemplate.description}
-              onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
-              placeholder="Describe brevemente este template..."
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                fontSize: '14px',
-                minHeight: '100px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontFamily: 'inherit',
-                resize: 'vertical',
-                outline: 'none'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#1976d2'}
-              onBlur={(e) => e.target.style.borderColor = '#ddd'}
-            />
-          </div>
-          
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+      {/* Templates Grid */}
+      {filteredTemplates.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-500">No hay templates {searchQuery ? 'que coincidan con la búsqueda' : 'creados aún'}</p>
+          {!searchQuery && (
             <button
-              type="button"
-              onClick={() => setShowNewTemplateForm(false)}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#f5f5f5',
-                color: '#424242',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'background-color 0.3s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e0e0e0'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+              onClick={() => setShowNewTemplateModal(true)}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
             >
-              Cancelar
+              Crear primer template
             </button>
-            <button
-              type="submit"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#4caf50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'background-color 0.3s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#4caf50'}
-            >
-              Crear Template
-            </button>
-          </div>
-        </form>
-      )}
-
-      <div>
-        {templates.length === 0 ? (
-          <p>No hay templates creados aún.</p>
-        ) : (
-          templates.map((template) => (
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredTemplates.map((template) => (
             <div
               key={template.id}
-              style={{
-                marginBottom: '30px',
-                padding: '20px',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                backgroundColor: 'white'
-              }}
+              className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow"
             >
-              <div style={{ marginBottom: '20px' }}>
-                <h2>{template.title}</h2>
-                <p style={{ color: '#666' }}>Slug: {template.slug}</p>
-                <p>{template.description}</p>
-                <span style={{
-                  display: 'inline-block',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  backgroundColor: template.is_active ? '#e8f5e9' : '#ffebee',
-                  color: template.is_active ? '#2e7d32' : '#c62828'
-                }}>
-                  {template.is_active ? 'Activo' : 'Inactivo'}
-                </span>
+              {/* Card header */}
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 line-clamp-1">{template.title}</h3>
+                      <p className="text-xs text-slate-500">{template.slug}</p>
+                    </div>
+                  </div>
+                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                    template.is_active 
+                      ? 'bg-emerald-100 text-emerald-700' 
+                      : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {template.is_active ? (
+                      <>
+                        <CheckCircle className="w-3 h-3" />
+                        Activo
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-3 h-3" />
+                        Inactivo
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <p className="text-sm text-slate-600 line-clamp-2 mb-3">
+                  {template.description || 'Sin descripción'}
+                </p>
+
+                {/* Stats */}
+                <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <span>{template.versions?.length || 0} versiones</span>
+                  {template.versions?.some(v => v.is_published) && (
+                    <span className="text-emerald-600 font-medium">● Publicado</span>
+                  )}
+                </div>
               </div>
 
-              <h3>Versiones</h3>
-              {template.versions && template.versions.length > 0 ? (
-                <div style={{ marginBottom: '20px' }}>
-                  {template.versions.map((version) => (
-                    <React.Fragment key={version.id}>
-                      <div
-                        style={{
-                          padding: '15px',
-                          marginBottom: '10px',
-                          backgroundColor: '#f5f5f5',
-                          borderRadius: '4px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
-                        }}
-                      >
-                        <div>
-                          <strong>Versión {version.version_number}</strong>
-                          <span style={{ margin: '0 10px', color: '#666' }}>|</span>
-                          <span>Precio base: ${version.base_price}</span>
-                          <span style={{ margin: '0 10px', color: '#666' }}>|</span>
-                          <span>{new Date(version.created_at).toLocaleDateString()}</span>
-                          <span style={{ margin: '0 10px', color: '#666' }}>|</span>
-                          <span style={{
-                            color: version.is_published ? '#2e7d32' : '#f57c00'
-                          }}>
-                            {version.is_published ? '✓ Publicada' : 'Draft'}
-                          </span>
-                          {version.base_form_schema && version.base_form_schema.length > 0 && (
-                            <>
-                              <span style={{ margin: '0 10px', color: '#666' }}>|</span>
-                              <span>{version.base_form_schema.length} campos</span>
-                            </>
-                          )}
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button
-                            onClick={() => handleDownloadVersion(version.id)}
-                            style={{
-                              padding: '6px 12px',
-                              backgroundColor: '#1976d2',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px'
-                            }}
-                            title="Descargar template .docx"
-                          >
-                            📥 Descargar
-                          </button>
-                          {!version.is_published && (
-                            <>
+              {/* Expand/collapse versions */}
+              <button
+                onClick={() => setExpandedTemplate(expandedTemplate === template.id ? null : template.id)}
+                className="w-full px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <span>Ver detalles</span>
+                {expandedTemplate === template.id ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Expanded content */}
+              {expandedTemplate === template.id && (
+                <div className="border-t border-slate-200 p-5 bg-slate-50/50">
+                  <h4 className="text-sm font-medium text-slate-700 mb-3">Versiones</h4>
+                  
+                  {template.versions && template.versions.length > 0 ? (
+                    <div className="space-y-2 mb-4">
+                      {template.versions.map((version) => (
+                        <div
+                          key={version.id}
+                          className="bg-white rounded-lg border border-slate-200 p-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="font-medium text-slate-900">v{version.version_number}</span>
+                              <span className="mx-2 text-slate-300">•</span>
+                              <span className="text-sm text-slate-500">${version.base_price}</span>
+                              <span className="mx-2 text-slate-300">•</span>
+                              <span className={`text-xs font-medium ${
+                                version.is_published ? 'text-emerald-600' : 'text-amber-600'
+                              }`}>
+                                {version.is_published ? 'Publicada' : 'Borrador'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
                               <button
-                                onClick={() => handlePublishVersion(version.id)}
-                                style={{
-                                  padding: '6px 12px',
-                                  backgroundColor: '#4caf50',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '12px'
-                                }}
+                                onClick={() => handleDownloadVersion(version.id)}
+                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Descargar"
                               >
-                                Publicar
+                                <Download className="w-4 h-4" />
                               </button>
-                              <button
-                                onClick={() => handleDeleteVersion(version.id, version.version_number)}
-                                style={{
-                                  padding: '6px 12px',
-                                  backgroundColor: '#d32f2f',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '12px'
-                                }}
-                                title="Eliminar versión y sus cápsulas"
-                              >
-                                🗑️ Eliminar
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      {version.base_form_schema && version.base_form_schema.length > 0 && (
-                        <div style={{
-                          marginTop: '-5px',
-                          marginBottom: '10px',
-                          padding: '10px',
-                          backgroundColor: '#fff',
-                          borderRadius: '4px',
-                          border: '1px solid #e0e0e0'
-                        }}>
-                          <strong>Campos base detectados:</strong>
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                            gap: '10px',
-                            marginTop: '10px'
-                          }}>
-                            {version.base_form_schema.map((field: any, idx: number) => (
-                              <div key={idx} style={{
-                                padding: '8px',
-                                backgroundColor: '#f9f9f9',
-                                borderRadius: '4px',
-                                fontSize: '12px'
-                              }}>
-                                <div style={{ fontWeight: 'bold', color: '#1976d2' }}>
-                                  {field.label}
-                                </div>
-                                <div style={{ color: '#666', marginTop: '4px' }}>
-                                  {`{{${field.field_name}}}`}
-                                </div>
-                                <div style={{ color: '#999', marginTop: '2px' }}>
-                                  Tipo: {field.field_type}
-                                </div>
-                              </div>
-                            ))}
+                              {!version.is_published && (
+                                <>
+                                  <button
+                                    onClick={() => handlePublishVersion(version.id)}
+                                    className="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 transition-colors"
+                                  >
+                                    Publicar
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteVersion(version.id, version.version_number)}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    title="Eliminar"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {/* Cápsulas opcionales */}
-                      {version.capsules && version.capsules.length > 0 && (
-                        <div style={{
-                          marginTop: '5px',
-                          marginBottom: '15px',
-                          padding: '12px',
-                          backgroundColor: '#fff3e0',
-                          borderRadius: '4px',
-                          border: '1px solid #ffb74d'
-                        }}>
-                          <div
-                            onClick={() => {
-                              const newExpanded = new Set(expandedVersions);
-                              if (newExpanded.has(version.id)) {
-                                newExpanded.delete(version.id);
-                              } else {
-                                newExpanded.add(version.id);
-                              }
-                              setExpandedVersions(newExpanded);
-                            }}
-                            style={{
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px'
-                            }}
-                          >
-                            <strong>📦 Cápsulas opcionales ({version.capsules.length})</strong>
-                            <span style={{ fontSize: '12px' }}>
-                              {expandedVersions.has(version.id) ? '▼' : '▶'}
-                            </span>
-                          </div>
-                          
-                          {expandedVersions.has(version.id) && (
-                            <div style={{ marginTop: '10px' }}>
-                              {version.capsules.map((capsule, idx) => (
-                                <div key={idx} style={{
-                                  padding: '10px',
-                                  marginBottom: '8px',
-                                  backgroundColor: '#fff',
-                                  borderRadius: '4px',
-                                  border: '1px solid #e0e0e0'
-                                }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <div>
-                                      <strong style={{ color: '#f57c00' }}>{capsule.title}</strong>
-                                      <span style={{ marginLeft: '8px', fontSize: '12px', color: '#666' }}>
-                                        ({capsule.slug})
-                                      </span>
-                                    </div>
-                                    <div style={{
-                                      padding: '4px 12px',
-                                      backgroundColor: '#4caf50',
-                                      color: 'white',
-                                      borderRadius: '12px',
-                                      fontSize: '14px',
-                                      fontWeight: 'bold'
-                                    }}>
-                                      ${capsule.price.toLocaleString()}
-                                    </div>
-                                  </div>
-                                  
-                                  {capsule.form_schema && capsule.form_schema.length > 0 && (
-                                    <div style={{
-                                      marginTop: '8px',
-                                      padding: '8px',
-                                      backgroundColor: '#f9f9f9',
-                                      borderRadius: '4px'
-                                    }}>
-                                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>
-                                        Variables ({capsule.form_schema.length}):
-                                      </div>
-                                      <div style={{
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        gap: '6px'
-                                      }}>
-                                        {capsule.form_schema.map((field: any, fieldIdx: number) => (
-                                          <span key={fieldIdx} style={{
-                                            padding: '4px 8px',
-                                            backgroundColor: '#fff',
-                                            border: '1px solid #ddd',
-                                            borderRadius: '4px',
-                                            fontSize: '11px',
-                                            color: '#666'
-                                          }}>
-                                            {`{{${field.field_name}}}`}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
+
+                          {/* Capsules count */}
+                          {version.capsules && version.capsules.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-slate-100">
+                              <span className="text-xs text-slate-500">
+                                {version.capsules.length} cápsulas opcionales
+                              </span>
                             </div>
                           )}
                         </div>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ color: '#666', marginBottom: '20px' }}>
-                  No hay versiones creadas aún.
-                </p>
-              )}
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500 mb-4">Sin versiones</p>
+                  )}
 
-              <h4>Subir Nueva Versión</h4>
-              <ContractUploader 
-                templateId={template.id} 
-                onUploadSuccess={() => loadTemplates()}
-              />
+                  {/* Upload new version */}
+                  <div className="pt-3 border-t border-slate-200">
+                    <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+                      <Upload className="w-4 h-4" />
+                      <span>Subir nueva versión</span>
+                    </div>
+                    <ContractUploader 
+                      templateId={template.id} 
+                      onUploadSuccess={() => loadTemplates()}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          ))
-        )}
-      </div>
-    </div>
+          ))}
+        </div>
+      )}
+
+      {/* New Template Modal */}
+      {showNewTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowNewTemplateModal(false)}
+          />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-5 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900">Crear Nuevo Template</h2>
+              <button
+                onClick={() => setShowNewTemplateModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTemplate} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Título
+                </label>
+                <input
+                  type="text"
+                  value={newTemplate.title}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, title: e.target.value })}
+                  required
+                  placeholder="Ej: Contrato de Arrendamiento"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Slug
+                </label>
+                <input
+                  type="text"
+                  value={newTemplate.slug}
+                  onChange={(e) => setNewTemplate({ 
+                    ...newTemplate, 
+                    slug: e.target.value.toLowerCase().replace(/\s+/g, '-') 
+                  })}
+                  required
+                  placeholder="ej: contrato-arrendamiento"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+                <p className="text-xs text-slate-500 mt-1">Identificador único (solo letras, números y guiones)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Descripción
+                </label>
+                <textarea
+                  value={newTemplate.description}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
+                  placeholder="Describe brevemente este template..."
+                  rows={3}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewTemplateModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                >
+                  Crear Template
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </AdminLayout>
   );
 };

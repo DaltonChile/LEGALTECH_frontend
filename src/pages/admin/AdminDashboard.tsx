@@ -1,270 +1,234 @@
-import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { 
-  Scale, 
-  Users, 
-  FileText, 
-  Settings, 
-  BarChart3,
-  Bell,
-  Search,
-  LogOut,
-  ChevronDown,
   TrendingUp,
   TrendingDown,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  ArrowRight
+  FileText,
+  Users,
+  DollarSign,
+  Activity,
+  Loader2
 } from 'lucide-react';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+import api from '../../services/api';
+
+interface Metrics {
+  contracts: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  payments: {
+    total_successful: number;
+    total_revenue: number;
+  };
+  users: {
+    active: number;
+  };
+}
 
 export function AdminDashboard() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  useEffect(() => {
+    loadMetrics();
+  }, []);
+
+  const loadMetrics = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/admin/metrics');
+      setMetrics(response.data.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading metrics:', err);
+      setError('Error al cargar métricas');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const menuItems = [
-    { 
-      icon: FileText, 
-      label: 'Templates', 
-      description: 'Gestionar plantillas de contratos y sus cápsulas',
-      path: '/admin/templates',
-      color: 'blue'
-    },
-    { 
-      icon: Users, 
-      label: 'Usuarios', 
-      description: 'Administrar usuarios y permisos del sistema',
-      path: '/admin/users',
-      color: 'cyan'
-    },
-    { 
-      icon: BarChart3, 
-      label: 'Reportes', 
-      description: 'Ver analíticas, métricas y estadísticas',
-      path: '/admin/reports',
-      color: 'lime'
-    },
-    { 
-      icon: Settings, 
-      label: 'Configuración', 
-      description: 'Ajustes del sistema y preferencias',
-      path: '/admin/settings',
-      color: 'slate'
-    },
-  ];
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('es-CL').format(num);
+  };
 
   const stats = [
     { 
       label: 'Total Contratos', 
-      value: '1,234', 
-      change: '+12.5%', 
-      trend: 'up',
+      value: metrics ? formatNumber(metrics.contracts.total) : '0', 
       icon: FileText,
-      color: 'blue'
     },
     { 
       label: 'Usuarios Activos', 
-      value: '89', 
-      change: '+4.3%', 
-      trend: 'up',
+      value: metrics ? formatNumber(metrics.users.active) : '0', 
       icon: Users,
-      color: 'cyan'
     },
     { 
-      label: 'Ingresos del Mes', 
-      value: '$2.5M', 
-      change: '-2.1%', 
-      trend: 'down',
-      icon: TrendingUp,
-      color: 'lime'
-    },
-    { 
-      label: 'Templates Activos', 
-      value: '24', 
-      change: '+8.0%', 
-      trend: 'up',
-      icon: FileText,
-      color: 'slate'
+      label: 'Ingresos Totales', 
+      value: metrics ? formatCurrency(metrics.payments.total_revenue) : '$0', 
+      icon: DollarSign,
     },
   ];
 
-  const recentActivity = [
-    { type: 'success', message: 'Contrato de arriendo firmado', time: 'Hace 5 min', user: 'María González' },
-    { type: 'pending', message: 'Nuevo usuario registrado', time: 'Hace 12 min', user: 'Carlos Pérez' },
-    { type: 'success', message: 'Pago procesado correctamente', time: 'Hace 25 min', user: 'Ana Silva' },
-    { type: 'warning', message: 'Template pendiente de revisión', time: 'Hace 1 hora', user: 'Admin' },
-    { type: 'success', message: 'Contrato de trabajo generado', time: 'Hace 2 horas', user: 'Pedro Muñoz' },
-  ];
+  // Calculate completion percentage based on successful payments vs total contracts
+  const completionRate = metrics && metrics.contracts.total > 0
+    ? Math.round((metrics.payments.total_successful / metrics.contracts.total) * 100)
+    : 0;
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center h-64">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={loadMetrics}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <div className="min-h-screen h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30">
-      {/* Top Bar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-cyan-500 to-lime-500 rounded-lg flex items-center justify-center">
-              <Scale className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">legaltech</span>
-          </div>
-
-          {/* Search */}
-          <div className="relative flex-1 max-w-xl mx-8">
-          
-            <input
-              type="text"
-              placeholder="Buscar contratos, usuarios, templates..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-            />
-          </div>
-
-          {/* Right Section */}
-          <div className="flex items-center gap-4">
-            {/* Notifications */}
-            <button className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full"></span>
-            </button>
-
-            {/* User Menu */}
-            <div className="relative">
-              <button 
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-3 p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 via-cyan-500 to-lime-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">
-                    {user?.full_name?.charAt(0) || 'A'}
-                  </span>
-                </div>
-                <div className="text-left hidden sm:block">
-                  <p className="text-sm font-medium text-slate-900">{user?.full_name || 'Admin'}</p>
-                  <p className="text-xs text-slate-500">Administrador</p>
-                </div>
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              </button>
-
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
-                  <button className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
-                    Mi Perfil
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
-                    Configuración
-                  </button>
-                  <hr className="my-1 border-slate-200" />
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Cerrar Sesión
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Page Content */}
-      <main className="max-w-7xl mx-auto p-6">
-        {/* KPIs Row - 4 columns */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          {stats.map((stat, index) => (
-            <div 
-              key={index}
-              className="flex-1 min-w-[140px] max-w-[200px] bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md hover:border-slate-300 transition-all"
-            >
-              <p className="text-sm text-slate-500 mb-1">{stat.label}</p>
-              <div className="flex items-end justify-between">
-                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                <span className={`inline-flex items-center gap-1 text-xs font-medium ${
-                  stat.trend === 'up' 
-                    ? 'text-emerald-600' 
-                    : 'text-red-600'
-                }`}>
-                  {stat.trend === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {stat.change}
-                </span>
+    <AdminLayout>
+      {/* KPIs Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {stats.map((stat, index) => (
+          <div 
+            key={index}
+            className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                index === 0 ? 'bg-blue-100' :
+                index === 1 ? 'bg-cyan-100' :
+                'bg-lime-100'
+              }`}>
+                <stat.icon className={`w-5 h-5 ${
+                  index === 0 ? 'text-blue-600' :
+                  index === 1 ? 'text-cyan-600' :
+                  'text-lime-600'
+                }`} />
               </div>
             </div>
-          ))}
-        </div>
+            <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+            <p className="text-sm text-slate-500 mt-1">{stat.label}</p>
+          </div>
+        ))}
+      </div>
 
-        {/* Two Column Layout: Menu + Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left Column: Menu Items */}
-          <div className="lg:col-span-1 space-y-4 p-4">
-            {menuItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => navigate(item.path)}
-                className="w-full bg-white rounded-xl border border-slate-200 p-5 hover:shadow-lg hover:border-slate-300 transition-all text-left group"
-              >
-                <div className="flex p-6 items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
-                    item.color === 'blue' ? 'bg-blue-100' :
-                    item.color === 'cyan' ? 'bg-cyan-100' :
-                    item.color === 'lime' ? 'bg-lime-100' :
-                    'bg-slate-100'
-                  }`}>
-                    <item.icon className={`w-6 h-6 ${
-                      item.color === 'blue' ? 'text-blue-600' :
-                      item.color === 'cyan' ? 'text-cyan-600' :
-                      item.color === 'lime' ? 'text-lime-600' :
-                      'text-slate-600'
+      {/* Main Chart Area */}
+      <div className="bg-white rounded-xl border border-slate-200 p-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-slate-900">Tasa de Conversión</h2>
+          <div className="flex items-center gap-2">
+            <Activity className="w-5 h-5 text-slate-400" />
+            <span className="text-sm text-slate-500">Pagos / Contratos</span>
+          </div>
+        </div>
+        
+        {/* Gauge Chart */}
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="relative w-64 h-32">
+            {/* Background arc */}
+            <svg className="w-full h-full" viewBox="0 0 200 100">
+              {/* Background arc */}
+              <path
+                d="M 20 100 A 80 80 0 0 1 180 100"
+                fill="none"
+                stroke="#e2e8f0"
+                strokeWidth="16"
+                strokeLinecap="round"
+              />
+              {/* Value arc */}
+              <path
+                d="M 20 100 A 80 80 0 0 1 180 100"
+                fill="none"
+                stroke="url(#gaugeGradient)"
+                strokeWidth="16"
+                strokeLinecap="round"
+                strokeDasharray={`${(completionRate / 100) * 251.2} 251.2`}
+              />
+              {/* Gradient definition */}
+              <defs>
+                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="50%" stopColor="#06b6d4" />
+                  <stop offset="100%" stopColor="#84cc16" />
+                </linearGradient>
+              </defs>
+            </svg>
+            
+            {/* Center value */}
+            <div className="absolute inset-0 flex items-end justify-center pb-2">
+              <div className="text-center">
+                <span className="text-4xl font-bold text-slate-900">{completionRate}%</span>
+                <p className="text-sm text-slate-500 mt-1">Contratos pagados</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Stats summary */}
+          <div className="flex items-center gap-8 mt-8">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-slate-900">{metrics?.contracts.total || 0}</p>
+              <p className="text-sm text-slate-500">Total contratos</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-emerald-600">{metrics?.payments.total_successful || 0}</p>
+              <p className="text-sm text-slate-500">Pagos exitosos</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-slate-900">{metrics?.users.active || 0}</p>
+              <p className="text-sm text-slate-500">Usuarios activos</p>
+            </div>
+          </div>
+
+          {/* Contract status breakdown */}
+          {metrics && Object.keys(metrics.contracts.by_status).length > 0 && (
+            <div className="mt-8 pt-6 border-t border-slate-200 w-full max-w-md">
+              <h3 className="text-sm font-medium text-slate-700 mb-3 text-center">Contratos por Estado</h3>
+              <div className="flex flex-wrap justify-center gap-4">
+                {Object.entries(metrics.contracts.by_status).map(([status, count]) => (
+                  <div key={status} className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${
+                      status === 'draft' ? 'bg-slate-400' :
+                      status === 'pending_payment' ? 'bg-amber-400' :
+                      status === 'paid' ? 'bg-blue-400' :
+                      status === 'signed' ? 'bg-emerald-400' :
+                      'bg-slate-300'
                     }`} />
+                    <span className="text-sm text-slate-600 capitalize">
+                      {status.replace(/_/g, ' ')}: <strong>{count}</strong>
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
-                      {item.label}
-                      <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-cyan-500" />
-                    </h3>
-                    <p className="text-sm text-slate-500 truncate">{item.description}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Right Column: Recent Activity */}
-          <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden h-fit">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Actividad Reciente</h2>
-              <button className="text-sm text-cyan-600 hover:text-cyan-700 font-medium">Ver todo</button>
+                ))}
+              </div>
             </div>
-            <div className="divide-y divide-slate-100">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="px-6 py-4 flex items-start gap-4 hover:bg-slate-50 transition-colors">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                    activity.type === 'success' ? 'bg-emerald-100' :
-                    activity.type === 'warning' ? 'bg-amber-100' :
-                    'bg-slate-100'
-                  }`}>
-                    {activity.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                    {activity.type === 'warning' && <AlertCircle className="w-4 h-4 text-amber-600" />}
-                    {activity.type === 'pending' && <Clock className="w-4 h-4 text-slate-600" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900">{activity.message}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{activity.user}</p>
-                  </div>
-                  <span className="text-xs text-slate-400 shrink-0">{activity.time}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

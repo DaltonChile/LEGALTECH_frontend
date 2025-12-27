@@ -10,6 +10,9 @@ import { ContractEditorPage } from '../pages/public/ContractEditorPage';
 // Admin
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { TemplatesPage } from '../pages/admin/TemplatesPage';
+import { UsersPage } from '../pages/admin/UsersPage';
+import { ConfigurationPage } from '../pages/admin/ConfigurationPage';
+import { ContractsPage } from '../pages/admin/ContractsPage';
 
 // Notary
 import { NotaryDashboard } from '../pages/notary/NotaryDashboard';
@@ -32,10 +35,34 @@ export function AppRoutes() {
         }
       />
       <Route
+        path="/admin/contratos"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <ContractsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/templates"
         element={
           <ProtectedRoute requiredRole="admin">
             <TemplatesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/usuarios"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <UsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/configuracion"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <ConfigurationPage />
           </ProtectedRoute>
         }
       />
