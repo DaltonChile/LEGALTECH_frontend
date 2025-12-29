@@ -45,10 +45,11 @@ export const templatesApi = {
 
 // Agregar estas funciones a LEGALTECH_frontend/src/services/api.ts
 
-export const uploadTemplateVersion = async (templateId: number, file: File, basePrice: number = 0) => {
+export const uploadTemplateVersion = async (templateId: number, file: File, basePrice: number = 0, requiresNotary: boolean = false) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('base_price', basePrice.toString());
+  formData.append('requires_notary', requiresNotary.toString());
 
   const response = await api.post(
     `/admin/templates/${templateId}/versions/upload`,
