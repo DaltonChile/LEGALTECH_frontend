@@ -3,7 +3,7 @@ import { Sidebar } from '../admin/dashboard/Sidebar';
 
 export function AdminLayout() {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 font-sans text-slate-900">
+    <div className="flex gap-6 min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 font-sans text-slate-900">
       {/* Persistent Sidebar */}
       <Sidebar />
       
