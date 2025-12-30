@@ -7,6 +7,7 @@ import {
   publishVersion,
   getTemplateVersionDownloadUrl,
   deleteTemplateVersion,
+  deleteTemplate,
   uploadTemplateVersion,
   setCapsulePrices
 } from '../../services/api';
@@ -128,6 +129,22 @@ export const TemplatesPage: React.FC = () => {
     } catch (error) {
       console.error('Error deleting version:', error);
       alert('Error al eliminar la versión');
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: number, templateTitle: string) => {
+    if (!confirm(`¿Estás seguro de desactivar el template "${templateTitle}"? El template dejará de estar visible en el catálogo.`)) {
+      return;
+    }
+
+    try {
+      await deleteTemplate(templateId);
+      loadTemplates();
+      setSelectedTemplate(null);
+      alert('Template desactivado exitosamente');
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      alert('Error al desactivar el template');
     }
   };
 
@@ -256,6 +273,7 @@ export const TemplatesPage: React.FC = () => {
           onPublish={handlePublishVersion}
           onDownload={handleDownloadVersion}
           onDelete={handleDeleteVersion}
+          onDeleteTemplate={handleDeleteTemplate}
           onUpdate={() => {
             loadTemplates();
             // Refresh the selected template data
@@ -629,6 +647,7 @@ interface TemplateDetailModalProps {
   onPublish: (versionId: number) => void;
   onDownload: (versionId: number) => void;
   onDelete: (versionId: number, versionNumber: number) => void;
+  onDeleteTemplate: (templateId: number, templateTitle: string) => void;
   onUpdate: () => void;
 }
 
@@ -638,6 +657,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   onPublish,
   onDownload,
   onDelete,
+  onDeleteTemplate,
   onUpdate
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -755,13 +775,24 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-3 py-1.5 border-2 border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-1"
-            >
-              <Edit2 className="w-4 h-4" />
-              Editar
-            </button>
+            <>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-3 py-1.5 border-2 border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-1"
+              >
+                <Edit2 className="w-4 h-4" />
+                Editar
+              </button>
+              {template.is_active && (
+                <button
+                  onClick={() => onDeleteTemplate(template.id, template.title)}
+                  className="px-3 py-1.5 border-2 border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 flex items-center gap-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Desactivar
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

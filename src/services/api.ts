@@ -33,8 +33,8 @@ export interface TemplateDetail extends Template {
 
 export const templatesApi = {
   getAll: async (): Promise<Template[]> => {
-    const response = await api.get<{ data: Template[] }>('/templates');
-    return response.data.data;
+    const response = await api.get<{ data: Template[] }>('/templates/catalog');
+    return response.data.data || [];
   },
 
   getBySlug: async (slug: string): Promise<TemplateDetail> => {
@@ -93,6 +93,10 @@ export const getTemplateVersionDownloadUrl = async (versionId: number) => {
 
 export const deleteTemplateVersion = async (versionId: number) => {
   return await api.delete(`/admin/versions/${versionId}`);
+};
+
+export const deleteTemplate = async (templateId: number) => {
+  return await api.delete(`/admin/templates/${templateId}`);
 };
 
 export const setCapsulePrices = async (versionId: string, capsules: any[]) => {
