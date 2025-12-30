@@ -37,11 +37,12 @@ export function ContractCatalog() {
       try {
         setLoading(true);
         const data = await templatesApi.getAll();
-        setTemplates(data);
+        setTemplates(data || []);
         setError(null);
       } catch (err) {
         console.error('Error al cargar templates:', err);
         setError('No se pudieron cargar los contratos. Por favor, intenta de nuevo.');
+        setTemplates([]);
       } finally {
         setLoading(false);
       }
@@ -55,7 +56,7 @@ export function ContractCatalog() {
   };
 
   // Filtrar templates según la búsqueda
-  const filteredTemplates = templates.filter(template => {
+  const filteredTemplates = (templates || []).filter(template => {
     const query = searchQuery.toLowerCase();
     return (
       template.title.toLowerCase().includes(query) ||

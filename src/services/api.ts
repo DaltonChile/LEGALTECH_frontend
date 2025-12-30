@@ -33,8 +33,8 @@ export interface TemplateDetail extends Template {
 
 export const templatesApi = {
   getAll: async (): Promise<Template[]> => {
-    const response = await api.get<{ data: Template[] }>('/templates');
-    return response.data.data;
+    const response = await api.get<{ data: Template[] }>('/templates/catalog');
+    return response.data.data || [];
   },
 
   getBySlug: async (slug: string): Promise<TemplateDetail> => {
@@ -45,10 +45,11 @@ export const templatesApi = {
 
 // Agregar estas funciones a LEGALTECH_frontend/src/services/api.ts
 
-export const uploadTemplateVersion = async (templateId: number, file: File, basePrice: number = 0) => {
+export const uploadTemplateVersion = async (templateId: number, file: File, basePrice: number = 0, requiresNotary: boolean = false) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('base_price', basePrice.toString());
+  formData.append('requires_notary', requiresNotary.toString());
 
   const response = await api.post(
     `/admin/templates/${templateId}/versions/upload`,
@@ -94,8 +95,83 @@ export const deleteTemplateVersion = async (versionId: number) => {
   return await api.delete(`/admin/versions/${versionId}`);
 };
 
+export const deleteTemplate = async (templateId: number) => {
+  return await api.delete(`/admin/templates/${templateId}`);
+};
+
 export const setCapsulePrices = async (versionId: string, capsules: any[]) => {
   return await api.post(`/admin/versions/${versionId}/capsules/set-prices`, { capsules });
+};
+
+// ============================================
+// APIs para Admin Users
+// ============================================
+
+export const getAdminUsers = async (params?: { role?: string; is_active?: boolean }) => {
+  return await api.get('/admin/users', { params });
+};
+
+export const createUser = async (data: {
+  email: string;
+  password: string;
+  full_name: string;
+  role: 'admin' | 'notario';
+  rut?: string;
+}) => {
+  return await api.post('/admin/users', data);
+};
+
+export const updateUser = async (userId: string, data: {
+  email?: string;
+  password?: string;
+  full_name?: string;
+  rut?: string;
+}) => {
+  return await api.put(`/admin/users/${userId}`, data);
+};
+
+export const deleteUser = async (userId: string) => {
+  return await api.delete(`/admin/users/${userId}`);
+};
+
+export const reactivateUser = async (userId: string) => {
+  return await api.post(`/admin/users/${userId}/reactivate`);
+};
+
+// ============================================
+// APIs para Admin Contracts
+// ============================================
+
+export const getAdminContracts = async (params?: { status?: string; page?: number; limit?: number }) => {
+  return await api.get('/admin/contracts', { params });
+};
+
+export const getAdminContractById = async (contractId: string) => {
+  return await api.get(`/admin/contracts/${contractId}`);
+};
+
+// ============================================
+// APIs para Dashboard
+// ============================================
+
+export const getDashboardStats = async () => {
+  return await api.get('/admin/dashboard/stats');
+};
+
+export const getDashboardWeeklyActivity = async () => {
+  return await api.get('/admin/dashboard/weekly-activity');
+};
+
+export const getDashboardMonthlyActivity = async () => {
+  return await api.get('/admin/dashboard/monthly-activity');
+};
+
+export const getDashboardRecentContracts = async (limit?: number) => {
+  return await api.get('/admin/dashboard/recent-contracts', { params: { limit } });
+};
+
+export const getDashboardPopularTemplates = async (limit?: number) => {
+  return await api.get('/admin/dashboard/popular-templates', { params: { limit } });
 };
 
 // ============================================

@@ -1,5 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ProtectedRoute } from '../components/shared/ProtectedRoute';
+import { AdminLayout } from '../components/layout/AdminLayout';
 
 // Public
 import { HomePage } from '../pages/public/HomePage';
@@ -10,6 +11,7 @@ import { ContractEditorPage } from '../pages/public/ContractEditorPage';
 // Admin
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { TemplatesPage } from '../pages/admin/TemplatesPage';
+import { UsersPage } from '../pages/admin/UsersPage';
 
 // Notary
 import { NotaryDashboard } from '../pages/notary/NotaryDashboard';
@@ -21,24 +23,21 @@ export function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/:slug" element={<ContractEditorPage />} />
+      <Route path="/catalogo" element={<ContractCatalogPage />} />
 
-      {/* Admin routes */}
+      {/* Admin Routes with Layout */}
       <Route
-        path="/admin"
         element={
           <ProtectedRoute requiredRole="admin">
-            <AdminDashboard />
+            <AdminLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/admin/templates"
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <TemplatesPage />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/templates" element={<TemplatesPage />} />
+        <Route path="/admin/users" element={<UsersPage />} />
+        <Route path="/admin/settings" element={<Outlet />} />
+      </Route>
 
       {/* Notary routes */}
       <Route
@@ -50,7 +49,7 @@ export function AppRoutes() {
         }
       />
 
-      {/* Redirect por defecto */}
+      {/* Default Redirect */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
