@@ -9,7 +9,7 @@ export function AdminLayout() {
       
       {/* Dynamic Content Area */}
       <main className="flex-1 p-4 overflow-y-auto h-screen">
-        <div className="max-w-7xl mx-auto space-y-4">
+        <div className="space-y-4">
           <Outlet />
         </div>
       </main>

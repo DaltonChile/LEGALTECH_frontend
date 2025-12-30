@@ -114,10 +114,10 @@ export function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Gestión de usuarios</h1>
+      <div className="flex items-center pt-6 justify-between">
+        
         
         <div className="flex items-center gap-3">
           {/* Search */}
