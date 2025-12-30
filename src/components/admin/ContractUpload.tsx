@@ -1,7 +1,7 @@
 // LEGALTECH_frontend/src/components/admin/ContractUploader.tsx
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { uploadTemplateVersion, setCapsulePrices, publishVersion } from '../../services/api';
+import { uploadTemplateVersion, setCapsulePrices } from '../../services/api';
 
 interface ContractUploaderProps {
   templateId: number;

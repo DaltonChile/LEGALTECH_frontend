@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { CapsuleSelector } from '../../components/shared/CapsuleSelector';
 import { ContractEditor } from '../../components/shared/ContractEditor';
 // import { useAutoSave } from '../../hooks/useAutoSave'; // TODO: implement this hook
 
@@ -10,6 +9,7 @@ interface Capsule {
   title: string;
   price: number;
   form_schema?: any[];
+  legal_text?: string;
 }
 
 interface Template {
@@ -37,8 +37,7 @@ export function ContractEditorPage() {
   // Contract data
   const [selectedCapsules, setSelectedCapsules] = useState<number[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [contractId, setContractId] = useState<string | null>(null);
-  const [trackingCode, setTrackingCode] = useState<string | null>(null);
+  const [trackingCode] = useState<string | null>(null);
   const [templateText, setTemplateText] = useState<string>('');
 
   // Auto-save - TODO: implement useAutoSave hook
@@ -47,8 +46,8 @@ export function ContractEditorPage() {
   //   formData,
   //   currentStep === 'editor'
   // );
-  const isSaving = false;
-  const lastSaved = null;
+  const [isSaving] = useState(false);
+  const [lastSaved] = useState<Date | null>(null);
 
   useEffect(() => {
     if (slug) {
@@ -102,14 +101,6 @@ export function ContractEditorPage() {
 
     setCurrentStep('payment');
     // TODO: Implementar flujo de pago
-  };
-
-  const handleBack = () => {
-    if (currentStep === 'editor') {
-      setCurrentStep('capsules');
-    } else if (currentStep === 'payment') {
-      setCurrentStep('editor');
-    }
   };
 
   const getAllVariables = (): string[] => {

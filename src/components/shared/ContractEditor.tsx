@@ -28,10 +28,8 @@ export function ContractEditor({
   selectedCapsules,
   onCapsuleSelectionChange,
   basePrice,
-  isLoading = false,
 }: ContractEditorProps) {
   const [activeField, setActiveField] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [showCapsulesPanel, setShowCapsulesPanel] = useState(false);
   const contractRef = useRef<HTMLDivElement>(null);
   const isEditingRef = useRef(false);
@@ -216,42 +214,11 @@ export function ContractEditor({
     setActiveField(null);
   };
 
-  const isFieldEmpty = (variable: string): boolean => {
-    return !formData[variable] || formData[variable].trim() === '';
-  };
-
   const completionPercentage = useMemo(() => {
     const validVariables = variables.filter(v => v);
     const filled = validVariables.filter((v) => formData[v] && formData[v].trim() !== '').length;
     return validVariables.length > 0 ? Math.round((filled / validVariables.length) * 100) : 0;
   }, [formData, variables]);
-
-  // Filtrar variables según búsqueda
-  const filteredVariables = useMemo(() => {
-    const validVariables = variables.filter(v => v);
-    if (!searchTerm) return validVariables;
-    const term = searchTerm.toLowerCase();
-    return validVariables.filter((v) => 
-      v.toLowerCase().includes(term) || 
-      formatVariableName(v).toLowerCase().includes(term)
-    );
-  }, [variables, searchTerm]);
-
-  // Agrupar variables por sección (por prefijo antes del guión bajo)
-  const groupedVariables = useMemo(() => {
-    const groups: Record<string, string[]> = {};
-    
-    filteredVariables.forEach((variable) => {
-      if (!variable) return;
-      const prefix = variable.split('_')[0] || 'general';
-      if (!groups[prefix]) {
-        groups[prefix] = [];
-      }
-      groups[prefix].push(variable);
-    });
-
-    return groups;
-  }, [filteredVariables]);
 
   const toggleCapsule = (capsuleId: number) => {
     if (selectedCapsules.includes(capsuleId)) {
