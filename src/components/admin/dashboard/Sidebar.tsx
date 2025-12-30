@@ -6,7 +6,6 @@ import {
   Users, 
   FileText, 
   Settings, 
-  File,
   LogOut,
 } from 'lucide-react';
 
@@ -52,7 +51,6 @@ const RouteSelect = () => {
     { icon: Home, label: 'Dashboard', path: '/admin' },
     { icon: FileText, label: 'Templates', path: '/admin/templates' },
     { icon: Users, label: 'Usuarios', path: '/admin/users' },
-    { icon: File, label: 'Contratos', path: '/admin/contracts' },
     { icon: Settings, label: 'Configuración', path: '/admin/settings' },
   ];
 

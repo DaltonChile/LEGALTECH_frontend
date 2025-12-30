@@ -11,6 +11,7 @@ import { ContractEditorPage } from '../pages/public/ContractEditorPage';
 // Admin
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { TemplatesPage } from '../pages/admin/TemplatesPage';
+import { UsersPage } from '../pages/admin/UsersPage';
 
 // Notary
 import { NotaryDashboard } from '../pages/notary/NotaryDashboard';
@@ -34,8 +35,7 @@ export function AppRoutes() {
       >
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/templates" element={<TemplatesPage />} />
-        <Route path="/admin/users" element={<Outlet />} />
-        <Route path="/admin/contracts" element={<Outlet />} />
+        <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/settings" element={<Outlet />} />
       </Route>
 
