@@ -7,9 +7,29 @@ import { ContractEditor } from '../../components/shared/ContractEditor';
 
 interface Capsule {
   id: number;
+  slug: string;
   title: string;
+  description?: string;
   price: number;
   form_schema?: any[];
+  legal_text?: string;
+  display_order?: number;
+}
+
+interface ClauseNumbering {
+  order: number;
+  title: string;
+  is_in_capsule: boolean;
+  capsule_slug: string | null;
+}
+
+interface SignerConfig {
+  role: string;
+  display_name: string;
+  signature_order: number;
+  name_variable: string;
+  rut_variable: string;
+  email_variable: string;
 }
 
 interface Template {
@@ -21,6 +41,12 @@ interface Template {
   base_price: number;
   base_form_schema: any[];
   template_content: string;
+  clause_numbering?: ClauseNumbering[];
+  signers_config?: SignerConfig[];
+  variables_metadata?: {
+    variables: any[];
+    baseVariables: string[];
+  };
   capsules: Capsule[];
 }
 
@@ -292,6 +318,9 @@ export function ContractEditorPage() {
               onCapsuleSelectionChange={handleCapsuleSelectionChange}
               basePrice={template.base_price}
               isLoading={isSaving}
+              clauseNumbering={template.clause_numbering}
+              signersConfig={template.signers_config}
+              variablesMetadata={template.variables_metadata}
             />
 
             {/* Fixed bottom bar */}
