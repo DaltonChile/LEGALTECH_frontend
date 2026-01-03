@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ContractCard } from './ContractCard';
 import { Home, Briefcase, FileText, ShieldCheck, Users, HandshakeIcon, Loader2, Search } from 'lucide-react';
-import { templatesApi, type Template } from '../services/api';
+import { templatesApi, type Template } from '../../../services/api';
 
 // Mapeo de iconos según el slug o título
 const getIconForTemplate = (slug: string): any => {

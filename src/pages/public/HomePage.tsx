@@ -1,6 +1,5 @@
-import { Navbar } from '../../components/Navbar';
-import { Hero } from '../../components/Hero';
-import { ContractCatalog } from '../../components/ContractCatalog';
+import { Navbar, Hero } from '../../components/landing';
+import { ContractCatalog } from '../../components/public/contracts';
 
 export function HomePage() {
   return (
