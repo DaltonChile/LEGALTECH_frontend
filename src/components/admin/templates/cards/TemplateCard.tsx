@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText, ChevronRight } from 'lucide-react';
-import { Template } from '../../../types/templates';
+import type { Template } from '../../../../types/templates';
 
 interface TemplateCardProps {
   template: Template;

@@ -1,2 +1,2 @@
-export { default as Hero } from './Hero';
-export { default as Navbar } from './Navbar';
+export { Hero } from './Hero';
+export { Navbar } from './Navbar';
