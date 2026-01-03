@@ -108,6 +108,53 @@ export const TemplatesPage: React.FC = () => {
     }
   };
 
+  const handleToggleActive = async (templateId: number, currentStatus: boolean) => {
+    const template = templates.find(t => t.id === templateId);
+    
+    if (!currentStatus) {
+      // Intentando publicar
+      const hasPublishedVersion = template?.versions?.some(v => v.is_published);
+      const latestVersion = template?.versions?.[0];
+      
+      if (!latestVersion) {
+        alert('No se puede publicar un template sin versiones. Sube una versión primero.');
+        return;
+      }
+
+      let message = '¿Estás seguro de publicar este template?';
+      if (!hasPublishedVersion) {
+        message = `¿Estás seguro de publicar este template?\n\nSe publicará automáticamente la versión ${latestVersion.version_number} (la más reciente).`;
+      }
+      
+      if (!confirm(message)) return;
+    } else {
+      // Intentando esconder
+      if (!confirm('¿Estás seguro de esconder este template del catálogo público?')) {
+        return;
+      }
+    }
+
+    try {
+      const response = await fetch(`/api/v1/admin/templates/${templateId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ is_active: !currentStatus })
+      });
+
+      if (!response.ok) throw new Error('Error updating template');
+
+      loadTemplates();
+      const action = currentStatus ? 'escondido' : 'publicado';
+      alert(`Template ${action} exitosamente`);
+    } catch (error) {
+      console.error('Error updating template:', error);
+      alert('Error al actualizar el template');
+    }
+  };
+
   // Filter templates
   const filteredTemplates = templates.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -207,6 +254,7 @@ export const TemplatesPage: React.FC = () => {
               template={template} 
               onClick={() => setSelectedTemplate(template)}
               onDownload={handleDownloadVersion}
+              onToggleActive={handleToggleActive}
             />
           ))}
         </div>

@@ -22,11 +22,13 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 }) => {
   const [showVersions, setShowVersions] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
-  const [editingField, setEditingField] = useState<'title' | 'description' | 'price' | null>(null);
+  const [editingField, setEditingField] = useState<'title' | 'description' | 'price' | string | null>(null);
   const [editData, setEditData] = useState({
     title: template.title,
     description: template.description || '',
   });
+  const [editPrice, setEditPrice] = useState('');
+  const [editCapsulePrice, setEditCapsulePrice] = useState('');
   const [saving, setSaving] = useState(false);
 
   const publishedVersion = template.versions?.find(v => v.is_published);
@@ -40,12 +42,24 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     setEditingField(field);
   };
 
+  const handleStartEditPrice = () => {
+    setEditPrice(publishedVersion?.base_price?.toString() || '');
+    setEditingField('price');
+  };
+
+  const handleStartEditCapsule = (capsuleIndex: number, currentPrice: number) => {
+    setEditCapsulePrice(currentPrice?.toString() || '');
+    setEditingField(`capsule-${capsuleIndex}`);
+  };
+
   const handleCancelEdit = () => {
     // Restaurar valores originales
     setEditData({
       title: template.title,
       description: template.description || '',
     });
+    setEditPrice('');
+    setEditCapsulePrice('');
     setEditingField(null);
   };
 
@@ -67,90 +81,139 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     }
   };
 
-  if (showVersions) {
-    return (
-      <Modal onClose={onClose} wide>
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Versiones Anteriores</h2>
-            <p className="text-slate-600">{template.title}</p>
-          </div>
+  const handleSavePrice = async () => {
+    if (saving || !publishedVersion) return;
+    
+    const newPrice = parseFloat(editPrice);
+    if (isNaN(newPrice) || newPrice < 0) {
+      alert('Ingresa un precio válido');
+      return;
+    }
 
-          {/* Lista de versiones */}
-          {template.versions && template.versions.length > 0 ? (
-            <div className="space-y-3">
-              {template.versions.map((version) => (
-                <div
-                  key={version.id}
-                  className={`border-2 rounded-2xl p-5 ${
-                    version.is_published
-                      ? 'bg-gradient-to-r from-lime-50/50 to-cyan-50/50 border-lime-300'
-                      : 'bg-white border-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl font-bold text-slate-900">v{version.version_number}</span>
-                      {version.is_published ? (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-lime-100 to-cyan-100 border-2 border-lime-400">
-                          ✓ Publicada
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 border-2 border-slate-300">
-                          Borrador
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-lg font-bold text-slate-900">${version.base_price?.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-slate-600 mt-2">
-                    <span>{version.base_form_schema?.length || 0} campos</span>
-                    {version.capsules && version.capsules.length > 0 && (
-                      <span className="text-amber-600 font-medium">{version.capsules.length} cápsulas</span>
-                    )}
-                    <span className="text-slate-400">{new Date(version.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
-              <p className="text-slate-600">No hay versiones</p>
-            </div>
-          )}
+    setSaving(true);
+    try {
+      await api.put(`/admin/templates/${template.id}/versions/${publishedVersion.id}/price`, {
+        base_price: newPrice
+      });
+      setEditingField(null);
+      setEditPrice('');
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating price:', error);
+      alert('Error al actualizar el precio');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-          <button
-            onClick={() => setShowVersions(false)}
-            className="w-full px-6 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200"
-          >
-            Volver
-          </button>
-        </div>
-      </Modal>
-    );
-  }
+  const handleSaveCapsulePrice = async (capsuleIndex: number) => {
+    if (saving || !publishedVersion?.capsules?.[capsuleIndex]) return;
+    
+    const newPrice = parseFloat(editCapsulePrice);
+    if (isNaN(newPrice) || newPrice < 0) {
+      alert('Ingresa un precio válido');
+      return;
+    }
 
-  if (showUploader) {
-    return (
-      <Modal onClose={onClose} wide>
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-slate-900">Nueva Versión</h2>
-          <NewVersionUploader
-            templateId={template.id}
-            onSuccess={() => {
-              setShowUploader(false);
-              onUpdate();
-            }}
-            onCancel={() => setShowUploader(false)}
-          />
-        </div>
-      </Modal>
-    );
-  }
+    setSaving(true);
+    try {
+      const capsule = publishedVersion.capsules[capsuleIndex];
+      await api.put(`/admin/templates/${template.id}/versions/${publishedVersion.id}/capsule-price`, {
+        capsule_slug: capsule.slug,
+        price: newPrice
+      });
+      setEditingField(null);
+      setEditCapsulePrice('');
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating capsule price:', error);
+      alert('Error al actualizar el precio de la cápsula');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Modal onClose={onClose} wide>
       <div className="space-y-6">
+        {/* Vista de versiones anteriores */}
+        {showVersions && (
+          <>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">Versiones Anteriores</h2>
+              <p className="text-slate-600">{template.title}</p>
+            </div>
+
+            {/* Lista de versiones */}
+            {template.versions && template.versions.length > 0 ? (
+              <div className="space-y-3">
+                {template.versions.map((version) => (
+                  <div
+                    key={version.id}
+                    className={`border-2 rounded-2xl p-5 ${
+                      version.is_published
+                        ? 'bg-gradient-to-r from-lime-50/50 to-cyan-50/50 border-lime-300'
+                        : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-bold text-slate-900">v{version.version_number}</span>
+                        {version.is_published ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-lime-100 to-cyan-100 border-2 border-lime-400">
+                            ✓ Publicada
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 border-2 border-slate-300">
+                            Borrador
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-lg font-bold text-slate-900">${version.base_price?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-slate-600 mt-2">
+                      <span>{version.base_form_schema?.length || 0} campos</span>
+                      {version.capsules && version.capsules.length > 0 && (
+                        <span className="text-amber-600 font-medium">{version.capsules.length} cápsulas</span>
+                      )}
+                      <span className="text-slate-400">{new Date(version.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
+                <p className="text-slate-600">No hay versiones</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowVersions(false)}
+              className="w-full px-6 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200"
+            >
+              Volver
+            </button>
+          </>
+        )}
+
+        {/* Vista de subir nueva versión */}
+        {showUploader && (
+          <>
+            <h2 className="text-2xl font-bold text-slate-900">Nueva Versión</h2>
+            <NewVersionUploader
+              templateId={template.id}
+              onSuccess={() => {
+                setShowUploader(false);
+                onUpdate();
+              }}
+              onCancel={() => setShowUploader(false)}
+            />
+          </>
+        )}
+
+        {/* Vista principal */}
+        {!showVersions && !showUploader && (
+          <>
         {/* Titulo */}
         <div className="flex items-center gap-3">
           <div className="flex-1">
@@ -249,18 +312,55 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
         {/* Precio */}
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
-              <p className="text-lg font-semibold text-slate-900">
-                ${publishedVersion?.base_price?.toLocaleString() || '0'}
-              </p>
-            </div>
+            {editingField === 'price' ? (
+              <input
+                type="number"
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 text-lg font-semibold"
+                placeholder="0"
+                min="0"
+                step="0.01"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSavePrice();
+                  if (e.key === 'Escape') handleCancelEdit();
+                }}
+              />
+            ) : (
+              <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
+                <p className="text-lg font-semibold text-slate-900">
+                  ${publishedVersion?.base_price?.toLocaleString() || '0'}
+                </p>
+              </div>
+            )}
           </div>
-          <button
-            className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-400 rounded-xl font-semibold cursor-not-allowed"
-            disabled
-          >
-            editar
-          </button>
+          {editingField === 'price' ? (
+            <div className="flex gap-2">
+              <button
+                onClick={handleCancelEdit}
+                disabled={saving}
+                className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSavePrice}
+                disabled={saving}
+                className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
+              >
+                {saving ? '...' : 'Guardar'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleStartEditPrice}
+              disabled={!publishedVersion}
+              className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              editar
+            </button>
+          )}
         </div>
 
         {/* Version Publicada */}
@@ -278,14 +378,52 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                     <div className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl bg-white">
                       <p className="text-slate-900 font-medium">Capsula {index + 1}: {capsule.title}</p>
                     </div>
-                    <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-w-[120px] text-center">
-                      <p className="text-slate-900 font-semibold">${capsule.price?.toLocaleString()}</p>
-                    </div>
-                    <button
-                      className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50"
-                    >
-                      editar
-                    </button>
+                    {editingField === `capsule-${index}` ? (
+                      <>
+                        <input
+                          type="number"
+                          value={editCapsulePrice}
+                          onChange={(e) => setEditCapsulePrice(e.target.value)}
+                          className="px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 min-w-[120px] text-center font-semibold"
+                          placeholder="0"
+                          min="0"
+                          step="0.01"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveCapsulePrice(index);
+                            if (e.key === 'Escape') handleCancelEdit();
+                          }}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleCancelEdit}
+                            disabled={saving}
+                            className="px-3 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50 text-sm"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            onClick={() => handleSaveCapsulePrice(index)}
+                            disabled={saving}
+                            className="px-4 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50 text-sm"
+                          >
+                            {saving ? '...' : 'Guardar'}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-w-[120px] text-center">
+                          <p className="text-slate-900 font-semibold">${capsule.price?.toLocaleString()}</p>
+                        </div>
+                        <button
+                          onClick={() => handleStartEditCapsule(index, capsule.price)}
+                          className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
+                        >
+                          editar
+                        </button>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
@@ -314,6 +452,8 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
             Guardar
           </button>
         </div>
+        </>
+        )}
       </div>
     </Modal>
   );

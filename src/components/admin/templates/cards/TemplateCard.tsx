@@ -6,9 +6,10 @@ interface TemplateCardProps {
   template: Template;
   onClick: () => void;
   onDownload?: (versionId: number) => void;
+  onToggleActive?: (templateId: number, currentStatus: boolean) => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownload }) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownload, onToggleActive }) => {
   const latestVersion = template.versions?.[0];
   const hasPublishedVersion = template.versions?.some(v => v.is_published);
   const publishedVersion = template.versions?.find(v => v.is_published);
@@ -25,6 +26,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownlo
     e.stopPropagation();
     if (publishedVersion && onDownload) {
       onDownload(publishedVersion.id);
+    }
+  };
+
+  const handleToggleActive = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleActive) {
+      onToggleActive(template.id, template.is_active);
     }
   };
   
@@ -58,11 +66,29 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownlo
 
       </div>
 
-      {/* Botones Editar y Descargar en la parte inferior */}
+      {/* Botones Editar, Publicar/Desactivar y Descargar en la parte inferior */}
       <div className="p-6 flex items-center gap-3">
         <button className="flex-1 py-3 px-4 flex items-center justify-center gap-2 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 transition-all">
           <span>Editar</span>
         </button>
+        {template.is_active ? (
+          <button 
+            onClick={handleToggleActive}
+            className="py-3 px-4 bg-white border-2 border-slate-300 rounded-xl text-slate-600 font-semibold hover:bg-slate-100 transition-all"
+            title="Esconder template del catálogo público"
+          >
+            Esconder
+          </button>
+        ) : (
+          <button 
+            onClick={handleToggleActive}
+            className="py-3 px-4 bg-gradient-to-r from-lime-100 to-cyan-100 border-2 border-lime-400 rounded-xl text-slate-700 font-semibold hover:from-lime-200 hover:to-cyan-200 transition-all"
+            title="Publicar template en el catálogo público"
+            disabled={!latestVersion}
+          >
+            Publicar
+          </button>
+        )}
         {publishedVersion && (
           <button 
             onClick={handleDownload}
