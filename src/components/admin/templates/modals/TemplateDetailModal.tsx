@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Save, Download, Trash2, Upload } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import NewVersionUploader from '../NewVersionUploader';
 import api from '../../../../services/api';
@@ -18,38 +18,46 @@ interface TemplateDetailModalProps {
 const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   template,
   onClose,
-  onPublish,
-  onDownload,
-  onDelete,
-  onDeleteTemplate,
   onUpdate
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
+  const [editingField, setEditingField] = useState<'title' | 'description' | 'price' | null>(null);
   const [editData, setEditData] = useState({
     title: template.title,
     description: template.description || '',
-    is_active: template.is_active
   });
   const [saving, setSaving] = useState(false);
-  const [showUploader, setShowUploader] = useState(false);
 
-  // Calcular estado del template
-  const hasPublishedVersion = template.versions?.some(v => v.is_published);
   const publishedVersion = template.versions?.find(v => v.is_published);
-  
-  const getTemplateStatus = () => {
-    if (!template.is_active) return { label: 'Inactivo', desc: 'No visible en el catálogo', color: 'bg-slate-100 text-slate-600 border-slate-300' };
-    if (hasPublishedVersion) return { label: 'Publicado', desc: 'Visible en el catálogo público', color: 'bg-green-50 text-green-700 border-green-300' };
-    return { label: 'Borrador', desc: 'Necesita publicar una versión', color: 'bg-amber-50 text-amber-700 border-amber-300' };
-  };
-  
-  const status = getTemplateStatus();
 
-  const handleSaveTemplate = async () => {
+  const handleStartEdit = (field: 'title' | 'description') => {
+    // Restaurar valores actuales del template al empezar a editar
+    setEditData({
+      title: template.title,
+      description: template.description || '',
+    });
+    setEditingField(field);
+  };
+
+  const handleCancelEdit = () => {
+    // Restaurar valores originales
+    setEditData({
+      title: template.title,
+      description: template.description || '',
+    });
+    setEditingField(null);
+  };
+
+  const handleSaveField = async (field: 'title' | 'description' | 'price') => {
+    if (saving) return;
+    
     setSaving(true);
     try {
-      await api.put(`/admin/templates/${template.id}`, editData);
-      setIsEditing(false);
+      await api.put(`/admin/templates/${template.id}`, {
+        [field]: editData[field as keyof typeof editData]
+      });
+      setEditingField(null);
       onUpdate();
     } catch (error) {
       console.error('Error updating template:', error);
@@ -59,143 +67,74 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     }
   };
 
-  return (
-    <Modal onClose={onClose} wide>
-      {/* Status Banner */}
-      <div className={`-mx-6 -mt-6 px-6 py-3 mb-6 border-b ${status.color}`}>
-        <div className="flex items-center justify-between">
+  if (showVersions) {
+    return (
+      <Modal onClose={onClose} wide>
+        <div className="space-y-6">
           <div>
-            <span className="font-semibold">{status.label}</span>
-            <span className="text-sm ml-2 opacity-75">— {status.desc}</span>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Versiones Anteriores</h2>
+            <p className="text-slate-600">{template.title}</p>
           </div>
-          {!template.is_active && (
-            <button
-              onClick={() => {
-                setEditData({ ...editData, is_active: true });
-                // Auto-save activation
-                api.put(`/admin/templates/${template.id}`, { ...editData, is_active: true }).then(onUpdate);
-              }}
-              className="px-3 py-1 bg-white rounded-lg text-sm font-medium hover:bg-slate-50 border"
-            >
-              Activar template
-            </button>
-          )}
-        </div>
-      </div>
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex-1">
-          {isEditing ? (
+          {/* Lista de versiones */}
+          {template.versions && template.versions.length > 0 ? (
             <div className="space-y-3">
-              <input
-                type="text"
-                value={editData.title}
-                onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                className="text-xl font-bold text-slate-900 w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-cyan-400"
-              />
-              <textarea
-                value={editData.description}
-                onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                placeholder="Descripción..."
-                rows={2}
-                className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-cyan-400 resize-none text-sm"
-              />
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={editData.is_active}
-                  onChange={(e) => setEditData({ ...editData, is_active: e.target.checked })}
-                  className="rounded border-slate-300"
-                />
-                <span className="text-slate-700">Template activo (visible en catálogo si tiene versión publicada)</span>
-              </label>
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">{template.title}</h2>
-              <p className="text-slate-500 mt-1">{template.description || 'Sin descripción'}</p>
-              <span className="text-xs text-slate-400 font-mono">/{template.slug}</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-2 ml-4">
-          {isEditing ? (
-            <>
-              <button
-                onClick={() => setIsEditing(false)}
-                className="px-3 py-1.5 border-2 border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSaveTemplate}
-                disabled={saving}
-                className="px-3 py-1.5 bg-cyan-100 text-slate-700 border border-cyan-300 rounded-lg text-sm font-medium hover:bg-cyan-200 flex items-center gap-1"
-              >
-                <Save className="w-4 h-4" />
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-3 py-1.5 border-2 border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-1"
-              >
-                <Edit2 className="w-4 h-4" />
-                Editar
-              </button>
-              {template.is_active && (
-                <button
-                  onClick={() => onDeleteTemplate(template.id, template.title)}
-                  className="px-3 py-1.5 border-2 border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 flex items-center gap-1"
+              {template.versions.map((version) => (
+                <div
+                  key={version.id}
+                  className={`border-2 rounded-2xl p-5 ${
+                    version.is_published
+                      ? 'bg-gradient-to-r from-lime-50/50 to-cyan-50/50 border-lime-300'
+                      : 'bg-white border-slate-200'
+                  }`}
                 >
-                  <Trash2 className="w-4 h-4" />
-                  Desactivar
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Published Version Info */}
-      {publishedVersion && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-800 font-medium">Versión publicada: v{publishedVersion.version_number}</p>
-              <p className="text-green-600 text-sm">Precio: ${publishedVersion.base_price?.toLocaleString()} • {publishedVersion.base_form_schema?.length || 0} campos</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-bold text-slate-900">v{version.version_number}</span>
+                      {version.is_published ? (
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-lime-100 to-cyan-100 border-2 border-lime-400">
+                          ✓ Publicada
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 border-2 border-slate-300">
+                          Borrador
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-lg font-bold text-slate-900">${version.base_price?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-slate-600 mt-2">
+                    <span>{version.base_form_schema?.length || 0} campos</span>
+                    {version.capsules && version.capsules.length > 0 && (
+                      <span className="text-amber-600 font-medium">{version.capsules.length} cápsulas</span>
+                    )}
+                    <span className="text-slate-400">{new Date(version.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <button
-              onClick={() => onDownload(publishedVersion.id)}
-              className="px-3 py-1.5 bg-white border border-green-300 text-green-700 rounded-lg text-sm font-medium hover:bg-green-50 flex items-center gap-1"
-            >
-              <Download className="w-4 h-4" />
-              Descargar
-            </button>
-          </div>
-        </div>
-      )}
+          ) : (
+            <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
+              <p className="text-slate-600">No hay versiones</p>
+            </div>
+          )}
 
-      {/* Versions Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
-            Todas las versiones ({template.versions?.length || 0})
-          </h3>
           <button
-            onClick={() => setShowUploader(!showUploader)}
-            className="px-3 py-1.5 bg-cyan-100 text-slate-700 border border-cyan-300 rounded-lg text-sm font-medium hover:bg-cyan-200 flex items-center gap-1"
+            onClick={() => setShowVersions(false)}
+            className="w-full px-6 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200"
           >
-            <Upload className="w-4 h-4" />
-            Subir nueva versión
+            Volver
           </button>
         </div>
+      </Modal>
+    );
+  }
 
-        {showUploader && (
+  if (showUploader) {
+    return (
+      <Modal onClose={onClose} wide>
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-slate-900">Nueva Versión</h2>
           <NewVersionUploader
             templateId={template.id}
             onSuccess={() => {
@@ -204,86 +143,177 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
             }}
             onCancel={() => setShowUploader(false)}
           />
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal onClose={onClose} wide>
+      <div className="space-y-6">
+        {/* Titulo */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            {editingField === 'title' ? (
+              <input
+                type="text"
+                value={editData.title}
+                onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 text-lg font-semibold"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveField('title');
+                  if (e.key === 'Escape') handleCancelEdit();
+                }}
+              />
+            ) : (
+              <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
+                <p className="text-lg font-semibold text-slate-900">{template.title}</p>
+              </div>
+            )}
+          </div>
+          {editingField === 'title' ? (
+            <div className="flex gap-2">
+              <button
+                onClick={handleCancelEdit}
+                disabled={saving}
+                className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleSaveField('title')}
+                disabled={saving}
+                className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
+              >
+                {saving ? '...' : 'Guardar'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => handleStartEdit('title')}
+              className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
+            >
+              editar
+            </button>
+          )}
+        </div>
+
+        {/* Descripcion */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            {editingField === 'description' ? (
+              <textarea
+                value={editData.description}
+                onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 resize-none"
+                rows={2}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') handleCancelEdit();
+                }}
+              />
+            ) : (
+              <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-h-[56px] flex items-center">
+                <p className="text-slate-700">{template.description || 'Sin descripción'}</p>
+              </div>
+            )}
+          </div>
+          {editingField === 'description' ? (
+            <div className="flex gap-2">
+              <button
+                onClick={handleCancelEdit}
+                disabled={saving}
+                className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleSaveField('description')}
+                disabled={saving}
+                className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
+              >
+                {saving ? '...' : 'Guardar'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => handleStartEdit('description')}
+              className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
+            >
+              editar
+            </button>
+          )}
+        </div>
+
+        {/* Precio */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
+              <p className="text-lg font-semibold text-slate-900">
+                ${publishedVersion?.base_price?.toLocaleString() || '0'}
+              </p>
+            </div>
+          </div>
+          <button
+            className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-400 rounded-xl font-semibold cursor-not-allowed"
+            disabled
+          >
+            editar
+          </button>
+        </div>
+
+        {/* Version Publicada */}
+        {publishedVersion && (
+          <div className="space-y-3">
+            <p className="text-slate-900 font-semibold">
+              Version Publicada: <span className="text-cyan-600">version {publishedVersion.version_number}</span>
+            </p>
+
+            {/* Capsulas */}
+            {publishedVersion.capsules && publishedVersion.capsules.length > 0 && (
+              <div className="space-y-2">
+                {publishedVersion.capsules.map((capsule: any, index: number) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl bg-white">
+                      <p className="text-slate-900 font-medium">Capsula {index + 1}: {capsule.title}</p>
+                    </div>
+                    <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-w-[120px] text-center">
+                      <p className="text-slate-900 font-semibold">${capsule.price?.toLocaleString()}</p>
+                    </div>
+                    <button
+                      className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50"
+                    >
+                      editar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
-        {template.versions && template.versions.length > 0 ? (
-          <div className="space-y-2">
-            {template.versions.map((version) => (
-              <div 
-                key={version.id} 
-                className={`border-2 rounded-xl p-4 transition-colors ${
-                  version.is_published 
-                    ? 'border-green-300 bg-green-50/50' 
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold text-slate-900">v{version.version_number}</span>
-                    {version.is_published ? (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                        ✓ Publicada
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                        Borrador
-                      </span>
-                    )}
-                    <span className="text-sm text-slate-500">${version.base_price?.toLocaleString()}</span>
-                    <span className="text-xs text-slate-400">
-                      {new Date(version.created_at).toLocaleDateString()}
-                    </span>
-                    {version.requires_notary && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                        🏛 Notario
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onDownload(version.id)}
-                      className="p-2 text-slate-500 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-                      title="Descargar .docx"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                    {!version.is_published && (
-                      <>
-                        <button
-                          onClick={() => onPublish(version.id)}
-                          className="px-3 py-1.5 bg-green-100 text-green-700 border border-green-300 rounded-lg text-xs font-medium hover:bg-green-200 transition-colors"
-                        >
-                          Publicar
-                        </button>
-                        <button
-                          onClick={() => onDelete(version.id, version.version_number)}
-                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Version details */}
-                <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
-                  <span>{version.base_form_schema?.length || 0} campos</span>
-                  {version.capsules && version.capsules.length > 0 && (
-                    <span className="text-amber-600">{version.capsules.length} cápsulas</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-xl">
-            <Upload className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-slate-500">No hay versiones</p>
-            <p className="text-slate-400 text-sm">Sube un archivo .docx para crear la primera versión</p>
-          </div>
-        )}
+        {/* Botones inferiores */}
+        <div className="flex gap-3 pt-4 border-t-2 border-slate-200">
+          <button
+            onClick={() => setShowUploader(true)}
+            className="flex-1 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:border-slate-400 hover:bg-slate-50"
+          >
+            nueva version
+          </button>
+          <button
+            onClick={() => setShowVersions(true)}
+            className="flex-1 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:border-slate-400 hover:bg-slate-50"
+          >
+            Ver versiones anteriores
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 px-6 py-3 bg-gradient-to-r from-lime-100 to-cyan-100 text-slate-700 border-2 border-lime-400 rounded-xl font-semibold hover:from-lime-200 hover:to-cyan-200"
+          >
+            Guardar
+          </button>
+        </div>
       </div>
     </Modal>
   );

@@ -206,6 +206,7 @@ export const TemplatesPage: React.FC = () => {
               key={template.id} 
               template={template} 
               onClick={() => setSelectedTemplate(template)}
+              onDownload={handleDownloadVersion}
             />
           ))}
         </div>
