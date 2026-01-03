@@ -7,6 +7,7 @@ import {
   FileText, 
   Settings, 
   LogOut,
+  ClipboardCheck,
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -44,15 +45,24 @@ const AccountToggle = () => {
 
 
 const RouteSelect = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const routes = [
+  // Different routes based on role
+  const adminRoutes = [
     { icon: Home, label: 'Dashboard', path: '/admin' },
     { icon: FileText, label: 'Templates', path: '/admin/templates' },
     { icon: Users, label: 'Usuarios', path: '/admin/users' },
+
     { icon: Settings, label: 'Configuración', path: '/admin/settings' },
   ];
+
+  const notaryRoutes = [
+    { icon: ClipboardCheck, label: 'Bandeja de Entrada', path: '/notary/inbox' },
+  ];
+
+  const routes = user?.role === 'notario' ? notaryRoutes : adminRoutes;
 
   return (
     <div className="space-y-1">

@@ -137,9 +137,9 @@ export const TemplatesPage: React.FC = () => {
     try {
       const response = await fetch(`/api/v1/admin/templates/${templateId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ is_active: !currentStatus })
       });

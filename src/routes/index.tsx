@@ -15,6 +15,7 @@ import { UsersPage } from '../pages/admin/UsersPage';
 
 // Notary
 import { NotaryDashboard } from '../pages/notary/NotaryDashboard';
+import { NotaryInboxPage } from '../pages/notary/NotaryInboxPage';
 
 export function AppRoutes() {
   return (
@@ -39,15 +40,17 @@ export function AppRoutes() {
         <Route path="/admin/settings" element={<Outlet />} />
       </Route>
 
-      {/* Notary routes */}
+      {/* Notary routes - use same AdminLayout */}
       <Route
-        path="/notary"
         element={
           <ProtectedRoute requiredRole="notario">
-            <NotaryDashboard />
+            <AdminLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route path="/notary" element={<Navigate to="/notary/inbox" replace />} />
+        <Route path="/notary/inbox" element={<NotaryInboxPage />} />
+      </Route>
 
       {/* Default Redirect */}
       <Route path="*" element={<Navigate to="/" />} />

@@ -119,7 +119,7 @@ export function LoginPage() {
              <div className="flex justify-center gap-4 text-xs text-slate-500 font-mono">
                 <span>admin@legaltech.cl</span>
                 <span>password123</span>
-                <span>notary@legaltech.cl</span>
+                <span>notario1@legaltech.cl</span>
                 <span>password123</span>
              </div>
           </div>
