@@ -21,12 +21,11 @@ export function DocumentPreview({
   }, [renderedContract]);
 
   return (
-    <div className="w-2/5 flex flex-col">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex-1 flex flex-col">
-        {/* Header */}
+    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
+      {/* Header */}
         <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 p-6">
               <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
@@ -57,6 +56,5 @@ export function DocumentPreview({
           )}
         </div>
       </div>
-    </div>
   );
 }
