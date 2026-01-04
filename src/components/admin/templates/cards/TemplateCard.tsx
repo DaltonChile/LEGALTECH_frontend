@@ -56,10 +56,17 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownlo
 
       {/* Precio centrado */}
       <div className="px-6 py-8 flex flex-col items-center justify-center min-h-[120px]">
-        {latestVersion ? (
+        {publishedVersion ? (
           <p className="text-4xl font-bold text-slate-900">
-            ${latestVersion.base_price?.toLocaleString() || 0}
+            ${publishedVersion.base_price?.toLocaleString() || 0}
           </p>
+        ) : latestVersion ? (
+          <div className="text-center">
+            <p className="text-4xl font-bold text-slate-400">
+              ${latestVersion.base_price?.toLocaleString() || 0}
+            </p>
+            <p className="text-xs text-slate-400 mt-2">(No publicado)</p>
+          </div>
         ) : (
           <p className="text-sm text-slate-400">Sin versiones</p>
         )}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2 } from 'lucide-react';
+import { Edit2, Download } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import NewVersionUploader from '../NewVersionUploader';
 import api from '../../../../services/api';
@@ -18,7 +18,8 @@ interface TemplateDetailModalProps {
 const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   template,
   onClose,
-  onUpdate
+  onUpdate,
+  onDownload
 }) => {
   const [showVersions, setShowVersions] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
@@ -43,7 +44,9 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   };
 
   const handleStartEditPrice = () => {
-    setEditPrice(publishedVersion?.base_price?.toString() || '');
+    const currentPrice = publishedVersion?.base_price?.toString() || '0';
+    console.log('Starting edit price:', currentPrice, 'from:', publishedVersion?.base_price);
+    setEditPrice(currentPrice);
     setEditingField('price');
   };
 
@@ -146,7 +149,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 
             {/* Lista de versiones */}
             {template.versions && template.versions.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-6">
                 {template.versions.map((version) => (
                   <div
                     key={version.id}
@@ -169,7 +172,16 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                           </span>
                         )}
                       </div>
-                      <span className="text-lg font-bold text-slate-900">${version.base_price?.toLocaleString()}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold text-slate-900">${version.base_price?.toLocaleString()}</span>
+                        <button
+                          onClick={() => onDownload?.(version.id)}
+                          className="p-2 flex items-center justify-center bg-white border-2 border-slate-300 rounded-lg text-slate-600 hover:border-cyan-400 hover:text-cyan-600 hover:bg-cyan-50 transition-all"
+                          title="Descargar versión"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-slate-600 mt-2">
                       <span>{version.base_form_schema?.length || 0} campos</span>
