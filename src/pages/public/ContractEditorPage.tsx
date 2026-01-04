@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ContractEditor } from '../../components/public/contract-editor';
+import { Navbar } from '../../components/landing/Navbar';
+import { ProgressBar } from '../../components/shared/ProgressBar';
 import { ArrowLeft } from 'lucide-react';
 
 interface Template {
@@ -22,7 +24,13 @@ interface Template {
   capsules: any[];
 }
 
-type Step = 'editor' | 'payment';
+type Step = 'editor' | 'payment' | 'signatures';
+
+const PROGRESS_STEPS = [
+  { id: 'editor', label: 'Completar datos' },
+  { id: 'payment', label: 'Revisar y pagar' },
+  { id: 'signatures', label: 'Firma electrónica' },
+];
 
 export function ContractEditorPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -231,29 +239,11 @@ export function ContractEditorPage() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-100">
-      {/* Minimal Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex-shrink-0">
-        <div className="flex items-center justify-between max-w-screen-2xl mx-auto">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Volver</span>
-          </button>
-
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-slate-900">{template.title}</h1>
-            {trackingCode && (
-              <p className="text-xs text-slate-500">
-                Código: <span className="font-mono text-cyan-600">{trackingCode}</span>
-              </p>
-            )}
-          </div>
-
-          <div className="w-24" /> {/* Spacer for centering */}
-        </div>
-      </header>
+      {/* Navbar */}
+      <Navbar />
+      
+      {/* Progress Bar */}
+      <ProgressBar steps={PROGRESS_STEPS} currentStep={currentStep} />
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">

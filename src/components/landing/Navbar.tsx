@@ -2,7 +2,7 @@ import { Scale } from 'lucide-react';
 
 export function Navbar() {
   return (
-    <nav className="bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 sticky top-0 z-50">
+    <nav className="bg-white shadow-md from-slate-50 via-cyan-50/30 to-lime-50/30 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-10">
