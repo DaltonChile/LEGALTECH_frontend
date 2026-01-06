@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import NewVersionUploader from '../NewVersionUploader';
 import api from '../../../../services/api';

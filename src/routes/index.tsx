@@ -14,7 +14,7 @@ import { TemplatesPage } from '../pages/admin/TemplatesPage';
 import { UsersPage } from '../pages/admin/UsersPage';
 
 // Notary
-import { NotaryDashboard } from '../pages/notary/NotaryDashboard';
+// import { NotaryDashboard } from '../pages/notary/NotaryDashboard';
 import { NotaryInboxPage } from '../pages/notary/NotaryInboxPage';
 
 export function AppRoutes() {

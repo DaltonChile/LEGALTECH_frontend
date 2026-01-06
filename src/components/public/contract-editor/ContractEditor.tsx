@@ -22,7 +22,6 @@ export function ContractEditor({
   onContinueToPayment,
   onRenderedHtmlChange,
 }: ContractEditorProps) {
-  const [showCapsules, setShowCapsules] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeField, setActiveField] = useState<string | null>(null);
   const documentRef = useRef<HTMLDivElement>(null);
@@ -125,8 +124,6 @@ export function ContractEditor({
             capsules={capsules}
             selectedCapsules={selectedCapsules}
             onToggle={toggleCapsule}
-            isOpen={showCapsules}
-            onOpenChange={setShowCapsules}
           />
 
           <PaymentButton

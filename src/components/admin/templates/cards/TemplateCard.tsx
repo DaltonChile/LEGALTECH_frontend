@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import type { Template } from '../../../../types/templates';
 
 interface TemplateCardProps {

@@ -1,10 +1,9 @@
 // LEGALTECH_frontend/src/pages/admin/AdminDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { 
-  Search, FileText, Clock, CheckCircle, XCircle, AlertCircle, 
-  X, Eye, TrendingUp, TrendingDown, Bell
+  FileText, Clock, CheckCircle, XCircle, AlertCircle, 
+  X, Eye, TrendingUp, TrendingDown
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 import { 
   getDashboardStats, 
   getDashboardWeeklyActivity, 
@@ -83,7 +82,7 @@ const STATUS_CONFIG = {
 // Main Component
 // ============================================
 export function AdminDashboard() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);

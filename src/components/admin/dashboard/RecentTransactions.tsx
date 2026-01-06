@@ -1,5 +1,4 @@
-import React from "react";
-import { ArrowUpRight, FileText, MoreHorizontal } from "lucide-react";
+import { FileText, MoreHorizontal } from "lucide-react";
 
 export const RecentTransactions = () => {
   return (

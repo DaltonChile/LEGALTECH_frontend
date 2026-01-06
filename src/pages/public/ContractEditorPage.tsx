@@ -6,7 +6,7 @@ import { ReviewStep } from '../../components/public/contract-editor/ReviewStep';
 import { PaymentStep } from '../../components/public/contract-editor/PaymentStep';
 import { Navbar } from '../../components/landing/Navbar';
 import { ProgressBar } from '../../components/shared/ProgressBar';
-import { ArrowLeft } from 'lucide-react';
+import { extractVariables } from '../../components/public/contract-editor/utils/templateParser';
 
 interface Template {
   id: string;
@@ -19,10 +19,7 @@ interface Template {
   template_content: string;
   clause_numbering?: any[];
   signers_config?: any[];
-  variables_metadata?: {
-    variables: any[];
-    baseVariables: string[];
-  };
+
   capsules: any[];
 }
 
@@ -58,7 +55,6 @@ export function ContractEditorPage() {
   //   currentStep === 'editor'
   // );
   const isSaving = false;
-  const lastSaved = null;
 
   useEffect(() => {
     if (slug) {
@@ -103,12 +99,21 @@ export function ContractEditorPage() {
   };
 
   const handleContinueToReview = () => {
+    if (!template) return;
+    
     // Validar que todos los campos estén llenos
-    const allVariables = getAllVariables();
-    const emptyFields = allVariables.filter((v) => !formData[v] || formData[v].trim() === '');
+    const allVariables = extractVariables(templateText, template.capsules, selectedCapsules);
+    const emptyFields = allVariables.filter((v: string) => !formData[v] || formData[v].trim() === '');
 
     if (emptyFields.length > 0) {
-      alert(`Por favor completa los siguientes campos:\n${emptyFields.map((v) => `- ${formatVariableName(v)}`).join('\n')}`);
+      const formatName = (variable: string): string => {
+        return variable
+          .replace(/_/g, ' ')
+          .split(' ')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      };
+      alert(`Por favor completa los siguientes campos:\n${emptyFields.map((v: string) => `- ${formatName(v)}`).join('\n')}`);
       return;
     }
 
@@ -145,120 +150,6 @@ export function ContractEditorPage() {
       console.error('Error creating contract:', error);
       alert(`Error al crear el contrato: ${error.response?.data?.error || error.message}`);
     }
-  };
-
-  const handleBack = () => {
-    if (currentStep === 'editor') {
-      setCurrentStep('capsules');
-    } else if (currentStep === 'payment') {
-      setCurrentStep('editor');
-    }
-  };
-
-  const getAllVariables = (): string[] => {
-    if (!template) return [];
-    
-    console.log('Template base_form_schema:', template.base_form_schema);
-    console.log('First 3 fields:', template.base_form_schema?.slice(0, 3));
-    
-    // Extract variables from base_form_schema
-    const baseVars = (template.base_form_schema || [])
-      .map((field: any) => {
-        console.log('Processing field:', field);
-        // El backend genera 'field_name', no 'variable_name'
-        const varName = field.field_name || field.name || field.id;
-        if (varName) {
-          return varName; // Mantener case original
-        }
-        // Si no hay field_name, convertir label a MAYÚSCULAS con snake_case
-        if (field.label) {
-          return field.label
-            .toUpperCase() // ← Cambiado a mayúsculas para coincidir con el template
-            .replace(/\s+/g, '_')
-            .replace(/[^A-Z0-9_]/g, '');
-        }
-        return null;
-      })
-      .filter((v: string) => v); // Filtrar undefined/null
-    
-    console.log('Base variables:', baseVars);
-    
-    // Extract variables from UNSELECTED capsules (para excluirlas)
-    const unselectedCapsuleVars = new Set<string>();
-    (template.capsules || [])
-      .filter((c) => !selectedCapsules.includes(c.id)) // ← Cápsulas NO seleccionadas
-      .forEach((c) => {
-        // Variables del form_schema
-        (c.form_schema || []).forEach((field: any) => {
-          const varName = field.field_name || field.name;
-          if (varName) unselectedCapsuleVars.add(varName);
-        });
-        
-        // Variables del legal_text
-        if (c.legal_text) {
-          const varRegex = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
-          let match;
-          while ((match = varRegex.exec(c.legal_text)) !== null) {
-            const varName = match[1].trim();
-            unselectedCapsuleVars.add(varName);
-          }
-        }
-      });
-    
-    console.log('Unselected capsule variables:', Array.from(unselectedCapsuleVars));
-    
-    // Extract variables from SELECTED capsules
-    const capsuleVars = (template.capsules || [])
-      .filter((c) => selectedCapsules.includes(c.id)) // ← Cápsulas seleccionadas
-      .flatMap((c) => {
-        // Variables del form_schema (usar field_name)
-        const schemaVars = (c.form_schema || [])
-          .map((field: any) => field.field_name || field.name) // ← Mantener case original
-          .filter((v: string) => v);
-        
-        // Variables del legal_text (extraer con regex - mantiene mayúsculas)
-        const textVars: string[] = [];
-        if (c.legal_text) {
-          const varRegex = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
-          let match;
-          while ((match = varRegex.exec(c.legal_text)) !== null) {
-            const varName = match[1].trim(); // Mantiene el case original del template
-            if (!textVars.includes(varName)) {
-              textVars.push(varName);
-            }
-          }
-        }
-        
-        return [...schemaVars, ...textVars];
-      });
-    
-    console.log('Selected capsule variables:', capsuleVars);
-    
-    // Combinar variables base + cápsulas seleccionadas
-    // PERO excluir las que están en cápsulas no seleccionadas
-    const allVars = [...baseVars, ...capsuleVars]
-      .filter(v => !unselectedCapsuleVars.has(v));
-    
-    // Eliminar duplicados (case-sensitive para preservar el original)
-    const uniqueVars = Array.from(new Set(allVars));
-    console.log('All variables (unique):', uniqueVars);
-    
-    return uniqueVars;
-  };
-
-  const formatVariableName = (variable: string): string => {
-    return variable
-      .replace(/_/g, ' ')
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-    }).format(price);
   };
 
   if (loading) {
@@ -305,7 +196,6 @@ export function ContractEditorPage() {
         {currentStep === 'editor' && (
           <ContractEditor
             templateText={templateText}
-            variables={getAllVariables()}
             formData={formData}
             onFormChange={handleFormChange}
             capsules={template.capsules}
@@ -315,7 +205,6 @@ export function ContractEditorPage() {
             isLoading={isSaving}
             clauseNumbering={template.clause_numbering}
             signersConfig={template.signers_config}
-            variablesMetadata={template.variables_metadata}
             onContinueToPayment={handleContinueToReview}
             onRenderedHtmlChange={setRenderedContractHtml}
           />

@@ -11,7 +11,7 @@ export const useAutoSave = (
   onSave: (data: any) => Promise<void>,
   delay: number = 3000
 ) => {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousDataRef = useRef(data);
   const isFirstRender = useRef(true);
 

@@ -33,7 +33,6 @@ export interface VariableMetadata {
 
 export interface ContractEditorProps {
   templateText: string;
-  variables: string[];
   formData: Record<string, string>;
   onFormChange: (data: Record<string, string>) => void;
   capsules: Capsule[];
@@ -43,10 +42,6 @@ export interface ContractEditorProps {
   isLoading?: boolean;
   clauseNumbering?: ClauseNumbering[];
   signersConfig?: SignerConfig[];
-  variablesMetadata?: {
-    variables: VariableMetadata[];
-    baseVariables: string[];
-  };
   onContinueToPayment?: () => void;
   onRenderedHtmlChange?: (html: string) => void;
 }

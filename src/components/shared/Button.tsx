@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'outline';
 type ButtonSize = 'sm' | 'md' | 'lg';

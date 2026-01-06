@@ -32,7 +32,7 @@ export const NotaryInboxPage: React.FC = () => {
   const [contracts, setContracts] = useState<ContractRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'pending' | 'signed' | 'all'>('pending');
-  const [selectedContract, setSelectedContract] = useState<ContractRequest | null>(null);
+  const [_selectedContract, setSelectedContract] = useState<ContractRequest | null>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
