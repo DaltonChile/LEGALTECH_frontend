@@ -125,12 +125,30 @@ export function ContractEditorPage() {
     try {
       // Crear contrato en el backend al aprobar la revisión
       if (!trackingCode && template) {
+        // Obtener datos del comprador desde signers_config (primer firmante)
+        const buyerSigner = template.signers_config?.[0];
+        const buyerRut = buyerSigner ? formData[buyerSigner.rut_variable] : '';
+        const buyerEmail = buyerSigner ? formData[buyerSigner.email_variable] : '';
+
+        console.log('📝 Creating contract with:', {
+          template_version_id: template.version_id,
+          buyer_rut: buyerRut,
+          buyer_email: buyerEmail,
+          capsule_ids: selectedCapsules,
+          signers_config: template.signers_config
+        });
+
+        if (!buyerRut || !buyerEmail) {
+          alert('Error: No se pudieron obtener los datos del comprador (RUT y Email)');
+          return;
+        }
+
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/contracts`,
           {
             template_version_id: template.version_id,
-            buyer_rut: formData.COMPRADOR_RUT || formData.buyer_rut || '',
-            buyer_email: formData.COMPRADOR_EMAIL || formData.buyer_email || '',
+            buyer_rut: buyerRut,
+            buyer_email: buyerEmail,
             capsule_ids: selectedCapsules,
             form_data: formData
           }
@@ -223,11 +241,11 @@ export function ContractEditorPage() {
           />
         )}
 
-        {currentStep === 'payment' && (
+        {currentStep === 'payment' && template && (
           <PaymentStep
             contractId={contractId}
             trackingCode={trackingCode || ''}
-            buyerRut={formData.COMPRADOR_RUT || formData.buyer_rut || ''}
+            buyerRut={template.signers_config?.[0] ? formData[template.signers_config[0].rut_variable] : ''}
             totalAmount={template.base_price + 
               template.capsules
                 .filter((c: any) => selectedCapsules.includes(c.id))

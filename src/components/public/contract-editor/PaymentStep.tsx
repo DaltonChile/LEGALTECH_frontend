@@ -37,6 +37,26 @@ export function PaymentStep({
     setError(null);
     
     try {
+      // HARDCODED PAYMENT - Simulate immediate success
+      console.log('💳 HARDCODED PAYMENT - Simulating payment for:', {
+        contractId,
+        trackingCode,
+        buyerRut,
+        totalAmount
+      });
+
+      // Simular delay de 1 segundo y luego marcar como exitoso
+      setTimeout(() => {
+        setLoading(false);
+        setPaymentStatus('success');
+        
+        // Después de 2 segundos más, avanzar al siguiente paso
+        setTimeout(() => {
+          onPaymentSuccess();
+        }, 2000);
+      }, 1000);
+
+      /* CÓDIGO REAL COMENTADO PARA CUANDO SE INTEGRE LA PASARELA
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/payments/${contractId}/initiate`,
         {
@@ -48,23 +68,16 @@ export function PaymentStep({
 
       if (response.data.success) {
         setPaymentUrl(response.data.payment_url);
-        // Simular pago exitoso después de 3 segundos (MOCK)
-        // En producción, esto vendría del webhook de la pasarela
-        setTimeout(() => {
-          setPaymentStatus('success');
-          setTimeout(() => {
-            onPaymentSuccess();
-          }, 2000);
-        }, 3000);
+        // El webhook de la pasarela actualizará el estado
       } else {
         setError(response.data.error || 'Error al iniciar pago');
         setPaymentStatus('failed');
       }
+      */
     } catch (err: any) {
       console.error('Error initiating payment:', err);
       setError(err.response?.data?.error || 'Error al procesar el pago');
       setPaymentStatus('failed');
-    } finally {
       setLoading(false);
     }
   };
