@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { CreditCard, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 interface PaymentStepProps {
@@ -21,7 +20,6 @@ export function PaymentStep({
   onPaymentFailed,
   onBack,
 }: PaymentStepProps) {
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
@@ -45,8 +43,25 @@ export function PaymentStep({
         totalAmount
       });
 
-      // Simular delay de 1 segundo y luego marcar como exitoso
-      setTimeout(() => {
+      // Simular delay de 1 segundo
+      setTimeout(async () => {
+        try {
+          // Simular webhook de pago aprobado actualizando el status del contrato
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/contracts/${contractId}/simulate-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'approved' })
+          });
+
+          if (response.ok) {
+            console.log('✅ Payment simulation successful');
+          } else {
+            console.warn('⚠️ Payment simulation endpoint not found, continuing anyway');
+          }
+        } catch (err) {
+          console.warn('⚠️ Payment simulation failed, continuing anyway:', err);
+        }
+
         setLoading(false);
         setPaymentStatus('success');
         
@@ -109,15 +124,7 @@ export function PaymentStep({
             {loading && (
               <div className="text-center py-8">
                 <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
-                <p className="text-slate-600 font-medium">Iniciando proceso de pago...</p>
-              </div>
-            )}
-
-            {!loading && paymentUrl && (
-              <div className="text-center py-8">
-                <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
-                <p className="text-slate-600 font-medium mb-2">Procesando pago...</p>
-                <p className="text-slate-500 text-sm">Por favor espera un momento</p>
+                <p className="text-slate-600 font-medium">Procesando pago...</p>
               </div>
             )}
           </div>

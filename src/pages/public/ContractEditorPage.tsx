@@ -130,18 +130,31 @@ export function ContractEditorPage() {
         const buyerRut = buyerSigner ? formData[buyerSigner.rut_variable] : '';
         const buyerEmail = buyerSigner ? formData[buyerSigner.email_variable] : '';
 
+        console.log('📝 Buyer signer config:', buyerSigner);
+        console.log('📝 Form data keys:', Object.keys(formData));
+        console.log('📝 Looking for RUT variable:', buyerSigner?.rut_variable);
+        console.log('📝 Looking for Email variable:', buyerSigner?.email_variable);
+        console.log('📝 Found RUT:', buyerRut);
+        console.log('📝 Found Email:', buyerEmail);
+
+        if (!buyerRut || !buyerEmail) {
+          alert(`Error: Faltan datos del comprador.\nRUT: ${buyerRut || 'FALTA'}\nEmail: ${buyerEmail || 'FALTA'}\nVerificar variables: ${buyerSigner?.rut_variable}, ${buyerSigner?.email_variable}`);
+          return;
+        }
+
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(buyerEmail)) {
+          alert(`Error: El email "${buyerEmail}" no es válido. Por favor verifica el campo ${buyerSigner?.email_variable}`);
+          return;
+        }
+
         console.log('📝 Creating contract with:', {
           template_version_id: template.version_id,
           buyer_rut: buyerRut,
           buyer_email: buyerEmail,
-          capsule_ids: selectedCapsules,
-          signers_config: template.signers_config
+          capsule_ids: selectedCapsules
         });
-
-        if (!buyerRut || !buyerEmail) {
-          alert('Error: No se pudieron obtener los datos del comprador (RUT y Email)');
-          return;
-        }
 
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/contracts`,
