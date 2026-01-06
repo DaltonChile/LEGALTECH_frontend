@@ -128,17 +128,17 @@ export function ContractEditorPage() {
     const baseVars = (template.base_form_schema || [])
       .map((field: any) => {
         console.log('Processing field:', field);
-        // Priorizar variable_name, luego name, y como último recurso usar label en snake_case
-        const varName = field.variable_name || field.name || field.id;
+        // El backend genera 'field_name', no 'variable_name'
+        const varName = field.field_name || field.name || field.id;
         if (varName) {
-          return varName;
+          return varName; // Mantener case original
         }
-        // Si no hay variable_name, convertir label a snake_case
+        // Si no hay field_name, convertir label a MAYÚSCULAS con snake_case
         if (field.label) {
           return field.label
-            .toLowerCase()
+            .toUpperCase() // ← Cambiado a mayúsculas para coincidir con el template
             .replace(/\s+/g, '_')
-            .replace(/[^a-z0-9_]/g, '');
+            .replace(/[^A-Z0-9_]/g, '');
         }
         return null;
       })
@@ -146,22 +146,46 @@ export function ContractEditorPage() {
     
     console.log('Base variables:', baseVars);
     
-    // Extract variables from selected capsules
-    const capsuleVars = (template.capsules || [])
-      .filter((c) => selectedCapsules.includes(c.id))
-      .flatMap((c) => {
+    // Extract variables from UNSELECTED capsules (para excluirlas)
+    const unselectedCapsuleVars = new Set<string>();
+    (template.capsules || [])
+      .filter((c) => !selectedCapsules.includes(c.id)) // ← Cápsulas NO seleccionadas
+      .forEach((c) => {
         // Variables del form_schema
-        const schemaVars = (c.form_schema || [])
-          .map((field: any) => field.variable_name || field.name)
-          .filter((v: string) => v);
+        (c.form_schema || []).forEach((field: any) => {
+          const varName = field.field_name || field.name;
+          if (varName) unselectedCapsuleVars.add(varName);
+        });
         
-        // Variables del legal_text (extraer con regex)
-        const textVars: string[] = [];
+        // Variables del legal_text
         if (c.legal_text) {
           const varRegex = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
           let match;
           while ((match = varRegex.exec(c.legal_text)) !== null) {
             const varName = match[1].trim();
+            unselectedCapsuleVars.add(varName);
+          }
+        }
+      });
+    
+    console.log('Unselected capsule variables:', Array.from(unselectedCapsuleVars));
+    
+    // Extract variables from SELECTED capsules
+    const capsuleVars = (template.capsules || [])
+      .filter((c) => selectedCapsules.includes(c.id)) // ← Cápsulas seleccionadas
+      .flatMap((c) => {
+        // Variables del form_schema (usar field_name)
+        const schemaVars = (c.form_schema || [])
+          .map((field: any) => field.field_name || field.name) // ← Mantener case original
+          .filter((v: string) => v);
+        
+        // Variables del legal_text (extraer con regex - mantiene mayúsculas)
+        const textVars: string[] = [];
+        if (c.legal_text) {
+          const varRegex = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
+          let match;
+          while ((match = varRegex.exec(c.legal_text)) !== null) {
+            const varName = match[1].trim(); // Mantiene el case original del template
             if (!textVars.includes(varName)) {
               textVars.push(varName);
             }
@@ -171,20 +195,14 @@ export function ContractEditorPage() {
         return [...schemaVars, ...textVars];
       });
     
-    console.log('Capsule variables:', capsuleVars);
+    console.log('Selected capsule variables:', capsuleVars);
     
-    // Combinar todas las variables y eliminar duplicados
-    const allVars = [...baseVars, ...capsuleVars];
+    // Combinar variables base + cápsulas seleccionadas
+    // PERO excluir las que están en cápsulas no seleccionadas
+    const allVars = [...baseVars, ...capsuleVars]
+      .filter(v => !unselectedCapsuleVars.has(v));
     
-    // Asegurar que ciudad_contrato y fecha_contrato estén incluidas (si no están ya)
-    if (!allVars.includes('ciudad_contrato')) {
-      allVars.unshift('ciudad_contrato');
-    }
-    if (!allVars.includes('fecha_contrato')) {
-      allVars.splice(1, 0, 'fecha_contrato');
-    }
-    
-    // Eliminar duplicados
+    // Eliminar duplicados (case-sensitive para preservar el original)
     const uniqueVars = Array.from(new Set(allVars));
     console.log('All variables (unique):', uniqueVars);
     
