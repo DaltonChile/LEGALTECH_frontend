@@ -20,6 +20,7 @@ export function ContractEditor({
   clauseNumbering = [],
   signersConfig = [],
   onContinueToPayment,
+  onRenderedHtmlChange,
 }: ContractEditorProps) {
   const [showCapsules, setShowCapsules] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,6 +105,7 @@ export function ContractEditor({
             templateText={templateText}
             renderedContract={renderedContract}
             completionPercentage={completionPercentage}
+            onHtmlReady={onRenderedHtmlChange}
           />
         </div>
 

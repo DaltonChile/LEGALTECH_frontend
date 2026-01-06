@@ -5,20 +5,27 @@ interface DocumentPreviewProps {
   templateText: string;
   renderedContract: string;
   completionPercentage: number;
+  onHtmlReady?: (html: string) => void;
 }
 
 export function DocumentPreview({ 
   templateText, 
   renderedContract, 
-  completionPercentage 
+  completionPercentage,
+  onHtmlReady
 }: DocumentPreviewProps) {
   const contractRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (contractRef.current) {
       contractRef.current.innerHTML = renderedContract;
+      
+      // Notificar al padre cuando el HTML esté listo
+      if (onHtmlReady && renderedContract) {
+        onHtmlReady(renderedContract);
+      }
     }
-  }, [renderedContract]);
+  }, [renderedContract, onHtmlReady]);
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden h-full flex flex-col">

@@ -48,4 +48,5 @@ export interface ContractEditorProps {
     baseVariables: string[];
   };
   onContinueToPayment?: () => void;
+  onRenderedHtmlChange?: (html: string) => void;
 }

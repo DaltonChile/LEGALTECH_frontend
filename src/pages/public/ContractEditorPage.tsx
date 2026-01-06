@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ContractEditor } from '../../components/public/contract-editor';
+import { ReviewStep } from '../../components/public/contract-editor/ReviewStep';
+import { PaymentStep } from '../../components/public/contract-editor/PaymentStep';
 import { Navbar } from '../../components/landing/Navbar';
 import { ProgressBar } from '../../components/shared/ProgressBar';
 import { ArrowLeft } from 'lucide-react';
@@ -24,11 +26,12 @@ interface Template {
   capsules: any[];
 }
 
-type Step = 'editor' | 'payment' | 'signatures';
+type Step = 'editor' | 'review' | 'payment' | 'signatures';
 
 const PROGRESS_STEPS = [
   { id: 'editor', label: 'Completar datos' },
-  { id: 'payment', label: 'Revisar y pagar' },
+  { id: 'review', label: 'Revisar contrato' },
+  { id: 'payment', label: 'Pagar' },
   { id: 'signatures', label: 'Firma electrónica' },
 ];
 
@@ -46,6 +49,7 @@ export function ContractEditorPage() {
   const [contractId, setContractId] = useState<string | null>(null);
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
   const [templateText, setTemplateText] = useState<string>('');
+  const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
 
   // Auto-save - TODO: implement useAutoSave hook
   // const { isSaving, lastSaved } = useAutoSave(
@@ -67,6 +71,8 @@ export function ContractEditorPage() {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/templates/${slug}`);
       const templateData = response.data.data;
       console.log('📄 Template loaded:', templateData);
+      console.log('🆔 Template ID:', templateData.id);
+      console.log('🆔 Template template_id:', templateData.template_id);
       console.log('📝 Template content length:', templateData.template_content?.length || 0);
       console.log('📦 Capsules count:', templateData.capsules?.length || 0);
       
@@ -96,7 +102,7 @@ export function ContractEditorPage() {
     setFormData(data);
   };
 
-  const handleContinueToPayment = () => {
+  const handleContinueToReview = () => {
     // Validar que todos los campos estén llenos
     const allVariables = getAllVariables();
     const emptyFields = allVariables.filter((v) => !formData[v] || formData[v].trim() === '');
@@ -106,8 +112,39 @@ export function ContractEditorPage() {
       return;
     }
 
-    setCurrentStep('payment');
-    // TODO: Implementar flujo de pago
+    // Ir a paso de review (sin crear contrato aún)
+    setCurrentStep('review');
+  };
+
+  const handleApproveReview = async () => {
+    try {
+      // Crear contrato en el backend al aprobar la revisión
+      if (!trackingCode && template) {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/contracts`,
+          {
+            template_version_id: template.version_id,
+            buyer_rut: formData.COMPRADOR_RUT || formData.buyer_rut || '',
+            buyer_email: formData.COMPRADOR_EMAIL || formData.buyer_email || '',
+            capsule_ids: selectedCapsules,
+            form_data: formData
+          }
+        );
+
+        if (response.data.success) {
+          setContractId(response.data.data.id);
+          setTrackingCode(response.data.data.tracking_code);
+        } else {
+          alert('Error al crear el contrato');
+          return;
+        }
+      }
+      
+      setCurrentStep('payment');
+    } catch (error: any) {
+      console.error('Error creating contract:', error);
+      alert(`Error al crear el contrato: ${error.response?.data?.error || error.message}`);
+    }
   };
 
   const handleBack = () => {
@@ -279,37 +316,38 @@ export function ContractEditorPage() {
             clauseNumbering={template.clause_numbering}
             signersConfig={template.signers_config}
             variablesMetadata={template.variables_metadata}
-            onContinueToPayment={handleContinueToPayment}
+            onContinueToPayment={handleContinueToReview}
+            onRenderedHtmlChange={setRenderedContractHtml}
+          />
+        )}
+
+        {currentStep === 'review' && template && renderedContractHtml && (
+          <ReviewStep
+            renderedContractHtml={renderedContractHtml}
+            totalPrice={template.base_price + 
+              template.capsules
+                .filter((c: any) => selectedCapsules.includes(c.id))
+                .reduce((sum: number, c: any) => sum + c.price, 0)
+            }
+            onApprove={handleApproveReview}
+            onBack={() => setCurrentStep('editor')}
           />
         )}
 
         {currentStep === 'payment' && (
-          <div className="h-full flex items-center justify-center p-6">
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-8 max-w-md w-full text-center">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Proceso de Pago</h2>
-              <p className="text-slate-600 mb-6">
-                Próximamente: Integración con Webpay/Flow
-              </p>
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-cyan-200 rounded-xl p-6 mb-6">
-                <p className="text-2xl font-bold text-slate-900 mb-2">
-                  {formatPrice(template.base_price + 
-                    template.capsules
-                      .filter((c: any) => selectedCapsules.includes(c.id))
-                      .reduce((sum: number, c: any) => sum + c.price, 0)
-                  )}
-                </p>
-                <p className="text-sm text-slate-600">
-                  Código: <span className="font-mono font-medium text-cyan-600">{trackingCode}</span>
-                </p>
-              </div>
-              <button
-                onClick={() => setCurrentStep('editor')}
-                className="text-sm text-slate-600 hover:text-slate-900"
-              >
-                ← Volver al editor
-              </button>
-            </div>
-          </div>
+          <PaymentStep
+            contractId={contractId}
+            trackingCode={trackingCode || ''}
+            buyerRut={formData.COMPRADOR_RUT || formData.buyer_rut || ''}
+            totalAmount={template.base_price + 
+              template.capsules
+                .filter((c: any) => selectedCapsules.includes(c.id))
+                .reduce((sum: number, c: any) => sum + c.price, 0)
+            }
+            onPaymentSuccess={() => setCurrentStep('signatures')}
+            onPaymentFailed={() => setCurrentStep('review')}
+            onBack={() => setCurrentStep('review')}
+          />
         )}
       </main>
     </div>

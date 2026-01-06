@@ -29,7 +29,7 @@ export function PaymentButton({
         className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <CreditCard className="w-5 h-5" />
-        Pagar y Firmar
+        Continuar a Revisión
       </button>
       {completionPercentage < 100 && (
         <p className="text-xs text-slate-500 text-center mt-2">
