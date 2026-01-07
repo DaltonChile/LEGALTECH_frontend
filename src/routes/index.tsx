@@ -7,6 +7,8 @@ import { HomePage } from '../pages/public/HomePage';
 import { LoginPage } from '../pages/public/LoginPage';
 import { ContractCatalogPage } from '../pages/public/ContractCatalogPage';
 import { ContractEditorPage } from '../pages/public/ContractEditorPage';
+import { TrackingPage } from '../pages/public/TrackingPage';
+import { HelpPage } from '../pages/public/HelpPage';
 
 // Admin
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
@@ -23,6 +25,8 @@ export function AppRoutes() {
       {/* Public routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/seguimiento" element={<TrackingPage />} />
+      <Route path="/ayuda" element={<HelpPage />} />
       <Route path="/:slug" element={<ContractEditorPage />} />
       <Route path="/catalogo" element={<ContractCatalogPage />} />
 
