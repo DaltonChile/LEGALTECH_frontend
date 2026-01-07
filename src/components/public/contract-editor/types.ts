@@ -44,4 +44,5 @@ export interface ContractEditorProps {
   signersConfig?: SignerConfig[];
   onContinueToPayment?: () => void;
   onRenderedHtmlChange?: (html: string) => void;
+  onBack?: () => void;
 }

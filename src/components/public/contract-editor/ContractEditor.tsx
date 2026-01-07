@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { CapsuleSelector } from './CapsuleSelector';
@@ -21,6 +22,7 @@ export function ContractEditor({
   signersConfig = [],
   onContinueToPayment,
   onRenderedHtmlChange,
+  onBack,
 }: ContractEditorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeField, setActiveField] = useState<string | null>(null);
@@ -97,6 +99,19 @@ export function ContractEditor({
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/20 to-lime-400/20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-400/20 to-emerald-400/20 rounded-full blur-3xl"></div>
       </div>
+      
+      {/* Botón Volver */}
+      {onBack && (
+        <div className="relative mb-10 py-4">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg shadow-md border border-slate-200 transition-all duration-200 hover:shadow-lg hover:scale-105 font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver al catálogo
+          </button>
+        </div>
+      )}
       
       <div className="relative flex gap-6 h-full" ref={documentRef}>  
         <div className=" flex flex-col">
