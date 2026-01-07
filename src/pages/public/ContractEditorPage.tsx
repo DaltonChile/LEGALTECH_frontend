@@ -238,6 +238,7 @@ export function ContractEditorPage() {
             signersConfig={template.signers_config}
             onContinueToPayment={handleContinueToReview}
             onRenderedHtmlChange={setRenderedContractHtml}
+            onBack={() => navigate('/')}
           />
         )}
 
