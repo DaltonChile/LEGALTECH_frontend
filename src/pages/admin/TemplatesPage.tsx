@@ -136,13 +136,18 @@ export const TemplatesPage: React.FC = () => {
     }
 
     try {
-      await updateTemplateStatus(templateId, !currentStatus);
+      console.log('🔄 Updating template:', templateId, 'type:', typeof templateId, 'to:', !currentStatus);
+      await updateTemplateStatus(String(templateId), !currentStatus);
+      console.log('✅ Template updated successfully');
       loadTemplates();
       const action = currentStatus ? 'escondido' : 'publicado';
       alert(`Template ${action} exitosamente`);
-    } catch (error) {
-      console.error('Error updating template:', error);
-      alert('Error al actualizar el template');
+    } catch (error: any) {
+      console.error('❌ Error updating template:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      const errorMessage = error.response?.data?.error || error.message || 'Error desconocido';
+      alert(`Error al actualizar el template: ${errorMessage}`);
     }
   };
 
