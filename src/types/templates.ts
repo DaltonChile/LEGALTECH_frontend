@@ -1,5 +1,5 @@
 export interface Template {
-  id: number;
+  id: string;  // UUID
   title: string;
   slug: string;
   description: string;
@@ -8,7 +8,7 @@ export interface Template {
 }
 
 export interface Capsule {
-  id: number;
+  id: string;  // UUID
   slug: string;
   title: string;
   price: number;
@@ -17,15 +17,15 @@ export interface Capsule {
 }
 
 export interface Version {
-  id: number;
+  id: string;  // UUID (no number)
   version_number: number;
   base_price: number;
   is_published: boolean;
   requires_notary: boolean;
   created_at: string;
   base_form_schema: any[];
-  capsules?: Capsule[];
-}
+  capsules?: Capsule[];  has_contracts?: boolean;    // Indica si tiene contratos asociados
+  contract_count?: number;    // Número de contratos asociados}
 
 export interface CapsulePending {
   slug: string;
