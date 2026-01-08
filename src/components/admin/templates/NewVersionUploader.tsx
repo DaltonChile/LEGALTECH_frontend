@@ -4,7 +4,7 @@ import { uploadTemplateVersion, setCapsulePrices } from '../../../services/api';
 import type { CapsulePending } from '../../../types/templates';
 
 interface NewVersionUploaderProps {
-  templateId: number;
+  templateId: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
