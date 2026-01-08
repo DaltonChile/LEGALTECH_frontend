@@ -24,8 +24,10 @@ export interface Version {
   requires_notary: boolean;
   created_at: string;
   base_form_schema: any[];
-  capsules?: Capsule[];  has_contracts?: boolean;    // Indica si tiene contratos asociados
-  contract_count?: number;    // Número de contratos asociados}
+  capsules?: Capsule[];
+  has_contracts?: boolean;    // Indica si tiene contratos asociados
+  contract_count?: number;    // Número de contratos asociados
+}
 
 export interface CapsulePending {
   slug: string;
