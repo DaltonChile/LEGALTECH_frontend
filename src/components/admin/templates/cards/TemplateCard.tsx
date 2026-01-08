@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download } from 'lucide-react';
+import { Download, Trash2 } from 'lucide-react';
 import type { Template } from '../../../../types/templates';
 
 interface TemplateCardProps {
@@ -7,9 +7,10 @@ interface TemplateCardProps {
   onClick: () => void;
   onDownload?: (versionId: number) => void;
   onToggleActive?: (templateId: number, currentStatus: boolean) => void;
+  onDelete?: (templateId: number, templateTitle: string) => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownload, onToggleActive }) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownload, onToggleActive, onDelete }) => {
   const latestVersion = template.versions?.[0];
   const hasPublishedVersion = template.versions?.some(v => v.is_published);
   const publishedVersion = template.versions?.find(v => v.is_published);
@@ -33,6 +34,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownlo
     e.stopPropagation();
     if (onToggleActive) {
       onToggleActive(template.id, template.is_active);
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(template.id, template.title);
     }
   };
   
@@ -73,7 +81,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownlo
 
       </div>
 
-      {/* Botones Editar, Publicar/Desactivar y Descargar en la parte inferior */}
+      {/* Botones Editar, Publicar/Desactivar, Descargar y Eliminar en la parte inferior */}
       <div className="p-6 flex items-center gap-3">
         <button className="flex-1 py-3 px-4 flex items-center justify-center gap-2 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 transition-all">
           <span>Editar</span>
@@ -105,6 +113,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownlo
             <Download className="w-5 h-5" />
           </button>
         )}
+        <button 
+          onClick={handleDelete}
+          className="p-3 flex items-center justify-center bg-white border-2 border-red-200 rounded-xl text-red-600 hover:border-red-400 hover:text-red-700 hover:bg-red-50 transition-all"
+          title="Eliminar template"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

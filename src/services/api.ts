@@ -222,8 +222,12 @@ export const createContractRequest = async (data: {
   return await api.post('/contracts', data);
 };
 
-export const updateTemplateStatus = async (templateId: number, isActive: boolean) => {
+export const updateTemplateStatus = async (templateId: string, isActive: boolean) => {
+  console.log('📤 API: Updating template', { templateId, isActive, type: typeof templateId });
+  console.log('📤 API: Base URL:', API_BASE_URL);
+  console.log('📤 API: Full URL will be:', `${API_BASE_URL}/admin/templates/${templateId}`);
   const response = await api.put(`/admin/templates/${templateId}`, { is_active: isActive });
+  console.log('📥 API: Response:', response.data);
   return response.data;
 };
 

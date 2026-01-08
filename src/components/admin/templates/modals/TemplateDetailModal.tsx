@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Play, CheckCircle, Plus, History, Save, Trash2 } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import NewVersionUploader from '../NewVersionUploader';
 import api from '../../../../services/api';
@@ -8,18 +8,19 @@ import type { Template } from '../../../../types/templates';
 interface TemplateDetailModalProps {
   template: Template;
   onClose: () => void;
-  onPublish: (versionId: number) => void;
-  onDownload: (versionId: number) => void;
-  onDelete: (versionId: number, versionNumber: number) => void;
-  onDeleteTemplate: (templateId: number, templateTitle: string) => void;
+  onPublish: (versionId: string) => void;
+  onDownload: (versionId: string) => void;
+  onDelete?: (versionId: string, versionNumber: number) => void;
   onUpdate: () => void;
 }
 
 const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   template,
   onClose,
+  onPublish,
   onUpdate,
-  onDownload
+  onDownload,
+  onDelete
 }) => {
   const [showVersions, setShowVersions] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
@@ -33,6 +34,12 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   const [saving, setSaving] = useState(false);
 
   const publishedVersion = template.versions?.find(v => v.is_published);
+
+  const handleDeleteVersion = async (versionId: string, versionNumber: number) => {
+    if (onDelete) {
+      onDelete(versionId, versionNumber);
+    }
+  };
 
   const handleStartEdit = (field: 'title' | 'description') => {
     // Restaurar valores actuales del template al empezar a editar
@@ -142,69 +149,169 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
         {/* Vista de versiones anteriores */}
         {showVersions && (
           <>
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">Versiones Anteriores</h2>
-              <p className="text-slate-600">{template.title}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">Gestión de Versiones</h2>
+                <p className="text-slate-600">{template.title}</p>
+              </div>
             </div>
 
             {/* Lista de versiones */}
             {template.versions && template.versions.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {template.versions.map((version) => (
                   <div
                     key={version.id}
-                    className={`border-2 rounded-2xl p-5 ${
+                    className={`border-2 rounded-2xl overflow-hidden transition-all ${
                       version.is_published
-                        ? 'bg-gradient-to-r from-lime-50/50 to-cyan-50/50 border-lime-300'
-                        : 'bg-white border-slate-200'
+                        ? 'bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 border-emerald-300 shadow-lg ring-2 ring-emerald-200'
+                        : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl font-bold text-slate-900">v{version.version_number}</span>
-                        {version.is_published ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-lime-100 to-cyan-100 border-2 border-lime-400">
-                            ✓ Publicada
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 border-2 border-slate-300">
-                            Borrador
-                          </span>
+                    {/* Header con gradiente para versión publicada */}
+                    {version.is_published && (
+                      <div className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-6 py-3">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-5 h-5" />
+                          <span className="font-semibold">Versión Activa en el Catálogo</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="p-6">
+                      {/* Header con versión y estado */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
+                            <span className="text-3xl font-bold text-slate-900">v{version.version_number}</span>
+                            {!version.is_published && (
+                              <span className="px-3 py-1 rounded-full text-sm font-bold bg-slate-100 border-2 border-slate-300 text-slate-600">
+                                Borrador
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-bold text-slate-900 mb-1">${version.base_price?.toLocaleString()}</div>
+                          <div className="text-sm text-slate-500">{new Date(version.created_at).toLocaleDateString('es-ES')}</div>
+                        </div>
+                      </div>
+
+                      {/* Metadata con iconos */}
+                      <div className="flex items-center gap-6 text-sm mb-6">
+                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border">
+                          <span className="text-slate-500">📝</span>
+                          <span className="font-medium text-slate-700">{version.base_form_schema?.length || 0} campos</span>
+                        </div>
+                        {version.capsules && version.capsules.length > 0 && (
+                          <div className="flex items-center gap-2 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+                            <span className="text-amber-600">📦</span>
+                            <span className="font-medium text-amber-700">{version.capsules.length} cápsulas</span>
+                          </div>
+                        )}
+                        {version.requires_notary && (
+                          <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                            <span className="text-blue-600">⚖️</span>
+                            <span className="font-medium text-blue-700">Requiere notario</span>
+                          </div>
                         )}
                       </div>
+
+                      {/* Botones de acción */}
                       <div className="flex items-center gap-3">
-                        <span className="text-lg font-bold text-slate-900">${version.base_price?.toLocaleString()}</span>
+                        {!version.is_published ? (
+                          <button
+                            onClick={() => {
+                              if (confirm(`¿Estás seguro de publicar la versión ${version.version_number}?\n\nEsto hará que esta versión sea la que ven los usuarios en el catálogo.`)) {
+                                onPublish?.(version.id);
+                                setShowVersions(false);
+                              }
+                            }}
+                            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-300 rounded-xl text-emerald-700 font-semibold hover:from-emerald-200 hover:to-green-200 transition-all shadow-sm"
+                            title="Publicar esta versión en el catálogo"
+                          >
+                            <Play className="w-5 h-5" />
+                            Publicar Versión
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-2 px-5 py-3 bg-emerald-100 border-2 border-emerald-300 rounded-xl text-emerald-700 font-semibold">
+                            <CheckCircle className="w-5 h-5" />
+                            Versión Publicada
+                          </div>
+                        )}
+                        
                         <button
                           onClick={() => onDownload?.(version.id)}
-                          className="p-2 flex items-center justify-center bg-white border-2 border-slate-300 rounded-lg text-slate-600 hover:border-cyan-400 hover:text-cyan-600 hover:bg-cyan-50 transition-all"
-                          title="Descargar versión"
+                          className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-slate-300 rounded-xl text-slate-600 font-semibold hover:border-cyan-400 hover:text-cyan-600 hover:bg-cyan-50 transition-all"
+                          title="Descargar archivo .docx"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="w-5 h-5" />
+                          Descargar
                         </button>
+                        
+                        {/* Botón eliminar - solo para versiones no publicadas y sin contratos */}
+                        {!version.is_published && !version.has_contracts && onDelete && (
+                          <button
+                            onClick={() => handleDeleteVersion(version.id, version.version_number)}
+                            className="flex items-center gap-2 px-4 py-3 bg-white border-2 border-red-200 rounded-xl text-red-600 font-semibold hover:border-red-400 hover:bg-red-50 transition-all group"
+                            title="Eliminar esta versión permanentemente"
+                          >
+                            <Trash2 className="w-4 h-4 group-hover:animate-pulse" />
+                          </button>
+                        )}
+                        
+                        {/* Indicador de contratos asociados - para versiones no publicadas con contratos */}
+                        {!version.is_published && version.has_contracts && (
+                          <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border-2 border-amber-200 rounded-xl text-amber-700 font-medium">
+                            <span className="text-amber-600">🔒</span>
+                            <span className="text-sm">
+                              {version.contract_count} contrato{version.contract_count !== 1 ? 's' : ''} en uso
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="flex-1"></div>
+                        
+                        {version.is_published && (
+                          <div className="text-sm font-medium text-emerald-600 flex items-center gap-2 bg-emerald-50 px-3 py-2 rounded-lg">
+                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            En uso por usuarios
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-slate-600 mt-2">
-                      <span>{version.base_form_schema?.length || 0} campos</span>
-                      {version.capsules && version.capsules.length > 0 && (
-                        <span className="text-amber-600 font-medium">{version.capsules.length} cápsulas</span>
-                      )}
-                      <span className="text-slate-400">{new Date(version.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
-                <p className="text-slate-600">No hay versiones</p>
+              <div className="text-center py-16 border-2 border-dashed border-slate-300 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100">
+                <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <History className="w-10 h-10 text-slate-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-600 mb-2">No hay versiones</h3>
+                <p className="text-slate-500 mb-4">Este template necesita al menos una versión para funcionar.</p>
+                <button
+                  onClick={() => {
+                    setShowVersions(false);
+                    setShowUploader(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-300 text-blue-700 rounded-xl font-semibold hover:from-blue-200 hover:to-indigo-200 transition-all"
+                >
+                  <Plus className="w-5 h-5" />
+                  Crear primera versión
+                </button>
               </div>
             )}
 
-            <button
-              onClick={() => setShowVersions(false)}
-              className="w-full px-6 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200"
-            >
-              Volver
-            </button>
+            <div className="pt-6 border-t border-slate-200">
+              <button
+                onClick={() => setShowVersions(false)}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:from-slate-200 hover:to-slate-300 hover:border-slate-400 transition-all"
+              >
+                <span>←</span>
+                Volver al Template
+              </button>
+            </div>
           </>
         )}
 
@@ -444,24 +551,28 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
         )}
 
         {/* Botones inferiores */}
-        <div className="flex gap-3 pt-4 border-t-2 border-slate-200">
+        <div className="flex gap-3 pt-6 border-t-2 border-slate-200">
           <button
             onClick={() => setShowUploader(true)}
-            className="flex-1 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:border-slate-400 hover:bg-slate-50"
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-300 text-blue-700 rounded-xl font-semibold hover:from-blue-200 hover:to-indigo-200 transition-all shadow-sm"
           >
-            nueva version
+            <Plus className="w-5 h-5" />
+            Nueva Versión
           </button>
           <button
             onClick={() => setShowVersions(true)}
-            className="flex-1 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:border-slate-400 hover:bg-slate-50"
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:border-slate-400 hover:bg-slate-50 transition-all"
+            disabled={!template.versions || template.versions.length === 0}
           >
-            Ver versiones anteriores
+            <History className="w-5 h-5" />
+            Ver Versiones ({template.versions?.length || 0})
           </button>
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-lime-100 to-cyan-100 text-slate-700 border-2 border-lime-400 rounded-xl font-semibold hover:from-lime-200 hover:to-cyan-200"
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-lime-100 to-cyan-100 text-slate-700 border-2 border-lime-400 rounded-xl font-semibold hover:from-lime-200 hover:to-cyan-200 transition-all shadow-sm"
           >
-            Guardar
+            <Save className="w-5 h-5" />
+            Cerrar
           </button>
         </div>
         </>

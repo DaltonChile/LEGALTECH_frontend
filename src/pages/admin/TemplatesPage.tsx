@@ -40,22 +40,34 @@ export const TemplatesPage: React.FC = () => {
     }
   };
 
-  const handlePublishVersion = async (versionId: number) => {
+  const handlePublishVersion = async (versionId: string) => {
     try {
       await publishVersion(versionId);
-      loadTemplates();
-      // Refresh selected template
+      
+      // Recargar templates inmediatamente
+      await loadTemplates();
+      
+      // Actualizar template seleccionado si está abierto
       if (selectedTemplate) {
-        const updated = templates.find(t => t.id === selectedTemplate.id);
-        if (updated) setSelectedTemplate(updated);
+        // Esperar un momento para que la base de datos se actualice
+        setTimeout(async () => {
+          const response = await getAdminTemplates();
+          const updated = response.data.data.find((t: Template) => t.id === selectedTemplate.id);
+          if (updated) {
+            setSelectedTemplate(updated);
+          }
+        }, 500);
       }
+      
       alert('Versión publicada exitosamente');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error publishing version:', error);
+      const errorMessage = error.response?.data?.error || 'Error al publicar la versión';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
-  const handleDownloadVersion = async (versionId: number) => {
+  const handleDownloadVersion = async (versionId: string) => {
     try {
       const result = await getTemplateVersionDownloadUrl(versionId);
       
@@ -78,38 +90,80 @@ export const TemplatesPage: React.FC = () => {
     }
   };
 
-  const handleDeleteVersion = async (versionId: number, versionNumber: number) => {
-    if (!confirm(`¿Estás seguro de eliminar la versión ${versionNumber}?`)) {
+  const handleDeleteVersion = async (versionId: string, versionNumber: number) => {
+    if (!confirm(`¿Estás seguro de eliminar la versión ${versionNumber}? Esta acción no se puede deshacer.`)) {
       return;
     }
 
     try {
+      console.log('Deleting version with ID:', versionId, 'type:', typeof versionId);
       await deleteTemplateVersion(versionId);
-      loadTemplates();
+      
+      // Recargar templates inmediatamente
+      await loadTemplates();
+      
+      // Actualizar template seleccionado si está abierto
+      if (selectedTemplate) {
+        setTimeout(async () => {
+          const response = await getAdminTemplates();
+          const updated = response.data.data.find((t: Template) => t.id === selectedTemplate.id);
+          if (updated) {
+            setSelectedTemplate(updated);
+          }
+        }, 500);
+      }
+      
       alert('Versión eliminada exitosamente');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting version:', error);
-      alert('Error al eliminar la versión');
+      const errorMessage = error.response?.data?.error || 'Error al eliminar la versión';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
-  const handleDeleteTemplate = async (templateId: number, templateTitle: string) => {
-    if (!confirm(`¿Estás seguro de desactivar el template "${templateTitle}"? El template dejará de estar visible en el catálogo.`)) {
-      return;
+  const handleDeleteTemplate = async (templateId: string, templateTitle: string) => {
+    // Mostrar opciones de eliminación
+    const action = prompt(
+      `¿Qué acción deseas realizar con "${templateTitle}"?\n\n` +
+      '1. Desactivar (soft delete - se puede reactivar)\n' +
+      '2. Eliminar permanentemente (hard delete - NO se puede recuperar)\n\n' +
+      'Escribe "1" para desactivar o "2" para eliminar permanentemente:'
+    );
+
+    if (!action || !['1', '2'].includes(action)) {
+      return; // Usuario canceló o ingresó opción inválida
+    }
+
+    const isHardDelete = action === '2';
+    const confirmMessage = isHardDelete 
+      ? `⚠️ PELIGRO: ¿Estás ABSOLUTAMENTE SEGURO de eliminar permanentemente "${templateTitle}"?\n\nEsta acción:\n- Eliminará el template PARA SIEMPRE\n- Eliminará TODAS sus versiones\n- Eliminará TODAS las cápsulas asociadas\n- NO SE PUEDE DESHACER\n\n¡Escribe "ELIMINAR" para confirmar!`
+      : `¿Estás seguro de desactivar el template "${templateTitle}"?\n\nEl template dejará de estar visible en el catálogo pero se podrá reactivar después.`;
+    
+    if (isHardDelete) {
+      const confirmation = prompt(confirmMessage);
+      if (confirmation !== 'ELIMINAR') {
+        return;
+      }
+    } else {
+      if (!confirm(confirmMessage)) {
+        return;
+      }
     }
 
     try {
-      await deleteTemplate(templateId);
+      await deleteTemplate(templateId, isHardDelete);
       loadTemplates();
       setSelectedTemplate(null);
-      alert('Template desactivado exitosamente');
-    } catch (error) {
+      const successMessage = isHardDelete ? 'Template eliminado permanentemente' : 'Template desactivado exitosamente';
+      alert(successMessage);
+    } catch (error: any) {
       console.error('Error deleting template:', error);
-      alert('Error al desactivar el template');
+      const errorMessage = error.response?.data?.error || 'Error al procesar la eliminación';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
-  const handleToggleActive = async (templateId: number, currentStatus: boolean) => {
+  const handleToggleActive = async (templateId: string, currentStatus: boolean) => {
     const template = templates.find(t => t.id === templateId);
     
     if (!currentStatus) {
@@ -136,13 +190,18 @@ export const TemplatesPage: React.FC = () => {
     }
 
     try {
-      await updateTemplateStatus(templateId, !currentStatus);
+      console.log('🔄 Updating template:', templateId, 'type:', typeof templateId, 'to:', !currentStatus);
+      await updateTemplateStatus(String(templateId), !currentStatus);
+      console.log('✅ Template updated successfully');
       loadTemplates();
       const action = currentStatus ? 'escondido' : 'publicado';
       alert(`Template ${action} exitosamente`);
-    } catch (error) {
-      console.error('Error updating template:', error);
-      alert('Error al actualizar el template');
+    } catch (error: any) {
+      console.error('❌ Error updating template:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      const errorMessage = error.response?.data?.error || error.message || 'Error desconocido';
+      alert(`Error al actualizar el template: ${errorMessage}`);
     }
   };
 
@@ -246,6 +305,7 @@ export const TemplatesPage: React.FC = () => {
               onClick={() => setSelectedTemplate(template)}
               onDownload={handleDownloadVersion}
               onToggleActive={handleToggleActive}
+              onDelete={handleDeleteTemplate}
             />
           ))}
         </div>
@@ -273,7 +333,6 @@ export const TemplatesPage: React.FC = () => {
           onPublish={handlePublishVersion}
           onDownload={handleDownloadVersion}
           onDelete={handleDeleteVersion}
-          onDeleteTemplate={handleDeleteTemplate}
           onUpdate={() => {
             loadTemplates();
             // Refresh the selected template data
