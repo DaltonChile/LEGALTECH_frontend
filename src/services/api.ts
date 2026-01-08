@@ -222,4 +222,9 @@ export const createContractRequest = async (data: {
   return await api.post('/contracts', data);
 };
 
+export const updateTemplateStatus = async (templateId: number, isActive: boolean) => {
+  const response = await api.put(`/admin/templates/${templateId}`, { is_active: isActive });
+  return response.data;
+};
+
 export default api;

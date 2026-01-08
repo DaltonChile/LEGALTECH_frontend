@@ -5,7 +5,8 @@ import {
   publishVersion,
   getTemplateVersionDownloadUrl,
   deleteTemplateVersion,
-  deleteTemplate
+  deleteTemplate,
+  updateTemplateStatus
 } from '../../services/api';
 import { Search, Plus, FileText } from 'lucide-react';
 import { 
@@ -135,17 +136,7 @@ export const TemplatesPage: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/v1/admin/templates/${templateId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ is_active: !currentStatus })
-      });
-
-      if (!response.ok) throw new Error('Error updating template');
-
+      await updateTemplateStatus(templateId, !currentStatus);
       loadTemplates();
       const action = currentStatus ? 'escondido' : 'publicado';
       alert(`Template ${action} exitosamente`);
