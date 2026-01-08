@@ -75,7 +75,7 @@ export const createTemplate = async (data: {
   return await api.post('/admin/templates', data);
 };
 
-export const publishVersion = async (versionId: number) => {
+export const publishVersion = async (versionId: string) => {
   return await api.post(`/admin/versions/${versionId}/publish`);
 };
 
@@ -86,17 +86,22 @@ export const assignCapsulesToVersion = async (
   return await api.post(`/admin/versions/${versionId}/capsules`, { capsules });
 };
 
-export const getTemplateVersionDownloadUrl = async (versionId: number) => {
+export const getTemplateVersionDownloadUrl = async (versionId: string) => {
   const response = await api.get(`/admin/versions/${versionId}/download`);
   return response.data;
 };
 
-export const deleteTemplateVersion = async (versionId: number) => {
+export const deleteTemplateVersion = async (versionId: string) => {
   return await api.delete(`/admin/versions/${versionId}`);
 };
 
-export const deleteTemplate = async (templateId: number) => {
-  return await api.delete(`/admin/templates/${templateId}`);
+export const deleteTemplate = async (templateId: string, hardDelete: boolean = false) => {
+  const params = hardDelete ? { hard: 'true' } : {};
+  return await api.delete(`/admin/templates/${templateId}`, { params });
+};
+
+export const deleteObsoleteVersions = async (templateId: number) => {
+  return await api.delete(`/admin/templates/${templateId}/obsolete-versions`);
 };
 
 export const setCapsulePrices = async (versionId: string, capsules: any[]) => {
