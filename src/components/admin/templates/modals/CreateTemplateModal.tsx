@@ -45,7 +45,7 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
     setTemplateData({ ...templateData, title, slug: newSlug });
   };
 
-  const [templateId, setTemplateId] = useState<number | null>(null);
+  const [templateId, setTemplateId] = useState<string | null>(null);
   const [basePrice, setBasePrice] = useState('');
   const [requiresNotary, setRequiresNotary] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

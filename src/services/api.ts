@@ -45,7 +45,7 @@ export const templatesApi = {
 
 // Agregar estas funciones a LEGALTECH_frontend/src/services/api.ts
 
-export const uploadTemplateVersion = async (templateId: number, file: File, basePrice: number = 0, requiresNotary: boolean = false) => {
+export const uploadTemplateVersion = async (templateId: string, file: File, basePrice: number = 0, requiresNotary: boolean = false) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('base_price', basePrice.toString());
@@ -80,7 +80,7 @@ export const publishVersion = async (versionId: string) => {
 };
 
 export const assignCapsulesToVersion = async (
-  versionId: number, 
+  versionId: string, 
   capsules: { capsule_id: number; display_order: number }[]
 ) => {
   return await api.post(`/admin/versions/${versionId}/capsules`, { capsules });
@@ -100,7 +100,7 @@ export const deleteTemplate = async (templateId: string, hardDelete: boolean = f
   return await api.delete(`/admin/templates/${templateId}`, { params });
 };
 
-export const deleteObsoleteVersions = async (templateId: number) => {
+export const deleteObsoleteVersions = async (templateId: string) => {
   return await api.delete(`/admin/templates/${templateId}/obsolete-versions`);
 };
 

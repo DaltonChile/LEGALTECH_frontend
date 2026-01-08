@@ -5,9 +5,9 @@ import type { Template } from '../../../../types/templates';
 interface TemplateCardProps {
   template: Template;
   onClick: () => void;
-  onDownload?: (versionId: number) => void;
-  onToggleActive?: (templateId: number, currentStatus: boolean) => void;
-  onDelete?: (templateId: number, templateTitle: string) => void;
+  onDownload?: (versionId: string) => void;
+  onToggleActive?: (templateId: string, currentStatus: boolean) => void;
+  onDelete?: (templateId: string, templateTitle: string) => void;
 }
 
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownload, onToggleActive, onDelete }) => {

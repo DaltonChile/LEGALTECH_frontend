@@ -4,7 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { uploadTemplateVersion, setCapsulePrices } from '../../services/api';
 
 interface ContractUploaderProps {
-  templateId: number;
+  templateId: string;
   onUploadSuccess?: (data: any) => void;
 }
 
