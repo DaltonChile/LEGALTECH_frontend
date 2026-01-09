@@ -29,6 +29,13 @@ export interface VariableMetadata {
   canonical: string;
   normalized: string;
   aliases: string[];
+  description?: string;
+}
+
+export interface VariableWithDescription {
+  name: string;
+  description: string | null;
+  type: string;
 }
 
 export interface ContractEditorProps {
@@ -42,6 +49,7 @@ export interface ContractEditorProps {
   isLoading?: boolean;
   clauseNumbering?: ClauseNumbering[];
   signersConfig?: SignerConfig[];
+  variablesMetadata?: VariableWithDescription[];
   onContinueToPayment?: () => void;
   onRenderedHtmlChange?: (html: string) => void;
   onBack?: () => void;

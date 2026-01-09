@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Download, Trash2 } from 'lucide-react';
 import type { Template } from '../../../../types/templates';
 
@@ -11,6 +12,7 @@ interface TemplateCardProps {
 }
 
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownload, onToggleActive, onDelete }) => {
+  const navigate = useNavigate();
   const latestVersion = template.versions?.[0];
   const hasPublishedVersion = template.versions?.some(v => v.is_published);
   const publishedVersion = template.versions?.find(v => v.is_published);
@@ -28,6 +30,11 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownlo
     if (publishedVersion && onDownload) {
       onDownload(publishedVersion.id);
     }
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/admin/templates/${template.id}/edit`);
   };
 
   const handleToggleActive = (e: React.MouseEvent) => {
@@ -83,7 +90,10 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick, onDownlo
 
       {/* Botones Editar, Publicar/Desactivar, Descargar y Eliminar en la parte inferior */}
       <div className="p-6 flex items-center gap-3">
-        <button className="flex-1 py-3 px-4 flex items-center justify-center gap-2 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 transition-all">
+        <button 
+          onClick={handleEdit}
+          className="flex-1 py-3 px-4 flex items-center justify-center gap-2 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 transition-all"
+        >
           <span>Editar</span>
         </button>
         {template.is_active ? (
