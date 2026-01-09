@@ -69,9 +69,9 @@ export function useContractRenderer({
       const isActive = activeField === variable;
       
       if (value) {
-        result = result.replace(regex, `<span class="filled-var${isActive ? ' active-var' : ''}" data-var="${variable}">${value}</span>`);
+        result = result.replace(regex, `<span class="filled-var${isActive ? ' active-var' : ''}" data-variable="${variable}">${value}</span>`);
       } else {
-        result = result.replace(regex, `<span class="empty-var${isActive ? ' active-var' : ''}" data-var="${variable}">[${formatVariableName(variable)}]</span>`);
+        result = result.replace(regex, `<span class="empty-var${isActive ? ' active-var' : ''}" data-variable="${variable}">[${formatVariableName(variable)}]</span>`);
       }
     });
 
