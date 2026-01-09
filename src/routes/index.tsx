@@ -13,6 +13,7 @@ import { HelpPage } from '../pages/public/HelpPage';
 // Admin
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { TemplatesPage } from '../pages/admin/TemplatesPage';
+import { TemplateEditPage } from '../pages/admin/TemplateEditPage';
 import { UsersPage } from '../pages/admin/UsersPage';
 
 // Notary
@@ -40,6 +41,7 @@ export function AppRoutes() {
       >
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/templates" element={<TemplatesPage />} />
+        <Route path="/admin/templates/:id/edit" element={<TemplateEditPage />} />
         <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/settings" element={<Outlet />} />
       </Route>

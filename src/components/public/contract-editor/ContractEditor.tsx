@@ -1,11 +1,22 @@
+// React imports
 import { useState, useMemo, useRef } from 'react';
+
+// External libraries
 import { ArrowLeft } from 'lucide-react';
+
+// Local components
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { CapsuleSelector } from './CapsuleSelector';
 import { PaymentButton } from './PaymentButton';
+
+// Hooks
 import { useContractRenderer } from './hooks/useContractRenderer';
+
+// Utils
 import { extractVariables, formatVariableName } from './utils/templateParser';
+
+// Styles and types
 import { contractEditorStyles } from './styles';
 import type { ContractEditorProps } from './types';
 
@@ -20,33 +31,29 @@ export function ContractEditor({
   isLoading = false,
   clauseNumbering = [],
   signersConfig = [],
+  variablesMetadata = [],
   onContinueToPayment,
   onRenderedHtmlChange,
   onBack,
 }: ContractEditorProps) {
+  // ============================================================================
+  // State and Refs
+  // ============================================================================
   const [searchTerm, setSearchTerm] = useState('');
   const [activeField, setActiveField] = useState<string | null>(null);
   const documentRef = useRef<HTMLDivElement>(null);
 
+  // ============================================================================
+  // Computed Values (Memoized)
+  // ============================================================================
+  
   // Extract variables from template
   const extractedVariables = useMemo(
     () => extractVariables(templateText, capsules, selectedCapsules),
     [templateText, capsules, selectedCapsules]
   );
 
-  // Render contract HTML
-  const { renderedContract } = useContractRenderer({
-    templateText,
-    formData,
-    extractedVariables,
-    capsules,
-    selectedCapsules,
-    clauseNumbering,
-    signersConfig,
-    activeField,
-  });
-
-  // Filter variables by search
+  // Filter variables by search term
   const filteredVariables = useMemo(() => {
     const validVariables = extractedVariables.filter(v => v);
     if (!searchTerm) return validVariables;
@@ -72,7 +79,26 @@ export function ContractEditor({
     return basePrice + capsulesPrice;
   }, [basePrice, capsules, selectedCapsules]);
 
-  // Toggle capsule selection
+  // ============================================================================
+  // Custom Hooks
+  // ============================================================================
+  
+  // Render contract HTML
+  const { renderedContract } = useContractRenderer({
+    templateText,
+    formData,
+    extractedVariables,
+    capsules,
+    selectedCapsules,
+    clauseNumbering,
+    signersConfig,
+    activeField,
+  });
+
+  // ============================================================================
+  // Event Handlers
+  // ============================================================================
+  
   const toggleCapsule = (capsuleId: number) => {
     if (selectedCapsules.includes(capsuleId)) {
       onCapsuleSelectionChange(selectedCapsules.filter(id => id !== capsuleId));
@@ -81,16 +107,10 @@ export function ContractEditor({
     }
   };
 
-  // Handle field focus - scroll to variable in document
-  const handleFieldFocus = (variable: string) => {
-    setActiveField(variable);
-    setTimeout(() => {
-      const varElement = documentRef.current?.querySelector(`[data-var="${variable}"]`);
-      if (varElement) {
-        varElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 50);
-  };
+  // ============================================================================
+  // Render
+  // ============================================================================
+
 
   return (
     <div className="relative h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 p-6 overflow-hidden">
@@ -119,6 +139,8 @@ export function ContractEditor({
             templateText={templateText}
             renderedContract={renderedContract}
             completionPercentage={completionPercentage}
+            activeField={activeField}
+            variablesMetadata={variablesMetadata}
             onHtmlReady={onRenderedHtmlChange}
           />
         </div>
@@ -131,7 +153,7 @@ export function ContractEditor({
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             activeField={activeField}
-            onFieldFocus={handleFieldFocus}
+            onFieldFocus={setActiveField}
             onFieldBlur={() => setActiveField(null)}
           />
 

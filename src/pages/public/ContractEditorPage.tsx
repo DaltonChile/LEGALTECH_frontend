@@ -19,7 +19,7 @@ interface Template {
   template_content: string;
   clause_numbering?: any[];
   signers_config?: any[];
-
+  variables_metadata?: Array<{ name: string; description: string | null; type: string }>;
   capsules: any[];
 }
 
@@ -236,6 +236,15 @@ export function ContractEditorPage() {
             isLoading={isSaving}
             clauseNumbering={template.clause_numbering}
             signersConfig={template.signers_config}
+            variablesMetadata={
+              template.variables_metadata && template.variables_metadata.length > 0
+                ? template.variables_metadata
+                : template.base_form_schema?.map(field => ({
+                    name: field.field_name,
+                    description: field.description || field.placeholder || null,
+                    type: field.field_type || 'text'
+                  })) || []
+            }
             onContinueToPayment={handleContinueToReview}
             onRenderedHtmlChange={setRenderedContractHtml}
             onBack={() => navigate('/')}
