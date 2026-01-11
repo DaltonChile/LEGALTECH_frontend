@@ -20,10 +20,15 @@ export function ReviewStep({
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   useEffect(() => {
-    generatePreview();
-  }, []);
+    // Only generate once to prevent duplicate uploads
+    if (!hasGenerated) {
+      setHasGenerated(true);
+      generatePreview();
+    }
+  }, [hasGenerated]);
 
   // Cleanup blob URL when component unmounts
   useEffect(() => {
