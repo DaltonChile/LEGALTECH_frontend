@@ -6,7 +6,7 @@ import { contractEditorStyles } from './styles';
 interface ReviewStepProps {
   renderedContractHtml: string;
   totalPrice: number;
-  onApprove: () => void;
+  onApprove: (pdfBlob: Blob) => void;
   onBack: () => void;
 }
 
@@ -17,6 +17,7 @@ export function ReviewStep({
   onBack,
 }: ReviewStepProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -143,14 +144,17 @@ export function ReviewStep({
         },
       };
       
-      // Generate PDF and get blob URL
-      const pdfBlob = await html2pdf()
+      // Generate PDF and get blob
+      const generatedPdfBlob = await html2pdf()
         .set(options)
         .from(tempContainer)
         .output('blob');
       
-      // Create blob URL for iframe
-      const blobUrl = URL.createObjectURL(pdfBlob);
+      // Store blob for later upload
+      setPdfBlob(generatedPdfBlob);
+      
+      // Create blob URL for iframe preview
+      const blobUrl = URL.createObjectURL(generatedPdfBlob);
       setPdfUrl(blobUrl);
       
       // Cleanup
@@ -262,10 +266,10 @@ export function ReviewStep({
           {/* Acciones */}
           <div className="flex flex-col gap-3">
             <button
-              onClick={onApprove}
-              disabled={!pdfUrl || loading}
+              onClick={() => pdfBlob && onApprove(pdfBlob)}
+              disabled={!pdfUrl || !pdfBlob || loading}
               className={`w-full py-4 rounded-xl font-semibold text-white transition-all shadow-lg ${
-                !pdfUrl || loading
+                !pdfUrl || !pdfBlob || loading
                   ? 'bg-slate-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105'
               }`}
