@@ -122,6 +122,13 @@ export function ContractEditorPage() {
   };
 
   const handleApproveReview = async (pdfBlob: Blob) => {
+    // Prevent duplicate calls
+    if (contractId) {
+      console.log('⚠️ Contract already created, skipping duplicate call');
+      setCurrentStep('payment');
+      return;
+    }
+
     try {
       // Crear contrato en el backend al aprobar la revisión
       if (!trackingCode && template) {
