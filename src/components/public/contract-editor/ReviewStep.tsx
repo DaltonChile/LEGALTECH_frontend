@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import html2pdf from 'html2pdf.js';
 import { FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { contractEditorStyles } from './styles';
@@ -20,15 +20,16 @@ export function ReviewStep({
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasGenerated, setHasGenerated] = useState(false);
+  const hasGeneratedRef = useRef(false);
 
   useEffect(() => {
     // Only generate once to prevent duplicate uploads
-    if (!hasGenerated) {
-      setHasGenerated(true);
+    // Using ref instead of state to avoid dependency issues
+    if (!hasGeneratedRef.current) {
+      hasGeneratedRef.current = true;
       generatePreview();
     }
-  }, [hasGenerated]);
+  }, []);
 
   // Cleanup blob URL when component unmounts
   useEffect(() => {
@@ -271,7 +272,11 @@ export function ReviewStep({
           {/* Acciones */}
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => pdfBlob && onApprove(pdfBlob)}
+              onClick={() => {
+                if (pdfBlob && !loading) {
+                  onApprove(pdfBlob);
+                }
+              }}
               disabled={!pdfUrl || !pdfBlob || loading}
               className={`w-full py-4 rounded-xl font-semibold text-white transition-all shadow-lg ${
                 !pdfUrl || !pdfBlob || loading
