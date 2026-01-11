@@ -121,7 +121,7 @@ export function ContractEditorPage() {
     setCurrentStep('review');
   };
 
-  const handleApproveReview = async () => {
+  const handleApproveReview = async (pdfBlob: Blob) => {
     try {
       // Crear contrato en el backend al aprobar la revisión
       if (!trackingCode && template) {
@@ -168,8 +168,13 @@ export function ContractEditorPage() {
         );
 
         if (response.data.success) {
-          setContractId(response.data.data.id);
-          setTrackingCode(response.data.data.tracking_code);
+          const newContractId = response.data.data.id;
+          const newTrackingCode = response.data.data.tracking_code;
+          setContractId(newContractId);
+          setTrackingCode(newTrackingCode);
+          
+          // Upload draft PDF to backend
+          await uploadDraftPdf(newContractId, newTrackingCode, formData[template.signers_config?.[0]?.rut_variable || ''], pdfBlob);
         } else {
           alert('Error al crear el contrato');
           return;
@@ -180,6 +185,37 @@ export function ContractEditorPage() {
     } catch (error: any) {
       console.error('Error creating contract:', error);
       alert(`Error al crear el contrato: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
+  const uploadDraftPdf = async (contractId: string, trackingCode: string, rut: string, pdfBlob: Blob) => {
+    try {
+      console.log('📤 Uploading draft PDF to server...');
+      
+      const formData = new FormData();
+      formData.append('draft_pdf', pdfBlob, 'contract.pdf');
+      formData.append('tracking_code', trackingCode);
+      formData.append('rut', rut);
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/contracts/${contractId}/upload-draft-pdf`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        console.log('✅ Draft PDF uploaded successfully:', response.data.data.pdf_path);
+      } else {
+        console.error('❌ Failed to upload draft PDF:', response.data.error);
+      }
+    } catch (error: any) {
+      console.error('❌ Error uploading draft PDF:', error);
+      // Don't block the flow - just log the error
+      // The PDF will be missing but user can continue
     }
   };
 
