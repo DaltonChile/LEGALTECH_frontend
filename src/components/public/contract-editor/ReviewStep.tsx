@@ -8,6 +8,7 @@ interface ReviewStepProps {
   totalPrice: number;
   onApprove: (pdfBlob: Blob) => void;
   onBack: () => void;
+  isProcessing?: boolean;
 }
 
 export function ReviewStep({
@@ -15,6 +16,7 @@ export function ReviewStep({
   totalPrice,
   onApprove,
   onBack,
+  isProcessing = false,
 }: ReviewStepProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
@@ -273,18 +275,18 @@ export function ReviewStep({
           <div className="flex flex-col gap-3">
             <button
               onClick={() => {
-                if (pdfBlob && !loading) {
+                if (pdfBlob && !loading && !isProcessing) {
                   onApprove(pdfBlob);
                 }
               }}
-              disabled={!pdfUrl || !pdfBlob || loading}
+              disabled={!pdfUrl || !pdfBlob || loading || isProcessing}
               className={`w-full py-4 rounded-xl font-semibold text-white transition-all shadow-lg ${
-                !pdfUrl || !pdfBlob || loading
+                !pdfUrl || !pdfBlob || loading || isProcessing
                   ? 'bg-slate-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105'
               }`}
             >
-              Aprobar y continuar al pago →
+              {isProcessing ? 'Procesando...' : 'Aprobar y continuar al pago →'}
             </button>
 
             <button

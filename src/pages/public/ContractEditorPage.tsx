@@ -47,6 +47,7 @@ export function ContractEditorPage() {
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
   const [templateText, setTemplateText] = useState<string>('');
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Auto-save - TODO: implement useAutoSave hook
   // const { isSaving, lastSaved } = useAutoSave(
@@ -129,6 +130,14 @@ export function ContractEditorPage() {
       return;
     }
 
+    // Prevent duplicate processing
+    if (isProcessingPayment) {
+      console.log('⚠️ Already processing, ignoring duplicate call');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
     try {
       // Crear contrato en el backend al aprobar la revisión
       if (!trackingCode && template) {
@@ -192,6 +201,9 @@ export function ContractEditorPage() {
     } catch (error: any) {
       console.error('Error creating contract:', error);
       alert(`Error al crear el contrato: ${error.response?.data?.error || error.message}`);
+      setIsProcessingPayment(false); // Reset on error
+    } finally {
+      // Don't reset on success to prevent re-submission
     }
   };
 
@@ -304,6 +316,7 @@ export function ContractEditorPage() {
             }
             onApprove={handleApproveReview}
             onBack={() => setCurrentStep('editor')}
+            isProcessing={isProcessingPayment}
           />
         )}
 
