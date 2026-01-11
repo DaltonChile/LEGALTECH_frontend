@@ -179,7 +179,7 @@ export function ReviewStep({
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 p-6">
       <div className="flex-1 flex gap-6 max-w-7xl mx-auto w-full">
-        {/* PDF Preview */}
+        {/* PDF Preview (flex-1 will take 4/5 of space) */}
         <div className="flex-1 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-6 flex items-center gap-3">
@@ -230,8 +230,8 @@ export function ReviewStep({
           </div>
         </div>
 
-        {/* Sidebar - Resumen y Acciones */}
-        <div className="w-80 flex flex-col gap-4">
+        {/* Sidebar - Resumen y Acciones (w-1/5 will take 1/5 of space) */}
+        <div className="w-1/5 flex flex-col gap-4">
           {/* Precio Total */}
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6">
             <h3 className="text-sm font-medium text-slate-500 mb-2">Total a pagar</h3>
@@ -257,7 +257,7 @@ export function ReviewStep({
               <div>
                 <h4 className="font-semibold text-slate-900 mb-1">Cápsulas con blur</h4>
                 <p className="text-sm text-slate-600">
-                  Las cápsulas no seleccionadas aparecen difuminadas. Se desbloquearán tras el pago.
+                  Las cápsulas seleccionadas aparecen difuminadas. Se desbloquearán tras el pago.
                 </p>
               </div>
             </div>
