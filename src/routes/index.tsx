@@ -1,35 +1,43 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ProtectedRoute } from '../components/shared/ProtectedRoute';
 import { AdminLayout } from '../components/layout/AdminLayout';
 
-// Public
-import { HomePage } from '../pages/public/HomePage';
-import { LoginPage } from '../pages/public/LoginPage';
-import { ContractCatalogPage } from '../pages/public/ContractCatalogPage';
-import { ContractEditorPage } from '../pages/public/ContractEditorPage';
-import { TrackingPage } from '../pages/public/TrackingPage';
-import { HelpPage } from '../pages/public/HelpPage';
+// Public pages - lazy loaded
+const HomePage = lazy(() => import('../pages/public/HomePage').then(m => ({ default: m.HomePage })));
+const LoginPage = lazy(() => import('../pages/public/LoginPage').then(m => ({ default: m.LoginPage })));
+const ContractCatalogPage = lazy(() => import('../pages/public/ContractCatalogPage').then(m => ({ default: m.ContractCatalogPage })));
+const ContractEditorPage = lazy(() => import('../pages/public/ContractEditorPage').then(m => ({ default: m.ContractEditorPage })));
+const TrackingPage = lazy(() => import('../pages/public/TrackingPage').then(m => ({ default: m.TrackingPage })));
+const HelpPage = lazy(() => import('../pages/public/HelpPage').then(m => ({ default: m.HelpPage })));
 
-// Admin
-import { AdminDashboard } from '../pages/admin/AdminDashboard';
-import { TemplatesPage } from '../pages/admin/TemplatesPage';
-import { TemplateEditPage } from '../pages/admin/TemplateEditPage';
-import { UsersPage } from '../pages/admin/UsersPage';
+// Admin pages - lazy loaded
+const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const TemplatesPage = lazy(() => import('../pages/admin/TemplatesPage').then(m => ({ default: m.TemplatesPage })));
+const TemplateEditPage = lazy(() => import('../pages/admin/TemplateEditPage').then(m => ({ default: m.TemplateEditPage })));
+const UsersPage = lazy(() => import('../pages/admin/UsersPage').then(m => ({ default: m.UsersPage })));
 
-// Notary
-// import { NotaryDashboard } from '../pages/notary/NotaryDashboard';
-import { NotaryInboxPage } from '../pages/notary/NotaryInboxPage';
+// Notary pages - lazy loaded
+const NotaryInboxPage = lazy(() => import('../pages/notary/NotaryInboxPage').then(m => ({ default: m.NotaryInboxPage })));
+
+// Loading component
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="text-lg">Cargando...</div>
+  </div>
+);
 
 export function AppRoutes() {
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/seguimiento" element={<TrackingPage />} />
-      <Route path="/ayuda" element={<HelpPage />} />
-      <Route path="/:slug" element={<ContractEditorPage />} />
-      <Route path="/catalogo" element={<ContractCatalogPage />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/seguimiento" element={<TrackingPage />} />
+        <Route path="/ayuda" element={<HelpPage />} />
+        <Route path="/:slug" element={<ContractEditorPage />} />
+        <Route path="/catalogo" element={<ContractCatalogPage />} />
 
       {/* Admin Routes with Layout */}
       <Route
@@ -60,6 +68,7 @@ export function AppRoutes() {
 
       {/* Default Redirect */}
       <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }
