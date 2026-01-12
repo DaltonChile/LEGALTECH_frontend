@@ -14,4 +14,18 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks - separate large dependencies
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-charts': ['recharts'],
+          'vendor-pdf': ['html2pdf.js'],
+          'vendor-utils': ['axios', 'react-dropzone'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000, // Increase limit to 1000 kB
+  },
 })
