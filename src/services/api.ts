@@ -71,6 +71,7 @@ export const createTemplate = async (data: {
   title: string; 
   slug: string; 
   description: string;
+  signature_mode?: 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary';
 }) => {
   return await api.post('/admin/templates', data);
 };

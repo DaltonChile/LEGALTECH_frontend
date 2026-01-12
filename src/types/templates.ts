@@ -4,6 +4,7 @@ export interface Template {
   slug: string;
   description: string;
   is_active: boolean;
+  signature_mode?: 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary';
   versions: Version[];
 }
 

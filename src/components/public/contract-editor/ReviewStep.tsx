@@ -1,12 +1,32 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import html2pdf from 'html2pdf.js';
+import { FileText, CheckCircle, AlertCircle, Shield, Zap } from 'lucide-react';
+import { contractEditorStyles } from './styles';
+
+export interface SignatureInfo {
+  signatureMode: 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary';
+  numberOfSigners: number;
+  requiresNotary: boolean;
+  requiresSignatures: boolean;
+  pricing: {
+    fes: {
+      pricePerSigner: number;
+      totalPrice: number;
+    };
+    fea: {
+      pricePerSigner: number;
+      totalPrice: number;
+    };
+  };
+}
 
 interface ReviewStepProps {
   renderedContractHtml: string;
   totalPrice: number;
-  onApprove: () => void;
+  onApprove: (pdfBlob: Blob, signatureType?: 'simple' | 'fea' | 'none') => void;
   onBack: () => void;
+  isProcessing?: boolean;
+  signatureInfo?: SignatureInfo;
 }
 
 export function ReviewStep({
@@ -14,49 +34,191 @@ export function ReviewStep({
   totalPrice,
   onApprove,
   onBack,
+  isProcessing = false,
+  signatureInfo,
 }: ReviewStepProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signatureType, setSignatureType] = useState<'simple' | 'fea' | 'none'>('simple');
+  const hasGeneratedRef = useRef(false);
+
+  const requiresSignature = signatureInfo?.requiresSignatures || false;
 
   useEffect(() => {
-    generatePreview();
+    if (!requiresSignature) {
+      setSignatureType('none');
+    }
+  }, [requiresSignature]);
+
+  useEffect(() => {
+    // Only generate once to prevent duplicate uploads
+    // Using ref instead of state to avoid dependency issues
+    if (!hasGeneratedRef.current) {
+      hasGeneratedRef.current = true;
+      generatePreview();
+    }
   }, []);
+
+  // Cleanup blob URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (pdfUrl && pdfUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
+  }, [pdfUrl]);
 
   const generatePreview = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const payload = {
-        html: renderedContractHtml
+      console.log('📄 Generando PDF en el navegador...');
+      
+      // Create temporary container with isolation from page styles
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '210mm'; // A4 width
+      tempContainer.style.all = 'initial'; // Reset all inherited styles
+      document.body.appendChild(tempContainer);
+      
+      // Inject styles from styles.ts into the HTML
+      const styledHtml = `
+        <style>
+          /* Base styles - avoid modern CSS color functions for html2canvas compatibility */
+          * {
+            all: revert;
+            box-sizing: border-box;
+            color: #1f2937;
+            background-color: transparent;
+            border-color: #d1d5db;
+          }
+          body, html {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: white;
+            color: #1f2937;
+            margin: 0;
+            padding: 0;
+          }
+          ${contractEditorStyles}
+          .contract-preview {
+            padding: 20px;
+            max-width: 210mm;
+            background-color: white;
+          }
+          .filled-var {
+            background-color: #dbeafe !important;
+            color: #1e40af !important;
+          }
+          .empty-var {
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+          }
+          .signature-block {
+            page-break-inside: avoid;
+            background-color: #f9fafb !important;
+            border-color: #d1d5db !important;
+          }
+          .signatures-section {
+            page-break-before: auto;
+            border-color: #e5e7eb !important;
+          }
+          h1, h2, h3, h4, h5, h6 {
+            color: #111827 !important;
+          }
+          p {
+            color: #1f2937 !important;
+          }
+        </style>
+        <div class="contract-preview">
+          ${renderedContractHtml}
+        </div>
+      `;
+      
+      tempContainer.innerHTML = styledHtml;
+      
+      // Force reflow and strip computed styles with modern colors
+      tempContainer.querySelectorAll('*').forEach((el: Element) => {
+        if (el instanceof HTMLElement) {
+          const computed = window.getComputedStyle(el);
+          
+          // Check and replace color
+          if (computed.color && (computed.color.includes('oklch') || computed.color.includes('color-mix'))) {
+            el.style.color = '#1f2937';
+          }
+          
+          // Check and replace background-color
+          if (computed.backgroundColor && (computed.backgroundColor.includes('oklch') || computed.backgroundColor.includes('color-mix'))) {
+            el.style.backgroundColor = 'transparent';
+          }
+          
+          // Check and replace border-color
+          if (computed.borderColor && (computed.borderColor.includes('oklch') || computed.borderColor.includes('color-mix'))) {
+            el.style.borderColor = '#d1d5db';
+          }
+        }
+      });
+      
+      // Configure html2pdf options
+      const options = {
+        margin: [20, 20, 20, 20] as [number, number, number, number], // 20mm margins (matches backend 2cm)
+        filename: 'preview_contrato.pdf',
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2, // High quality
+          useCORS: true,
+          logging: false
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait' as const
+        },
       };
       
-      console.log('📤 Generando preview con HTML renderizado');
+      // Generate PDF and get blob
+      const generatedPdfBlob = await html2pdf()
+        .set(options)
+        .from(tempContainer)
+        .output('blob');
       
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/contracts/generate-preview`,
-        payload
-      );
-
-      if (response.data.success) {
-        // Construir URL completa
-        let url = response.data.pdf_url;
-        if (url.startsWith('/uploads')) {
-          // Los archivos estáticos se sirven desde la raíz, no desde /api/v1
-          const baseUrl = import.meta.env.VITE_API_URL.replace('/api/v1', '');
-          url = `${baseUrl}${url}`;
-        }
-        setPdfUrl(url);
-      } else {
-        setError(response.data.error || 'Error al generar preview');
-      }
+      // Store blob for later upload
+      setPdfBlob(generatedPdfBlob);
+      
+      // Create blob URL for iframe preview
+      const blobUrl = URL.createObjectURL(generatedPdfBlob);
+      setPdfUrl(blobUrl);
+      
+      // Cleanup
+      document.body.removeChild(tempContainer);
+      
+      console.log('✅ PDF generado exitosamente en el cliente');
     } catch (err: any) {
-      console.error('Error generating preview:', err);
-      setError(err.response?.data?.error || 'Error al generar PDF de previsualización');
+      console.error('❌ Error generating PDF:', err);
+      setError('Error al generar PDF de previsualización. Por favor, intenta nuevamente.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const getSignaturePrice = () => {
+    if (!signatureInfo || signatureType === 'none') return 0;
+    return signatureType === 'fea' 
+      ? signatureInfo.pricing.fea.totalPrice 
+      : signatureInfo.pricing.fes.totalPrice;
+  };
+
+  const getTotalPriceWithSignature = () => {
+    return totalPrice + getSignaturePrice();
+  };
+
+  const handleApprove = () => {
+    if (!pdfBlob || loading || isProcessing) return;
+    onApprove(pdfBlob, signatureType);
   };
 
   const formatPrice = (price: number) => {
@@ -69,7 +231,7 @@ export function ReviewStep({
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 p-6">
       <div className="flex-1 flex gap-6 max-w-7xl mx-auto w-full">
-        {/* PDF Preview */}
+        {/* PDF Preview (flex-1 will take 4/5 of space) */}
         <div className="flex-1 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-6 flex items-center gap-3">
@@ -120,13 +282,99 @@ export function ReviewStep({
           </div>
         </div>
 
-        {/* Sidebar - Resumen y Acciones */}
-        <div className="w-96 flex flex-col gap-4">
+        {/* Sidebar - Resumen y Acciones (w-1/5 will take 1/5 of space) */}
+        <div className="w-1/5 flex flex-col gap-4">
+          {/* Signature Selection */}
+          {requiresSignature && signatureInfo && (
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6">
+              <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-blue-600" />
+                Tipo de Firma
+              </h3>
+              
+              <div className="space-y-3">
+                {/* FES Option */}
+                <label className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  signatureType === 'simple' 
+                    ? 'border-blue-600 bg-blue-50' 
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="signatureType"
+                    value="simple"
+                    checked={signatureType === 'simple'}
+                    onChange={(e) => setSignatureType(e.target.value as 'simple')}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-green-600" />
+                      <span className="font-semibold text-sm">FES (Simple)</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Firma electrónica simple
+                    </p>
+                    <p className="text-sm font-bold text-green-600 mt-1">
+                      {formatPrice(signatureInfo.pricing.fes.totalPrice)}
+                    </p>
+                  </div>
+                </label>
+
+                {/* FEA Option */}
+                <label className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  signatureType === 'fea' 
+                    ? 'border-blue-600 bg-blue-50' 
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="signatureType"
+                    value="fea"
+                    checked={signatureType === 'fea'}
+                    onChange={(e) => setSignatureType(e.target.value as 'fea')}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-blue-600" />
+                      <span className="font-semibold text-sm">FEA (Avanzada)</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Firma electrónica avanzada
+                    </p>
+                    <p className="text-sm font-bold text-blue-600 mt-1">
+                      {formatPrice(signatureInfo.pricing.fea.totalPrice)}
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <p className="text-xs text-gray-500 mt-3">
+                {signatureInfo.numberOfSigners} {signatureInfo.numberOfSigners === 1 ? 'firmante' : 'firmantes'}
+                {signatureInfo.requiresNotary && ' + firma manual notario'}
+              </p>
+            </div>
+          )}
+
           {/* Precio Total */}
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6">
             <h3 className="text-sm font-medium text-slate-500 mb-2">Total a pagar</h3>
+            {requiresSignature && getSignaturePrice() > 0 && (
+              <div className="text-sm text-slate-600 mb-2">
+                <div className="flex justify-between">
+                  <span>Contrato base:</span>
+                  <span>{formatPrice(totalPrice)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Firma electrónica:</span>
+                  <span>{formatPrice(getSignaturePrice())}</span>
+                </div>
+                <div className="border-t border-slate-200 my-2"></div>
+              </div>
+            )}
             <div className="text-3xl font-bold text-slate-900">
-              {formatPrice(totalPrice)}
+              {formatPrice(getTotalPriceWithSignature())}
             </div>
           </div>
 
@@ -147,7 +395,7 @@ export function ReviewStep({
               <div>
                 <h4 className="font-semibold text-slate-900 mb-1">Cápsulas con blur</h4>
                 <p className="text-sm text-slate-600">
-                  Las cápsulas no seleccionadas aparecen difuminadas. Se desbloquearán tras el pago.
+                  Las cápsulas seleccionadas aparecen difuminadas. Se desbloquearán tras el pago.
                 </p>
               </div>
             </div>
@@ -156,15 +404,15 @@ export function ReviewStep({
           {/* Acciones */}
           <div className="flex flex-col gap-3">
             <button
-              onClick={onApprove}
-              disabled={!pdfUrl || loading}
+              onClick={handleApprove}
+              disabled={!pdfUrl || !pdfBlob || loading || isProcessing}
               className={`w-full py-4 rounded-xl font-semibold text-white transition-all shadow-lg ${
-                !pdfUrl || loading
+                !pdfUrl || !pdfBlob || loading || isProcessing
                   ? 'bg-slate-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105'
               }`}
             >
-              Aprobar y continuar al pago →
+              {isProcessing ? 'Procesando...' : 'Aprobar y continuar al pago →'}
             </button>
 
             <button

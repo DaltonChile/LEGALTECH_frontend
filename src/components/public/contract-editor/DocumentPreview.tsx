@@ -95,7 +95,7 @@ export function DocumentPreview({
     <>
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-5">
+        <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">

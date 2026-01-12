@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ContractEditor } from '../../components/public/contract-editor';
 import { ReviewStep } from '../../components/public/contract-editor/ReviewStep';
+import type { SignatureInfo } from '../../components/public/contract-editor/ReviewStep';
 import { PaymentStep } from '../../components/public/contract-editor/PaymentStep';
 import { Navbar } from '../../components/landing/Navbar';
 import { ProgressBar } from '../../components/shared/ProgressBar';
@@ -39,14 +40,17 @@ export function ContractEditorPage() {
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<Step>('editor');
+  const [signatureInfo, setSignatureInfo] = useState<SignatureInfo | undefined>(undefined);
 
   // Contract data
   const [selectedCapsules, setSelectedCapsules] = useState<number[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [contractId, setContractId] = useState<string | null>(null);
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
+  const [contractTotalAmount, setContractTotalAmount] = useState<number>(0);
   const [templateText, setTemplateText] = useState<string>('');
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Auto-save - TODO: implement useAutoSave hook
   // const { isSaving, lastSaved } = useAutoSave(
@@ -59,6 +63,7 @@ export function ContractEditorPage() {
   useEffect(() => {
     if (slug) {
       loadTemplate();
+      loadSignatureInfo();
     }
   }, [slug]);
 
@@ -87,6 +92,20 @@ export function ContractEditorPage() {
       navigate('/');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSignatureInfo = async () => {
+    if (!slug) return;
+    
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/templates/${slug}/signature-info`);
+      if (response.data.success) {
+        setSignatureInfo(response.data.data);
+        console.log('📝 Signature info loaded:', response.data.data);
+      }
+    } catch (error) {
+      console.error('Error loading signature info:', error);
     }
   };
 
@@ -121,7 +140,22 @@ export function ContractEditorPage() {
     setCurrentStep('review');
   };
 
-  const handleApproveReview = async () => {
+  const handleApproveReview = async (pdfBlob: Blob, signatureType?: 'simple' | 'fea' | 'none') => {
+    // Prevent duplicate calls
+    if (contractId) {
+      console.log('⚠️ Contract already created, skipping duplicate call');
+      setCurrentStep('payment');
+      return;
+    }
+
+    // Prevent duplicate processing
+    if (isProcessingPayment) {
+      console.log('⚠️ Already processing, ignoring duplicate call');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
     try {
       // Crear contrato en el backend al aprobar la revisión
       if (!trackingCode && template) {
@@ -153,7 +187,8 @@ export function ContractEditorPage() {
           template_version_id: template.version_id,
           buyer_rut: buyerRut,
           buyer_email: buyerEmail,
-          capsule_ids: selectedCapsules
+          capsule_ids: selectedCapsules,
+          signature_type: signatureType || 'simple'
         });
 
         const response = await axios.post(
@@ -163,13 +198,23 @@ export function ContractEditorPage() {
             buyer_rut: buyerRut,
             buyer_email: buyerEmail,
             capsule_ids: selectedCapsules,
-            form_data: formData
+            form_data: formData,
+            signature_type: signatureType || 'simple'
           }
         );
 
         if (response.data.success) {
-          setContractId(response.data.data.id);
-          setTrackingCode(response.data.data.tracking_code);
+          const newContractId = response.data.data.id;
+          const newTrackingCode = response.data.data.tracking_code;
+          const totalAmount = response.data.data.total_amount;
+          setContractId(newContractId);
+          setTrackingCode(newTrackingCode);
+          setContractTotalAmount(totalAmount);
+          
+          console.log('💰 Contract created with total amount:', totalAmount);
+          
+          // Upload draft PDF to backend
+          await uploadDraftPdf(newContractId, newTrackingCode, formData[template.signers_config?.[0]?.rut_variable || ''], pdfBlob);
         } else {
           alert('Error al crear el contrato');
           return;
@@ -180,6 +225,40 @@ export function ContractEditorPage() {
     } catch (error: any) {
       console.error('Error creating contract:', error);
       alert(`Error al crear el contrato: ${error.response?.data?.error || error.message}`);
+      setIsProcessingPayment(false); // Reset on error
+    } finally {
+      // Don't reset on success to prevent re-submission
+    }
+  };
+
+  const uploadDraftPdf = async (contractId: string, trackingCode: string, rut: string, pdfBlob: Blob) => {
+    try {
+      console.log('📤 Uploading draft PDF to server...');
+      
+      const formData = new FormData();
+      formData.append('draft_pdf', pdfBlob, 'contract.pdf');
+      formData.append('tracking_code', trackingCode);
+      formData.append('rut', rut);
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/contracts/${contractId}/upload-draft-pdf`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        console.log('✅ Draft PDF uploaded successfully:', response.data.data.pdf_path);
+      } else {
+        console.error('❌ Failed to upload draft PDF:', response.data.error);
+      }
+    } catch (error: any) {
+      console.error('❌ Error uploading draft PDF:', error);
+      // Don't block the flow - just log the error
+      // The PDF will be missing but user can continue
     }
   };
 
@@ -261,6 +340,8 @@ export function ContractEditorPage() {
             }
             onApprove={handleApproveReview}
             onBack={() => setCurrentStep('editor')}
+            isProcessing={isProcessingPayment}
+            signatureInfo={signatureInfo}
           />
         )}
 
@@ -269,11 +350,11 @@ export function ContractEditorPage() {
             contractId={contractId}
             trackingCode={trackingCode || ''}
             buyerRut={template.signers_config?.[0] ? formData[template.signers_config[0].rut_variable] : ''}
-            totalAmount={template.base_price + 
+            totalAmount={contractTotalAmount || (template.base_price +
               template.capsules
                 .filter((c: any) => selectedCapsules.includes(c.id))
                 .reduce((sum: number, c: any) => sum + c.price, 0)
-            }
+            )}
             onPaymentSuccess={() => setCurrentStep('signatures')}
             onPaymentFailed={() => setCurrentStep('review')}
             onBack={() => setCurrentStep('review')}

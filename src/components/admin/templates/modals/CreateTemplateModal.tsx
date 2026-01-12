@@ -16,7 +16,8 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
   const [templateData, setTemplateData] = useState({
     title: '',
     slug: '',
-    description: ''
+    description: '',
+    signature_mode: 'two_signatures' as 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary'
   });
 
   const generateSlug = (title: string): string => {
@@ -44,6 +45,13 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
     const newSlug = generateSlug(title);
     setTemplateData({ ...templateData, title, slug: newSlug });
   };
+
+  const signatureModeOptions = [
+    { value: 'none', label: 'Sin firma', description: 'Solo descarga, no requiere firma' },
+    { value: 'one_signature', label: '1 Firma', description: 'Requiere una firma' },
+    { value: 'two_signatures', label: '2 Firmas', description: 'Requiere dos firmas (ambas partes)' },
+    { value: 'two_signatures_notary', label: '2 Firmas + Notario', description: 'Requiere dos firmas y notario' }
+  ] as const;
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [basePrice, setBasePrice] = useState('');
@@ -200,6 +208,35 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
               rows={3}
               className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-cyan-400 transition-colors resize-none"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Modo de Firma *</label>
+            <div className="space-y-2">
+              {signatureModeOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex items-start p-3 border-2 rounded-xl cursor-pointer transition-all ${
+                    templateData.signature_mode === option.value
+                      ? 'border-cyan-500 bg-cyan-50'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="signature_mode"
+                    value={option.value}
+                    checked={templateData.signature_mode === option.value}
+                    onChange={(e) => setTemplateData({ ...templateData, signature_mode: e.target.value as typeof templateData.signature_mode })}
+                    className="mt-1 w-4 h-4 text-cyan-600 focus:ring-cyan-500"
+                  />
+                  <div className="ml-3 flex-1">
+                    <span className="block font-medium text-slate-700">{option.label}</span>
+                    <span className="block text-xs text-slate-500 mt-0.5">{option.description}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
           
           <div className="flex gap-3 pt-4">

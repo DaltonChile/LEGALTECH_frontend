@@ -125,35 +125,9 @@ export function useContractRenderer({
     // 4. Remove signature blocks from main content
     result = result.replace(/\[\s*FIRMA\s*:[^\]]+\]([\s\S]*?)\[\s*\/\s*FIRMA\s*\]/gi, '');
 
-    // 5. Add signatures section at the end
-    if (signersConfig && signersConfig.length > 0) {
-      result += '\n\n<div class="signatures-section"><h2>Firmas</h2>\n';
-      
-      signersConfig
-        .sort((a, b) => a.signature_order - b.signature_order)
-        .forEach(signer => {
-          const nameValue = formData[signer.name_variable];
-          const rutValue = formData[signer.rut_variable];
-          
-          const name = nameValue 
-            ? `<span class="filled-var">${nameValue}</span>`
-            : `<span class="empty-var">[${formatVariableName(signer.name_variable)}]</span>`;
-          
-          const rut = rutValue
-            ? `<span class="filled-var">${rutValue}</span>`
-            : `<span class="empty-var">[${formatVariableName(signer.rut_variable)}]</span>`;
-          
-          result += `
-            <div class="signature-block">
-              <h3>${signer.display_name}</h3>
-              <p><strong>Nombre:</strong> ${name}</p>
-              <p><strong>RUT:</strong> ${rut}</p>
-            </div>
-          `;
-        });
-      
-      result += '</div>';
-    }
+    // 5. Add signatures section at the end (REMOVED)
+    // The user requested to remove the signatures section from the preview and PDF
+    // but keep asking for the info (variables are still in the template text so they are asked).
 
     return result;
   }, [templateText, formData, extractedVariables, selectedCapsules, capsules, clauseNumbers, clauseNumbering, signersConfig, activeField]);
