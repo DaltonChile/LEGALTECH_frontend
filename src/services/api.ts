@@ -45,11 +45,10 @@ export const templatesApi = {
 
 // Agregar estas funciones a LEGALTECH_frontend/src/services/api.ts
 
-export const uploadTemplateVersion = async (templateId: string, file: File, basePrice: number = 0, requiresNotary: boolean = false) => {
+export const uploadTemplateVersion = async (templateId: string, file: File, basePrice: number = 0) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('base_price', basePrice.toString());
-  formData.append('requires_notary', requiresNotary.toString());
 
   const response = await api.post(
     `/admin/templates/${templateId}/versions/upload`,
@@ -67,11 +66,11 @@ export const getAdminTemplates = async () => {
   return await api.get('/admin/templates');
 };
 
-export const createTemplate = async (data: { 
-  title: string; 
-  slug: string; 
+export const createTemplate = async (data: {
+  title: string;
+  slug: string;
   description: string;
-  signature_mode?: 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary';
+  requires_notary?: boolean;
 }) => {
   return await api.post('/admin/templates', data);
 };
@@ -223,7 +222,7 @@ export const createContractRequest = async (data: {
   buyer_email: string;
   capsule_ids?: string[];
   form_data?: Record<string, any>;
-  requires_notary?: boolean;
+  signature_type?: string;
 }) => {
   return await api.post('/contracts', data);
 };

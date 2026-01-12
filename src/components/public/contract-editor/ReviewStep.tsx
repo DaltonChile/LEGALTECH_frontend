@@ -4,7 +4,6 @@ import { FileText, CheckCircle, AlertCircle, Shield, Zap } from 'lucide-react';
 import { contractEditorStyles } from './styles';
 
 export interface SignatureInfo {
-  signatureMode: 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary';
   numberOfSigners: number;
   requiresNotary: boolean;
   requiresSignatures: boolean;
