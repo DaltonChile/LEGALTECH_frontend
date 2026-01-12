@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CreditCard, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 interface PaymentStepProps {
@@ -23,9 +23,12 @@ export function PaymentStep({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
+  const paymentInitiatedRef = useRef(false);
 
   useEffect(() => {
-    if (contractId) {
+    // Evitar llamada duplicada en React Strict Mode
+    if (contractId && !paymentInitiatedRef.current) {
+      paymentInitiatedRef.current = true;
       initiatePayment();
     }
   }, [contractId]);

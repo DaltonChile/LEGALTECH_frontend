@@ -38,6 +38,7 @@ interface DashboardStats {
     pending_payment: number;
     paid: number;
     waiting_notary: number;
+    waiting_signatures: number;
     signed: number;
     failed: number;
   };
@@ -56,7 +57,7 @@ interface Contract {
   buyer_rut: string;
   buyer_email: string;
   total_amount: number;
-  status: 'draft' | 'pending_payment' | 'paid' | 'waiting_notary' | 'signed' | 'failed';
+  status: 'draft' | 'pending_payment' | 'paid' | 'waiting_notary' | 'waiting_signatures' | 'signed' | 'failed';
   requires_notary: boolean;
   created_at: string;
   updated_at: string;
@@ -74,6 +75,7 @@ const STATUS_CONFIG = {
   pending_payment: { label: 'Pend. Pago', color: 'bg-amber-100 text-amber-700', dotColor: 'bg-amber-500' },
   paid: { label: 'Pagado', color: 'bg-blue-100 text-blue-700', dotColor: 'bg-blue-500' },
   waiting_notary: { label: 'Esp. Notario', color: 'bg-purple-100 text-purple-700', dotColor: 'bg-purple-500' },
+  waiting_signatures: { label: 'Esp. Firmas', color: 'bg-cyan-100 text-cyan-700', dotColor: 'bg-cyan-500' },
   signed: { label: 'Firmado', color: 'bg-green-100 text-green-700', dotColor: 'bg-green-500' },
   failed: { label: 'Fallido', color: 'bg-red-100 text-red-700', dotColor: 'bg-red-500' }
 };
