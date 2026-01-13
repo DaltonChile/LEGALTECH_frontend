@@ -462,7 +462,7 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
   const status = STATUS_CONFIG[contract.status];
   const statusIcons = {
     draft: FileText, pending_payment: Clock, paid: CheckCircle,
-    waiting_notary: AlertCircle, signed: CheckCircle, failed: XCircle
+    waiting_notary: AlertCircle, waiting_signatures: Clock, signed: CheckCircle, failed: XCircle
   };
   const StatusIcon = statusIcons[contract.status];
 

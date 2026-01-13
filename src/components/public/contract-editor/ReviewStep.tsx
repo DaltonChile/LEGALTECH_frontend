@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import html2pdf from 'html2pdf.js';
 import { FileText, CheckCircle, AlertCircle, Shield, Zap } from 'lucide-react';
-import { contractEditorStyles } from './styles';
 
 export interface SignatureInfo {
   numberOfSigners: number;
