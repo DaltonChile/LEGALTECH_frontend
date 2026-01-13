@@ -44,6 +44,15 @@ export function FieldsForm({
     return varLower.includes('email') || varLower.includes('correo') || varLower.includes('mail');
   };
 
+  // Función para detectar si una variable es un teléfono
+  const isPhoneField = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('telefono') ||
+           varLower.includes('teléfono') ||
+           varLower.includes('celular') ||
+           varLower.includes('phone');
+  };
+
   // Validación para campo nombre (mínimo 2 caracteres)
   const validateName = (value: string): string | null => {
     if (!value || value.trim() === '') return null; // No validar si está vacío
@@ -73,6 +82,19 @@ export function FieldsForm({
     return null;
   };
 
+  // Validación para campo teléfono (formato chileno)
+  const validatePhone = (value: string): string | null => {
+    if (!value || value.trim() === '') return 'Teléfono es requerido';
+    
+    const cleaned = value.replace(/\s/g, '');
+    const phonePattern = /^(\+?56)?9\d{8}$/;
+    
+    if (!phonePattern.test(cleaned)) {
+      return 'Formato: +56912345678 o 912345678';
+    }
+    return null;
+  };
+
   // Función para obtener el error de validación de un campo
   const getFieldError = (variable: string): string | null => {
     const value = formData[variable] || '';
@@ -87,6 +109,10 @@ export function FieldsForm({
     
     if (isEmailField(variable)) {
       return validateEmail(value);
+    }
+    
+    if (isPhoneField(variable)) {
+      return validatePhone(value);
     }
     
     return null;

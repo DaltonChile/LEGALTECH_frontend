@@ -85,6 +85,14 @@ export function ContractEditor({
     return varLower.includes('email') || varLower.includes('correo') || varLower.includes('mail');
   };
 
+  const isPhoneField = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('telefono') ||
+           varLower.includes('teléfono') ||
+           varLower.includes('celular') ||
+           varLower.includes('phone');
+  };
+
   const validateName = (value: string): boolean => {
     if (!value || value.trim() === '') return true; // Empty is ok (will be caught by completion check)
     return value.trim().length >= 2;
@@ -102,6 +110,13 @@ export function ContractEditor({
     return emailPattern.test(value.trim());
   };
 
+  const validatePhone = (value: string): boolean => {
+    if (!value || value.trim() === '') return false; // Phone is REQUIRED
+    const cleaned = value.replace(/\s/g, '');
+    const phonePattern = /^(\+?56)?9\d{8}$/;
+    return phonePattern.test(cleaned);
+  };
+
   // Check if there are validation errors
   const hasValidationErrors = useMemo(() => {
     const validVariables = extractedVariables.filter(v => v);
@@ -117,6 +132,10 @@ export function ContractEditor({
       }
       
       if (isEmailField(variable) && !validateEmail(value)) {
+        return true;
+      }
+      
+      if (isPhoneField(variable) && !validatePhone(value)) {
         return true;
       }
       
