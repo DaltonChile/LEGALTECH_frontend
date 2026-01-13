@@ -236,4 +236,26 @@ export const updateTemplateStatus = async (templateId: string, isActive: boolean
   return response.data;
 };
 
+// ============================================
+// APIs para Platform Configuration
+// ============================================
+
+export interface PlatformConfig {
+  id: string;
+  key: string;
+  value: string;
+  value_type: 'string' | 'integer' | 'float' | 'boolean';
+  description: string;
+  is_editable_by_admin: boolean;
+}
+
+export const getPlatformConfig = async (): Promise<PlatformConfig[]> => {
+  const response = await api.get<{ success: boolean; data: PlatformConfig[] }>('/admin/config');
+  return response.data.data || [];
+};
+
+export const updatePlatformConfig = async (key: string, value: string | number): Promise<void> => {
+  await api.put(`/admin/config/${key}`, { value });
+};
+
 export default api;
