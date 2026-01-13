@@ -4,7 +4,6 @@ import { FileText, CheckCircle, AlertCircle, Shield, Zap } from 'lucide-react';
 import { contractEditorStyles } from './styles';
 
 export interface SignatureInfo {
-  signatureMode: 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary';
   numberOfSigners: number;
   requiresNotary: boolean;
   requiresSignatures: boolean;
@@ -70,108 +69,164 @@ export function ReviewStep({
     };
   }, [pdfUrl]);
 
+  // Sanitize HTML and apply safe inline styles to every element
+  const sanitizeHtmlForPdf = (html: string): string => {
+    // Use DOMParser to safely parse HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Remove style and link tags first
+    doc.querySelectorAll('style, link[rel="stylesheet"]').forEach((el: Element) => {
+      el.remove();
+    });
+    
+    // CRITICAL: Remove ALL existing style and class attributes FIRST
+    doc.querySelectorAll('*').forEach((el: Element) => {
+      el.removeAttribute('style');
+      el.removeAttribute('class');
+      el.removeAttribute('id');
+    });
+    
+    // Apply explicit safe styles to ALL elements - use setAttribute to ensure clean values
+    doc.querySelectorAll('*').forEach((el: Element) => {
+      const htmlEl = el as HTMLElement;
+      const tag = el.tagName.toLowerCase();
+      
+      // Build a complete style string with ALL safe values
+      let styleStr = 'color: rgb(31, 41, 55); background-color: rgba(0, 0, 0, 0);';
+      
+      switch (tag) {
+        case 'h1':
+          styleStr = 'font-size: 24px; font-weight: bold; color: rgb(17, 24, 39); margin: 16px 0px 8px 0px; background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'h2':
+          styleStr = 'font-size: 20px; font-weight: bold; color: rgb(17, 24, 39); margin: 16px 0px 8px 0px; background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'h3':
+          styleStr = 'font-size: 18px; font-weight: bold; color: rgb(17, 24, 39); margin: 14px 0px 7px 0px; background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'h4':
+        case 'h5':
+        case 'h6':
+          styleStr = 'font-size: 16px; font-weight: bold; color: rgb(17, 24, 39); margin: 12px 0px 6px 0px; background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'p':
+          styleStr = 'color: rgb(31, 41, 55); margin: 8px 0px; line-height: 1.6; text-align: justify; background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'strong':
+        case 'b':
+          styleStr = 'font-weight: bold; color: rgb(17, 24, 39); background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'em':
+        case 'i':
+          styleStr = 'font-style: italic; color: rgb(31, 41, 55); background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'ul':
+        case 'ol':
+          styleStr = 'margin: 8px 0px; padding-left: 20px; color: rgb(31, 41, 55); background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'li':
+          styleStr = 'margin: 4px 0px; color: rgb(31, 41, 55); background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'table':
+          styleStr = 'width: 100%; border-collapse: collapse; margin: 8px 0px; background-color: rgba(0, 0, 0, 0);';
+          break;
+        case 'td':
+          styleStr = 'border: 1px solid rgb(209, 213, 219); padding: 8px; text-align: left; color: rgb(31, 41, 55); background-color: rgb(255, 255, 255);';
+          break;
+        case 'th':
+          styleStr = 'border: 1px solid rgb(209, 213, 219); padding: 8px; text-align: left; color: rgb(17, 24, 39); background-color: rgb(243, 244, 246); font-weight: bold;';
+          break;
+        case 'div':
+        case 'span':
+          styleStr = 'color: rgb(31, 41, 55); background-color: rgba(0, 0, 0, 0);';
+          break;
+      }
+      
+      // Set the complete style attribute at once
+      htmlEl.setAttribute('style', styleStr);
+    });
+    
+    // Return only the body content
+    return doc.body.innerHTML;
+  };
+
   const generatePreview = async () => {
     setLoading(true);
     setError(null);
     
     try {
       console.log('📄 Generando PDF en el navegador...');
+      console.log('📝 HTML original length:', renderedContractHtml.length);
       
-      // Create temporary container with isolation from page styles
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '210mm'; // A4 width
-      tempContainer.style.all = 'initial'; // Reset all inherited styles
-      document.body.appendChild(tempContainer);
+      // Sanitize HTML FIRST to remove all inline styles and style tags
+      const sanitizedHtml = sanitizeHtmlForPdf(renderedContractHtml);
+      console.log('🧹 HTML sanitizado length:', sanitizedHtml.length);
+      console.log('🧹 Primeros 500 chars:', sanitizedHtml.substring(0, 500));
       
-      // Inject styles from styles.ts into the HTML
-      const styledHtml = `
-        <style>
-          /* Base styles - avoid modern CSS color functions for html2canvas compatibility */
-          * {
-            all: revert;
-            box-sizing: border-box;
-            color: #1f2937;
-            background-color: transparent;
-            border-color: #d1d5db;
-          }
-          body, html {
-            font-family: Arial, Helvetica, sans-serif;
-            background-color: white;
-            color: #1f2937;
-            margin: 0;
-            padding: 0;
-          }
-          ${contractEditorStyles}
-          .contract-preview {
-            padding: 20px;
-            max-width: 210mm;
-            background-color: white;
-          }
-          .filled-var {
-            background-color: #dbeafe !important;
-            color: #1e40af !important;
-          }
-          .empty-var {
-            background-color: #fee2e2 !important;
-            color: #991b1b !important;
-          }
-          .signature-block {
-            page-break-inside: avoid;
-            background-color: #f9fafb !important;
-            border-color: #d1d5db !important;
-          }
-          .signatures-section {
-            page-break-before: auto;
-            border-color: #e5e7eb !important;
-          }
-          h1, h2, h3, h4, h5, h6 {
-            color: #111827 !important;
-          }
-          p {
-            color: #1f2937 !important;
-          }
-        </style>
-        <div class="contract-preview">
-          ${renderedContractHtml}
-        </div>
-      `;
+      // Create an IFRAME to completely isolate from page CSS
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 210mm; height: 297mm; border: none;';
+      document.body.appendChild(iframe);
       
-      tempContainer.innerHTML = styledHtml;
-      
-      // Force reflow and strip computed styles with modern colors
-      tempContainer.querySelectorAll('*').forEach((el: Element) => {
-        if (el instanceof HTMLElement) {
-          const computed = window.getComputedStyle(el);
-          
-          // Check and replace color
-          if (computed.color && (computed.color.includes('oklch') || computed.color.includes('color-mix'))) {
-            el.style.color = '#1f2937';
-          }
-          
-          // Check and replace background-color
-          if (computed.backgroundColor && (computed.backgroundColor.includes('oklch') || computed.backgroundColor.includes('color-mix'))) {
-            el.style.backgroundColor = 'transparent';
-          }
-          
-          // Check and replace border-color
-          if (computed.borderColor && (computed.borderColor.includes('oklch') || computed.borderColor.includes('color-mix'))) {
-            el.style.borderColor = '#d1d5db';
-          }
+      // Wait for iframe to be ready
+      await new Promise(resolve => {
+        if (iframe.contentWindow && iframe.contentDocument) {
+          resolve(null);
+        } else {
+          iframe.onload = () => resolve(null);
         }
       });
       
-      // Configure html2pdf options
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) {
+        throw new Error('No se pudo crear el documento iframe');
+      }
+      
+      // Write the complete isolated HTML document with NO CSS to avoid any parsing issues
+      iframeDoc.open();
+      iframeDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; background: rgb(255, 255, 255); color: rgb(31, 41, 55); padding: 20px; font-size: 14px; line-height: 1.6; margin: 0;">${sanitizedHtml}</body>
+</html>`);
+      iframeDoc.close();
+      
+      // Wait a bit for the iframe content to fully render
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const iframeBody = iframeDoc.body;
+      console.log('📦 Iframe body creado. Inner HTML length:', iframeBody.innerHTML.length);
+      console.log('📦 Iframe body text content length:', iframeBody.textContent?.length || 0);
+      
+      // Configure html2pdf options with aggressive CSS avoidance
       const options = {
-        margin: [20, 20, 20, 20] as [number, number, number, number], // 20mm margins (matches backend 2cm)
+        margin: [20, 20, 20, 20] as [number, number, number, number], // 20mm margins
         filename: 'preview_contrato.pdf',
         image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: {
-          scale: 2, // High quality
+          scale: 2,
           useCORS: true,
-          logging: false
+          logging: false,
+          allowTaint: true,
+          backgroundColor: 'white',
+          removeContainer: true,
+          windowWidth: 794, // A4 width in pixels at 96 DPI (210mm)
+          windowHeight: 1123, // A4 height in pixels at 96 DPI (297mm)
+          onclone: (clonedDoc: Document) => {
+            // Remove ALL stylesheets from the cloned document to prevent CSS parsing
+            const allStyles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
+            allStyles.forEach(style => style.remove());
+            
+            // Remove any remaining class or id attributes that could reference external CSS
+            const allElements = clonedDoc.querySelectorAll('*');
+            allElements.forEach(el => {
+              el.removeAttribute('class');
+              el.removeAttribute('id');
+            });
+          }
         },
         jsPDF: {
           unit: 'mm',
@@ -180,10 +235,10 @@ export function ReviewStep({
         },
       };
       
-      // Generate PDF and get blob
+      // Generate PDF from the isolated iframe body with our sanitized content
       const generatedPdfBlob = await html2pdf()
         .set(options)
-        .from(tempContainer)
+        .from(iframeBody)
         .output('blob');
       
       // Store blob for later upload
@@ -193,8 +248,8 @@ export function ReviewStep({
       const blobUrl = URL.createObjectURL(generatedPdfBlob);
       setPdfUrl(blobUrl);
       
-      // Cleanup
-      document.body.removeChild(tempContainer);
+      // Cleanup - remove the temporary iframe
+      document.body.removeChild(iframe);
       
       console.log('✅ PDF generado exitosamente en el cliente');
     } catch (err: any) {

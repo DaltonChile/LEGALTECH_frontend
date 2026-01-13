@@ -5,6 +5,7 @@ import { ContractEditor } from '../../components/public/contract-editor';
 import { ReviewStep } from '../../components/public/contract-editor/ReviewStep';
 import type { SignatureInfo } from '../../components/public/contract-editor/ReviewStep';
 import { PaymentStep } from '../../components/public/contract-editor/PaymentStep';
+import { SignatureStep } from '../../components/public/contract-editor/SignatureStep';
 import { Navbar } from '../../components/landing/Navbar';
 import { ProgressBar } from '../../components/shared/ProgressBar';
 import { extractVariables } from '../../components/public/contract-editor/utils/templateParser';
@@ -225,9 +226,8 @@ export function ContractEditorPage() {
     } catch (error: any) {
       console.error('Error creating contract:', error);
       alert(`Error al crear el contrato: ${error.response?.data?.error || error.message}`);
-      setIsProcessingPayment(false); // Reset on error
     } finally {
-      // Don't reset on success to prevent re-submission
+      setIsProcessingPayment(false);
     }
   };
 
@@ -358,6 +358,14 @@ export function ContractEditorPage() {
             onPaymentSuccess={() => setCurrentStep('signatures')}
             onPaymentFailed={() => setCurrentStep('review')}
             onBack={() => setCurrentStep('review')}
+          />
+        )}
+
+        {currentStep === 'signatures' && contractId && trackingCode && (
+          <SignatureStep
+            contractId={contractId}
+            trackingCode={trackingCode}
+            onBack={() => setCurrentStep('payment')}
           />
         )}
       </main>

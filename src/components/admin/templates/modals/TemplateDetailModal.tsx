@@ -209,7 +209,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                             <span className="font-medium text-amber-700">{version.capsules.length} cápsulas</span>
                           </div>
                         )}
-                        {version.requires_notary && (
+                        {template.requires_notary && (
                           <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
                             <span className="text-blue-600">⚖️</span>
                             <span className="font-medium text-blue-700">Requiere notario</span>

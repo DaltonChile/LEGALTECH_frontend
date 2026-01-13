@@ -1,10 +1,11 @@
-import { CreditCard } from 'lucide-react';
+import { CreditCard, AlertCircle } from 'lucide-react';
 
 interface PaymentButtonProps {
   totalPrice: number;
   completionPercentage: number;
   isLoading: boolean;
   onContinue?: () => void;
+  hasValidationErrors?: boolean;
 }
 
 export function PaymentButton({
@@ -12,8 +13,9 @@ export function PaymentButton({
   completionPercentage,
   isLoading,
   onContinue,
+  hasValidationErrors = false,
 }: PaymentButtonProps) {
-  const isDisabled = isLoading || completionPercentage < 100;
+  const isDisabled = isLoading || completionPercentage < 100 || hasValidationErrors;
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-slate-200 py-4 px-4">
@@ -35,6 +37,14 @@ export function PaymentButton({
         <p className="text-xs text-slate-500 text-center mt-2 py-2">
           Completa todos los campos para continuar
         </p>
+      )}
+      {hasValidationErrors && completionPercentage === 100 && (
+        <div className="flex items-center gap-2 justify-center mt-2 py-2">
+          <AlertCircle className="w-4 h-4 text-red-500" />
+          <p className="text-xs text-red-600">
+            Corrige los errores de validación para continuar
+          </p>
+        </div>
       )}
     </div>
   );

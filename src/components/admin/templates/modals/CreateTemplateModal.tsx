@@ -17,7 +17,7 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
     title: '',
     slug: '',
     description: '',
-    signature_mode: 'two_signatures' as 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary'
+    requires_notary: false
   });
 
   const generateSlug = (title: string): string => {
@@ -46,16 +46,8 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
     setTemplateData({ ...templateData, title, slug: newSlug });
   };
 
-  const signatureModeOptions = [
-    { value: 'none', label: 'Sin firma', description: 'Solo descarga, no requiere firma' },
-    { value: 'one_signature', label: '1 Firma', description: 'Requiere una firma' },
-    { value: 'two_signatures', label: '2 Firmas', description: 'Requiere dos firmas (ambas partes)' },
-    { value: 'two_signatures_notary', label: '2 Firmas + Notario', description: 'Requiere dos firmas y notario' }
-  ] as const;
-
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [basePrice, setBasePrice] = useState('');
-  const [requiresNotary, setRequiresNotary] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +105,7 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
     setError(null);
 
     try {
-      const response = await uploadTemplateVersion(templateId, selectedFile, parseInt(basePrice), requiresNotary);
+      const response = await uploadTemplateVersion(templateId, selectedFile, parseInt(basePrice));
       
       if (response.data.requires_capsule_pricing && response.data.data.capsules_pending_price) {
         setVersionId(response.data.data.version.id);
@@ -210,33 +202,18 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Modo de Firma *</label>
-            <div className="space-y-2">
-              {signatureModeOptions.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex items-start p-3 border-2 rounded-xl cursor-pointer transition-all ${
-                    templateData.signature_mode === option.value
-                      ? 'border-cyan-500 bg-cyan-50'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="signature_mode"
-                    value={option.value}
-                    checked={templateData.signature_mode === option.value}
-                    onChange={(e) => setTemplateData({ ...templateData, signature_mode: e.target.value as typeof templateData.signature_mode })}
-                    className="mt-1 w-4 h-4 text-cyan-600 focus:ring-cyan-500"
-                  />
-                  <div className="ml-3 flex-1">
-                    <span className="block font-medium text-slate-700">{option.label}</span>
-                    <span className="block text-xs text-slate-500 mt-0.5">{option.description}</span>
-                  </div>
-                </label>
-              ))}
-            </div>
+          <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+            <input
+              type="checkbox"
+              id="templateRequiresNotary"
+              checked={templateData.requires_notary}
+              onChange={(e) => setTemplateData({ ...templateData, requires_notary: e.target.checked })}
+              className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+            />
+            <label htmlFor="templateRequiresNotary" className="flex-1">
+              <span className="font-medium text-slate-700">Requiere Notario</span>
+              <p className="text-xs text-slate-500">Este template requiere firma ante notario</p>
+            </label>
           </div>
           
           <div className="flex gap-3 pt-4">
@@ -294,20 +271,6 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
-            <input
-              type="checkbox"
-              id="requiresNotary"
-              checked={requiresNotary}
-              onChange={(e) => setRequiresNotary(e.target.checked)}
-              className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-            />
-            <label htmlFor="requiresNotary" className="flex-1">
-              <span className="font-medium text-slate-700">Requiere Notario</span>
-              <p className="text-xs text-slate-500">Este contrato necesita firma ante notario</p>
-            </label>
           </div>
           
           <div className="flex gap-3 pt-4">

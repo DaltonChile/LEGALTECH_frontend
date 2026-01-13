@@ -16,6 +16,7 @@ const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard').then(m
 const TemplatesPage = lazy(() => import('../pages/admin/TemplatesPage').then(m => ({ default: m.TemplatesPage })));
 const TemplateEditPage = lazy(() => import('../pages/admin/TemplateEditPage').then(m => ({ default: m.TemplateEditPage })));
 const UsersPage = lazy(() => import('../pages/admin/UsersPage').then(m => ({ default: m.UsersPage })));
+const SettingsPage = lazy(() => import('../pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })));
 
 // Notary pages - lazy loaded
 const NotaryInboxPage = lazy(() => import('../pages/notary/NotaryInboxPage').then(m => ({ default: m.NotaryInboxPage })));
@@ -51,7 +52,7 @@ export function AppRoutes() {
         <Route path="/admin/templates" element={<TemplatesPage />} />
         <Route path="/admin/templates/:id/edit" element={<TemplateEditPage />} />
         <Route path="/admin/users" element={<UsersPage />} />
-        <Route path="/admin/settings" element={<Outlet />} />
+        <Route path="/admin/settings" element={<SettingsPage />} />
       </Route>
 
       {/* Notary routes - use same AdminLayout */}

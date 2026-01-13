@@ -71,6 +71,78 @@ export function ContractEditor({
     return validVariables.length > 0 ? Math.round((filled / validVariables.length) * 100) : 0;
   }, [formData, extractedVariables]);
 
+  // Validation helper functions
+  const isNameField = (variable: string): boolean => {
+    return variable.toLowerCase().includes('nombre');
+  };
+
+  const isRutField = (variable: string): boolean => {
+    return variable.toLowerCase().includes('rut');
+  };
+
+  const isEmailField = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('email') || varLower.includes('correo') || varLower.includes('mail');
+  };
+
+  const isPhoneField = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('telefono') ||
+           varLower.includes('teléfono') ||
+           varLower.includes('celular') ||
+           varLower.includes('phone');
+  };
+
+  const validateName = (value: string): boolean => {
+    if (!value || value.trim() === '') return true; // Empty is ok (will be caught by completion check)
+    return value.trim().length >= 2;
+  };
+
+  const validateRut = (value: string): boolean => {
+    if (!value || value.trim() === '') return true; // Empty is ok (will be caught by completion check)
+    const rutPattern = /^\d{7,8}-[\dkK]$/;
+    return rutPattern.test(value.trim());
+  };
+
+  const validateEmail = (value: string): boolean => {
+    if (!value || value.trim() === '') return true; // Empty is ok (will be caught by completion check)
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(value.trim());
+  };
+
+  const validatePhone = (value: string): boolean => {
+    if (!value || value.trim() === '') return false; // Phone is REQUIRED
+    const cleaned = value.replace(/\s/g, '');
+    const phonePattern = /^(\+?56)?9\d{8}$/;
+    return phonePattern.test(cleaned);
+  };
+
+  // Check if there are validation errors
+  const hasValidationErrors = useMemo(() => {
+    const validVariables = extractedVariables.filter(v => v);
+    return validVariables.some((variable) => {
+      const value = formData[variable] || '';
+      
+      if (isNameField(variable) && !validateName(value)) {
+        return true;
+      }
+      
+      if (isRutField(variable) && !validateRut(value)) {
+        return true;
+      }
+      
+      if (isEmailField(variable) && !validateEmail(value)) {
+        return true;
+      }
+      
+      if (isPhoneField(variable) && !validatePhone(value)) {
+        return true;
+      }
+      
+      return false;
+    });
+  }, [formData, extractedVariables]);
+
   // Calculate total price
   const totalPrice = useMemo(() => {
     const capsulesPrice = capsules
@@ -168,6 +240,7 @@ export function ContractEditor({
             completionPercentage={completionPercentage}
             isLoading={isLoading}
             onContinue={onContinueToPayment}
+            hasValidationErrors={hasValidationErrors}
           />
         </div>
       </div>

@@ -4,7 +4,7 @@ export interface Template {
   slug: string;
   description: string;
   is_active: boolean;
-  signature_mode?: 'none' | 'one_signature' | 'two_signatures' | 'two_signatures_notary';
+  requires_notary: boolean;
   versions: Version[];
 }
 
@@ -22,7 +22,6 @@ export interface Version {
   version_number: number;
   base_price: number;
   is_published: boolean;
-  requires_notary: boolean;
   created_at: string;
   base_form_schema: any[];
   capsules?: Capsule[];

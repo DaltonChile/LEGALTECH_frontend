@@ -1,4 +1,4 @@
-import { Search, Edit3 } from 'lucide-react';
+import { Search, Edit3, AlertCircle } from 'lucide-react';
 import { formatVariableName } from './utils/templateParser';
 
 interface FieldsFormProps {
@@ -24,6 +24,98 @@ export function FieldsForm({
 }: FieldsFormProps) {
   const isFieldEmpty = (variable: string): boolean => {
     return !formData[variable] || formData[variable].trim() === '';
+  };
+
+  // Función para detectar si una variable es un nombre
+  const isNameField = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('nombre');
+  };
+
+  // Función para detectar si una variable es un RUT
+  const isRutField = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('rut');
+  };
+
+  // Función para detectar si una variable es un email
+  const isEmailField = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('email') || varLower.includes('correo') || varLower.includes('mail');
+  };
+
+  // Función para detectar si una variable es un teléfono
+  const isPhoneField = (variable: string): boolean => {
+    const varLower = variable.toLowerCase();
+    return varLower.includes('telefono') ||
+           varLower.includes('teléfono') ||
+           varLower.includes('celular') ||
+           varLower.includes('phone');
+  };
+
+  // Validación para campo nombre (mínimo 2 caracteres)
+  const validateName = (value: string): string | null => {
+    if (!value || value.trim() === '') return null; // No validar si está vacío
+    if (value.trim().length < 2) {
+      return 'El nombre debe tener al menos 2 caracteres';
+    }
+    return null;
+  };
+
+  // Validación para campo RUT (formato XXXXXXXX-X)
+  const validateRut = (value: string): string | null => {
+    if (!value || value.trim() === '') return null; // No validar si está vacío
+    const rutPattern = /^\d{7,8}-[\dkK]$/;
+    if (!rutPattern.test(value.trim())) {
+      return 'Debe ser formato XXXXXXXX-X (sin puntos, con guion)';
+    }
+    return null;
+  };
+
+  // Validación para campo email
+  const validateEmail = (value: string): string | null => {
+    if (!value || value.trim() === '') return null; // No validar si está vacío
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(value.trim())) {
+      return 'Debe ser un email válido (ejemplo@dominio.com)';
+    }
+    return null;
+  };
+
+  // Validación para campo teléfono (formato chileno)
+  const validatePhone = (value: string): string | null => {
+    if (!value || value.trim() === '') return 'Teléfono es requerido';
+    
+    const cleaned = value.replace(/\s/g, '');
+    const phonePattern = /^(\+?56)?9\d{8}$/;
+    
+    if (!phonePattern.test(cleaned)) {
+      return 'Formato: +56912345678 o 912345678';
+    }
+    return null;
+  };
+
+  // Función para obtener el error de validación de un campo
+  const getFieldError = (variable: string): string | null => {
+    const value = formData[variable] || '';
+    
+    if (isNameField(variable)) {
+      return validateName(value);
+    }
+    
+    if (isRutField(variable)) {
+      return validateRut(value);
+    }
+    
+    if (isEmailField(variable)) {
+      return validateEmail(value);
+    }
+    
+    if (isPhoneField(variable)) {
+      return validatePhone(value);
+    }
+    
+    return null;
   };
 
   return (
@@ -57,36 +149,49 @@ export function FieldsForm({
 
       {/* Fields List */}
       <div className="flex-1 overflow-y-auto space-y-1.5 py-4 px-4">
-        {variables.map((variable) => (
-          <div 
-            key={variable} 
-            className={`flex items-center gap-3 p-2 rounded-lg transition-all duration-200 ${
-              activeField === variable 
-                ? 'bg-cyan-50 ring-2 ring-cyan-500' 
-                : 'bg-white hover:bg-slate-50'
-            }`}
-          >
-            <div className="flex-1">
-              <label className="block text-xs text-slate-500 mb-1">
-                {formatVariableName(variable)}
-                {isFieldEmpty(variable) && <span className="text-red-500 ml-1">*</span>}
-              </label>
-              <input
-                type="text"
-                value={formData[variable] || ''}
-                onChange={(e) => onFormChange({ ...formData, [variable]: e.target.value })}
-                onFocus={() => onFieldFocus(variable)}
-                onBlur={onFieldBlur}
-                placeholder={`Ingresa ${formatVariableName(variable).toLowerCase()}`}
-                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-colors bg-white ${
-                  isFieldEmpty(variable) 
-                    ? 'border-red-200' 
-                    : 'border-slate-200'
-                }`}
-              />
+        {variables.map((variable) => {
+          const fieldError = getFieldError(variable);
+          const hasError = fieldError !== null;
+          
+          return (
+            <div
+              key={variable}
+              className={`flex items-center gap-3 p-2 rounded-lg transition-all duration-200 ${
+                activeField === variable
+                  ? 'bg-cyan-50 ring-2 ring-cyan-500'
+                  : 'bg-white hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex-1">
+                <label className="block text-xs text-slate-500 mb-1">
+                  {formatVariableName(variable)}
+                  {isFieldEmpty(variable) && <span className="text-red-500 ml-1">*</span>}
+                </label>
+                <input
+                  type="text"
+                  value={formData[variable] || ''}
+                  onChange={(e) => onFormChange({ ...formData, [variable]: e.target.value })}
+                  onFocus={() => onFieldFocus(variable)}
+                  onBlur={onFieldBlur}
+                  placeholder={`Ingresa ${formatVariableName(variable).toLowerCase()}`}
+                  className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors bg-white ${
+                    hasError
+                      ? 'border-red-300 focus:ring-red-500'
+                      : isFieldEmpty(variable)
+                        ? 'border-red-200 focus:ring-cyan-500'
+                        : 'border-slate-200 focus:ring-cyan-500'
+                  }`}
+                />
+                {hasError && (
+                  <div className="flex items-start gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-600">{fieldError}</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
