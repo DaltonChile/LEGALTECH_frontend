@@ -1,32 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Download, Upload, Clock, CheckCircle, FileText, Mail } from 'lucide-react';
+import { notaryApi, NotaryContract } from '../../services/api';
 
-interface ContractRequest {
-  id: string;
-  tracking_code: string;
-  buyer_email: string;
-  buyer_rut: string;
-  status: 'waiting_notary' | 'signed';
-  total_amount: number;
-  requires_notary: boolean;
-  draft_pdf_path: string | null;
-  final_pdf_path: string | null;
-  created_at: string;
-  templateVersion: {
-    template: {
-      title: string;
-      slug: string;
-    };
-  };
-  signers: Array<{
-    id: string;
-    full_name: string;
-    email: string;
-    role: string;
-    has_signed: boolean;
-    signed_at: string | null;
-  }>;
-}
+type ContractRequest = NotaryContract;
 
 export const NotaryInboxPage: React.FC = () => {
   const [contracts, setContracts] = useState<ContractRequest[]>([]);
@@ -42,11 +18,8 @@ export const NotaryInboxPage: React.FC = () => {
   const loadContracts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/v1/notary/contracts', {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      setContracts(data.data || []);
+      const data = await notaryApi.getContracts();
+      setContracts(data || []);
     } catch (error) {
       console.error('Error loading contracts:', error);
     } finally {
@@ -56,10 +29,7 @@ export const NotaryInboxPage: React.FC = () => {
 
   const handleDownloadContract = async (contractId: string) => {
     try {
-      const response = await fetch(`/api/v1/notary/contracts/${contractId}/download`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const data = await notaryApi.downloadContract(contractId);
       
       if (data.success) {
         const downloadUrl = data.download_url.startsWith('http') 
@@ -83,22 +53,10 @@ export const NotaryInboxPage: React.FC = () => {
   const handleUploadSigned = async (contractId: string, file: File) => {
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append('signed_pdf', file);
-
-      const response = await fetch(`/api/v1/notary/contracts/${contractId}/upload-signed`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
-      });
-
-      if (response.ok) {
-        alert('Documento firmado subido exitosamente');
-        loadContracts();
-        setSelectedContract(null);
-      } else {
-        alert('Error al subir el documento');
-      }
+      await notaryApi.uploadSignedContract(contractId, file);
+      alert('Documento firmado subido exitosamente');
+      loadContracts();
+      setSelectedContract(null);
     } catch (error) {
       console.error('Error uploading signed contract:', error);
       alert('Error al subir el documento firmado');
