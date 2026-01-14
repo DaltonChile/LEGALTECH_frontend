@@ -258,4 +258,58 @@ export const updatePlatformConfig = async (key: string, value: string | number):
   await api.put(`/admin/config/${key}`, { value });
 };
 
+// ============================================
+// APIs para Notario
+// ============================================
+
+export interface NotaryContract {
+  id: string;
+  tracking_code: string;
+  buyer_email: string;
+  buyer_rut: string;
+  status: 'waiting_notary' | 'signed';
+  total_amount: number;
+  requires_notary: boolean;
+  draft_pdf_path: string | null;
+  final_pdf_path: string | null;
+  created_at: string;
+  templateVersion: {
+    template: {
+      title: string;
+      slug: string;
+    };
+  };
+  signers: Array<{
+    id: string;
+    full_name: string;
+    email: string;
+    role: string;
+    has_signed: boolean;
+    signed_at: string | null;
+  }>;
+}
+
+export const notaryApi = {
+  getContracts: async (): Promise<NotaryContract[]> => {
+    const response = await api.get<{ success: boolean; data: NotaryContract[] }>('/notary/contracts');
+    return response.data.data || [];
+  },
+
+  downloadContract: async (contractId: string) => {
+    const response = await api.get<{ success: boolean; download_url: string; filename: string }>(`/notary/contracts/${contractId}/download`);
+    return response.data;
+  },
+
+  uploadSignedContract: async (contractId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('signed_pdf', file);
+    const response = await api.post(`/notary/contracts/${contractId}/upload-signed`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+};
+
 export default api;
