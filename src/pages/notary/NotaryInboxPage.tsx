@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Download, Upload, Clock, CheckCircle, FileText, Mail } from 'lucide-react';
-import { notaryApi, NotaryContract } from '../../services/api';
+import { notaryApi, type NotaryContract } from '../../services/api';
 
 type ContractRequest = NotaryContract;
 
