@@ -72,24 +72,35 @@ export function ContractEditorPage() {
 
 
   useEffect(() => {
-    if (slug) {
-      loadTemplate();
-      loadSignatureInfo();
-      
-      // Verificar si hay parámetros de resume
-      const stepParam = searchParams.get('step');
-      const idParam = searchParams.get('id');
-      const rutParam = searchParams.get('rut');
-      
-      if (stepParam && idParam && rutParam) {
-        // Cargar contrato existente
-        loadExistingContract(idParam, rutParam, stepParam);
-      }
+    const stepParam = searchParams.get('step');
+    const idParam = searchParams.get('id');
+    const codeParam = searchParams.get('code');
+    const rutParam = searchParams.get('rut');
+    
+    // Si viene con code, primero cargar el contrato para obtener el slug
+    if (codeParam && rutParam) {
+      loadContractByCode(codeParam, rutParam, stepParam || 'completar');
+      return;
+    }
+    
+    // Si no hay slug, no podemos continuar
+    if (!slug) {
+      return;
+    }
+    
+    // Cargar template normalmente
+    loadTemplate();
+    loadSignatureInfo();
+    
+    // Si hay parámetros de resume con ID, cargar el contrato
+    if (stepParam && idParam && rutParam) {
+      loadExistingContract(idParam, rutParam, stepParam);
     }
   }, [slug, searchParams]);
 
   const loadTemplate = async () => {
     try {
+      console.log('🔍 Intentando cargar template con slug:', slug);
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/templates/${slug}`);
       const templateData = response.data.data;
       console.log('📄 Template loaded:', templateData);
@@ -106,6 +117,7 @@ export function ContractEditorPage() {
     } catch (error: any) {
       console.error('Error al cargar template:', error);
       console.error('Error details:', error.response?.data);
+      console.error('Slug que se intentó cargar:', slug);
       alert(`Error al cargar el contrato: ${error.response?.data?.error || error.message}`);
       navigate('/');
     } finally {
@@ -124,6 +136,37 @@ export function ContractEditorPage() {
       }
     } catch (error) {
       console.error('Error loading signature info:', error);
+    }
+  };
+
+  const loadContractByCode = async (code: string, rut: string, step: string) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/contracts/resume?code=${code}&rut=${encodeURIComponent(rut)}`
+      );
+      
+      if (response.data.success) {
+        const data = response.data.data;
+        const templateSlug = data.template?.slug;
+        
+        if (!templateSlug) {
+          alert('Error: No se encontró el template del contrato');
+          navigate('/seguimiento');
+          return;
+        }
+        
+        // Redirigir al template correcto con el ID del contrato
+        navigate(`/${templateSlug}?step=${step}&id=${data.id}&rut=${encodeURIComponent(rut)}`);
+      } else {
+        alert('Error al cargar el contrato');
+        navigate('/seguimiento');
+      }
+    } catch (error: any) {
+      console.error('Error loading contract by code:', error);
+      alert(`Error al cargar el contrato: ${error.response?.data?.error || error.message}`);
+      navigate('/seguimiento');
+    } finally {
+      setLoading(false);
     }
   };
 

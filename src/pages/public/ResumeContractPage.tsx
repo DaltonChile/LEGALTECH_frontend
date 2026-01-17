@@ -10,28 +10,41 @@ export function ResumeContractPage() {
 
   useEffect(() => {
     const id = searchParams.get('id');
+    const code = searchParams.get('code');
     const rut = searchParams.get('rut');
 
-    if (!id || !rut) {
-      setError('Parámetros inválidos. Se requiere id y rut.');
+    if ((!id && !code) || !rut) {
+      setError('Parámetros inválidos. Se requiere (id o code) y rut.');
       setLoading(false);
       return;
     }
 
-    loadContract(id, rut);
+    loadContract(id, code, rut);
   }, [searchParams]);
 
-  const loadContract = async (id: string, rut: string) => {
+  const loadContract = async (id: string | null, code: string | null, rut: string) => {
     try {
+      // Construir la URL con los parámetros disponibles
+      const params = new URLSearchParams();
+      if (id) params.append('id', id);
+      if (code) params.append('code', code);
+      params.append('rut', rut);
+
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/contracts/resume?id=${id}&rut=${encodeURIComponent(rut)}`
+        `${import.meta.env.VITE_API_URL}/contracts/resume?${params.toString()}`
       );
 
       if (response.data.success) {
         const contract = response.data.data;
         const template = contract.template;
         
+        console.log('📦 Contrato cargado:', contract.id);
+        console.log('📝 Template recibido:', template);
+        console.log('🔗 Template slug:', template?.slug);
+        
         if (!template?.slug) {
+          console.error('❌ Template o slug no encontrado en el contrato');
+          console.error('Datos del contrato:', contract);
           setError('No se encontró el template asociado al contrato.');
           setLoading(false);
           return;
@@ -41,12 +54,12 @@ export function ResumeContractPage() {
         switch (contract.status) {
           case 'pending_payment':
             // Aún no ha pagado - volver al formulario inicial
-            navigate(`/${template.slug}?resume=true&id=${id}&rut=${encodeURIComponent(rut)}`);
+            navigate(`/${template.slug}?resume=true&id=${contract.id}&rut=${encodeURIComponent(rut)}`);
             break;
             
           case 'draft':
             // Ya pagó - puede completar formulario
-            navigate(`/${template.slug}?step=completar&id=${id}&rut=${encodeURIComponent(rut)}`);
+            navigate(`/${template.slug}?step=completar&id=${contract.id}&rut=${encodeURIComponent(rut)}`);
             break;
             
           case 'waiting_signatures':
