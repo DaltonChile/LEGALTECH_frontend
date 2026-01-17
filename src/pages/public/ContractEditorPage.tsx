@@ -58,11 +58,11 @@ export function ContractEditorPage() {
 
   // Contract data
   const [selectedCapsules, setSelectedCapsules] = useState<number[]>([]);
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [_formData, setFormData] = useState<Record<string, string>>({});
   const [contractId, setContractId] = useState<string | null>(null);
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
   const [contractTotalAmount, setContractTotalAmount] = useState<number>(0);
-  const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
+  const [_renderedContractHtml, setRenderedContractHtml] = useState<string>('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
   // Datos del contrato para el nuevo flujo

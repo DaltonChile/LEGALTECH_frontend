@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { FileText, Lock } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { contractEditorStyles } from './styles';
 
 interface VariableWithDescription {

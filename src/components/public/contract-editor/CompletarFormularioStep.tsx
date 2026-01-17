@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import axios from 'axios';
-import { ArrowLeft, ArrowRight, FileText, CheckCircle } from 'lucide-react';
+import { ArrowRight, FileText, CheckCircle } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { useContractRenderer } from './hooks/useContractRenderer';
@@ -25,14 +25,15 @@ interface CompletarFormularioStepProps {
   template: Template;
   contractData: ContractData;
   onComplete: (formData: Record<string, string>, renderedHtml: string) => void;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 export function CompletarFormularioStep({
   template,
   contractData,
   onComplete,
-  onBack,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onBack: _onBack,
 }: CompletarFormularioStepProps) {
   // Inicializar formData con los datos existentes del contrato
   const [formData, setFormData] = useState<Record<string, string>>(contractData.form_data || {});
