@@ -39,6 +39,7 @@ export function AppRoutes() {
         <Route path="/seguimiento" element={<TrackingPage />} />
         <Route path="/ayuda" element={<HelpPage />} />
         <Route path="/resume" element={<ResumeContractPage />} />
+        <Route path="/retomar" element={<ResumeContractPage />} />
         <Route path="/catalogo" element={<ContractCatalogPage />} />
         <Route path="/:slug" element={<ContractEditorPage />} />
 

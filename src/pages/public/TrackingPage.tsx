@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search, Package, Clock, CheckCircle, XCircle, FileText, Users, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Package, Clock, CheckCircle, XCircle, FileText, Users, AlertCircle, Edit } from 'lucide-react';
 import axios from 'axios';
 import { Navbar } from '../../components/landing/Navbar';
 
@@ -73,11 +74,65 @@ const STATUS_CONFIG = {
 };
 
 export function TrackingPage() {
+  const navigate = useNavigate();
   const [trackingCode, setTrackingCode] = useState('');
   const [contractData, setContractData] = useState<ContractStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
+  const [showRutForm, setShowRutForm] = useState(false);
+  const [buyerRut, setBuyerRut] = useState('');
+  const [rutError, setRutError] = useState('');
+
+  const formatRut = (value: string) => {
+    let rut = value.replace(/[^0-9kK]/g, '').toUpperCase();
+    if (rut.length > 1) {
+      const dv = rut.slice(-1);
+      let body = rut.slice(0, -1);
+      body = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      rut = body + '-' + dv;
+    }
+    return rut;
+  };
+
+  const isValidRut = (rut: string) => {
+    if (!rut || rut.length < 3) return false;
+    const cleanRut = rut.replace(/[.-]/g, '').toUpperCase();
+    const body = cleanRut.slice(0, -1);
+    const dv = cleanRut.slice(-1);
+    
+    if (!/^\d+$/.test(body)) return false;
+    
+    let sum = 0;
+    let multiplier = 2;
+    for (let i = body.length - 1; i >= 0; i--) {
+      sum += parseInt(body[i]) * multiplier;
+      multiplier = multiplier === 7 ? 2 : multiplier + 1;
+    }
+    const expectedDv = 11 - (sum % 11);
+    const dvChar = expectedDv === 11 ? '0' : expectedDv === 10 ? 'K' : expectedDv.toString();
+    
+    return dv === dvChar;
+  };
+
+  const handleContinueEditing = () => {
+    if (!contractData) return;
+    setRutError('');
+    
+    if (!buyerRut || !isValidRut(buyerRut)) {
+      setRutError('Por favor ingresa un RUT válido');
+      return;
+    }
+
+    // Navegar con el tracking code y el RUT
+    // El backend verificará que el RUT coincida con el contrato
+    const cleanRut = buyerRut.replace(/[.-]/g, '');
+    const url = `/resume?code=${contractData.tracking_code}&rut=${encodeURIComponent(cleanRut)}`;
+    console.log('🚀 Navegando a:', url);
+    console.log('📋 Tracking code:', contractData.tracking_code);
+    console.log('🆔 RUT:', cleanRut);
+    navigate(url);
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -320,13 +375,67 @@ export function TrackingPage() {
               {contractData.status !== 'completed' && contractData.status !== 'cancelled' && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="font-semibold text-blue-900 mb-2">Próximos Pasos</div>
-                  <div className="text-sm text-blue-700">
+                  <div className="text-sm text-blue-700 mb-3">
                     {contractData.status === 'draft' && 'Completa y paga el contrato para continuar con el proceso.'}
                     {contractData.status === 'pending_payment' && 'Completa el pago para avanzar al proceso de firmas.'}
                     {contractData.status === 'paid' && 'El pago ha sido confirmado. Espera a que todas las partes firmen el contrato.'}
                     {contractData.status === 'pending_signatures' && 'Espera a que todas las partes firmen el contrato.'}
                     {contractData.status === 'pending_notary' && 'El notario revisará y firmará el contrato.'}
                   </div>
+                  {contractData.status === 'draft' && (
+                    <div className="space-y-3">
+                      {!showRutForm ? (
+                        <button
+                          onClick={() => setShowRutForm(true)}
+                          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
+                        >
+                          <Edit className="w-5 h-5" />
+                          Continuar Editando
+                        </button>
+                      ) : (
+                        <div className="bg-white rounded-lg p-4 border-2 border-blue-300">
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                              Tu RUT <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={buyerRut}
+                              onChange={(e) => {
+                                setBuyerRut(formatRut(e.target.value));
+                                setRutError('');
+                              }}
+                              placeholder="12.345.678-9"
+                              maxLength={12}
+                              className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-sm"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Ingresa tu RUT para verificar tu identidad</p>
+                            {rutError && (
+                              <p className="text-xs text-red-600 mt-1">{rutError}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleContinueEditing}
+                              className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200"
+                            >
+                              Continuar
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowRutForm(false);
+                                setBuyerRut('');
+                                setRutError('');
+                              }}
+                              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all duration-200"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
