@@ -207,23 +207,7 @@ export function CompletarFormularioStep({
 
         {/* Formulario */}
         <div className="w-[400px] flex flex-col gap-4 min-w-0">
-          {/* Info de progreso */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-slate-700">Completa tu contrato</span>
-              <span className="text-sm font-bold text-cyan-600">{completionPercentage}%</span>
-            </div>
-            <div className="w-full bg-slate-200 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  completionPercentage === 100 
-                    ? 'bg-gradient-to-r from-green-500 to-green-600' 
-                    : 'bg-gradient-to-r from-cyan-500 to-cyan-600'
-                }`}
-                style={{ width: `${completionPercentage}%` }}
-              />
-            </div>
-          </div>
+
 
           {/* Campos del formulario */}
           <FieldsForm

@@ -160,36 +160,6 @@ export function ContractEditorPage() {
     }
   };
 
-  // Función para subir PDF borrador
-  const uploadDraftPdf = async (cId: string, tCode: string, rut: string, pdfBlob: Blob) => {
-    try {
-      console.log('📤 Uploading draft PDF to server...');
-      
-      const uploadFormData = new FormData();
-      uploadFormData.append('draft_pdf', pdfBlob, 'contract.pdf');
-      uploadFormData.append('tracking_code', tCode);
-      uploadFormData.append('rut', rut);
-      
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/contracts/${cId}/upload-draft-pdf`,
-        uploadFormData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-      
-      if (response.data.success) {
-        console.log('✅ Draft PDF uploaded successfully:', response.data.data.pdf_path);
-      } else {
-        console.error('❌ Failed to upload draft PDF:', response.data.error);
-      }
-    } catch (error: any) {
-      console.error('❌ Error uploading draft PDF:', error);
-    }
-  };
-
   // Función para aprobar revisión y enviar a firma
   const handleApproveAndSign = async () => {
     if (!contractId || !trackingCode || !buyerRut) {
@@ -200,37 +170,7 @@ export function ContractEditorPage() {
     setIsProcessingPayment(true);
 
     try {
-      // Primero subir el PDF borrador
-      if (renderedContractHtml) {
-        const html2pdf = (await import('html2pdf.js')).default;
-        
-        // Sanitizar HTML para remover colores oklch que no son soportados por html2canvas
-        let sanitizedHtml = renderedContractHtml
-          .replace(/oklch\([^)]*\)/gi, '#1f2937') // Reemplazar oklch con color seguro
-          .replace(/color-mix\([^)]*\)/gi, '#1f2937'); // También color-mix no es soportado
-        
-        const container = document.createElement('div');
-        container.innerHTML = sanitizedHtml;
-        container.style.cssText = 'font-family: Arial, sans-serif; background: white; color: #1f2937; padding: 20px; font-size: 14px;';
-        document.body.appendChild(container);
-
-        const pdfBlob = await html2pdf()
-          .set({
-            margin: [20, 20, 20, 20],
-            filename: 'contract.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-          })
-          .from(container)
-          .output('blob');
-
-        document.body.removeChild(container);
-
-        await uploadDraftPdf(contractId, trackingCode, buyerRut, pdfBlob);
-      }
-
-      // Aprobar revisión
+      // Aprobar revisión - el backend genera el PDF
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/contracts/${contractId}/approve-review`,
         {
@@ -305,7 +245,7 @@ export function ContractEditorPage() {
               setFormData(data.formData);
               setSelectedCapsules(data.selectedCapsules);
               setSignatureType(data.signatureType);
-              setBuyerRut(template.signers_config?.[0] ? data.formData[template.signers_config[0].rut_variable] : '');
+              setBuyerRut(data.buyerRut);
               
               // Crear contractData para pasar a los siguientes pasos
               setContractData({
@@ -318,8 +258,8 @@ export function ContractEditorPage() {
                 signature_type: data.signatureType,
                 signature_price: 0,
                 selectedCapsules: data.selectedCapsules.map(id => ({ id, price_at_purchase: 0 })),
-                buyer_rut: template.signers_config?.[0] ? data.formData[template.signers_config[0].rut_variable] : '',
-                buyer_email: template.signers_config?.[0] ? data.formData[template.signers_config[0].email_variable] : '',
+                buyer_rut: data.buyerRut,
+                buyer_email: data.buyerEmail,
               });
               
               setCurrentStep('payment');
@@ -333,7 +273,7 @@ export function ContractEditorPage() {
           <PaymentStep
             contractId={contractId}
             trackingCode={trackingCode || ''}
-            buyerRut={buyerRut || (template.signers_config?.[0] ? formData[template.signers_config[0].rut_variable] : '')}
+            buyerRut={buyerRut || ''}
             totalAmount={contractTotalAmount}
             onPaymentSuccess={() => {
               // Actualizar contractData con estado draft
@@ -362,9 +302,11 @@ export function ContractEditorPage() {
         )}
 
         {/* Paso 4 - Revisión */}
-        {currentStep === 'review' && template && renderedContractHtml && (
+        {currentStep === 'review' && contractId && trackingCode && buyerRut && (
           <ReviewStep
-            renderedContractHtml={renderedContractHtml}
+            contractId={contractId}
+            trackingCode={trackingCode}
+            buyerRut={buyerRut}
             totalPrice={contractTotalAmount}
             onApprove={handleApproveAndSign}
             onBack={() => setCurrentStep('completar')}
