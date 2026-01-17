@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
+import { contractEditorStyles } from './styles';
 
 interface VariableWithDescription {
   name: string;
@@ -14,6 +15,9 @@ interface DocumentPreviewProps {
   activeField?: string | null;
   variablesMetadata?: VariableWithDescription[];
   onHtmlReady?: (html: string) => void;
+  // Props para mostrar solo un porcentaje del documento (con gradiente blur)
+  visiblePercentage?: number; // Si se define, muestra solo este % del documento
+  lockedOverlayContent?: React.ReactNode; // Contenido a mostrar sobre la parte bloqueada
 }
 
 export function DocumentPreview({ 
@@ -22,7 +26,9 @@ export function DocumentPreview({
   completionPercentage,
   activeField,
   variablesMetadata = [],
-  onHtmlReady
+  onHtmlReady,
+  visiblePercentage,
+  lockedOverlayContent
 }: DocumentPreviewProps) {
   const contractRef = useRef<HTMLDivElement>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ top: number; left: number } | null>(null);
@@ -91,6 +97,9 @@ export function DocumentPreview({
     setTooltipPosition(position);
   }, [activeField, renderedContract, variablesMetadata]);
 
+  // Determinar si mostrar el documento parcialmente (con gradiente)
+  const isPartialView = visiblePercentage !== undefined && visiblePercentage < 100;
+
   return (
     <>
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
@@ -106,26 +115,48 @@ export function DocumentPreview({
                 <div className="text-white font-semibold">Documento</div>
               </div>
             </div>
-            <div className="bg-lime-400/90 text-slate-900 text-xs px-3 py-1 rounded-full font-medium">
+            <div className="text-xs px-3 py-1 rounded-full font-medium bg-lime-400/90 text-slate-900">
               {completionPercentage}% completado
             </div>
           </div>
         </div>
         
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 relative" style={{ position: 'relative', overflow: 'visible' }}>
+        <div className="flex-1 overflow-y-auto p-6 relative">
           {!templateText || templateText.trim() === '' ? (
             <div className="text-center py-12 text-slate-400">
               <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p className="font-medium">No hay contenido</p>
             </div>
           ) : (
-            <div className="relative" style={{ position: 'relative' }}>
-              <div
-                ref={contractRef}
-                className="contract-preview prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: renderedContract }}
-              />
+            <div className="relative">
+              {/* Contenedor con altura limitada si es vista parcial */}
+              <div className={`${isPartialView ? 'relative' : ''}`} style={isPartialView ? { maxHeight: '400px', overflow: 'hidden' } : {}}>
+                <div
+                  ref={contractRef}
+                  className="contract-preview prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: renderedContract }}
+                />
+                
+                {/* Gradiente con blur y transparencia si es vista parcial */}
+                {isPartialView && (
+                  <div 
+                    className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.7) 40%, rgba(255,255,255,0.95) 100%)',
+                      backdropFilter: 'blur(4px)',
+                      WebkitBackdropFilter: 'blur(4px)'
+                    }}
+                  />
+                )}
+              </div>
+              
+              {/* Sección bloqueada con overlay */}
+              {isPartialView && lockedOverlayContent && (
+                <div className="mt-4 py-8 flex flex-col items-center justify-center border-t border-slate-200">
+                  {lockedOverlayContent}
+                </div>
+              )}
               
               {/* Popup tipo comic con la descripción */}
               {tooltipPosition && currentDescription && (
@@ -169,6 +200,7 @@ export function DocumentPreview({
         .animate-fade-in {
           animation: fade-in 0.2s ease-out;
         }
+        ${contractEditorStyles}
       `}</style>
     </>
   );

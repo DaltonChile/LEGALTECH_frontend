@@ -65,17 +65,25 @@ export const NotaryInboxPage: React.FC = () => {
     }
   };
 
-  const filteredContracts = contracts.filter(contract => {
-    if (filter === 'pending') return contract.status === 'waiting_notary';
-    if (filter === 'signed') return contract.status === 'signed';
-    return true;
-  });
-
   const notarySigner = (contract: ContractRequest) => 
     contract.signers.find(s => s.role === 'notary');
 
-  const pendingCount = contracts.filter(c => c.status === 'waiting_notary').length;
-  const signedCount = contracts.filter(c => c.status === 'signed').length;
+  const filteredContracts = contracts.filter(contract => {
+    const notary = notarySigner(contract);
+    if (filter === 'pending') return notary && !notary.has_signed;
+    if (filter === 'signed') return notary && notary.has_signed;
+    return true;
+  });
+
+  const pendingCount = contracts.filter(c => {
+    const notary = notarySigner(c);
+    return notary && !notary.has_signed;
+  }).length;
+  
+  const signedCount = contracts.filter(c => {
+    const notary = notarySigner(c);
+    return notary && notary.has_signed;
+  }).length;
 
   if (loading) {
     return (
