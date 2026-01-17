@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { ContractEditor } from '../../components/public/contract-editor';
 import { ReviewStep } from '../../components/public/contract-editor/ReviewStep';
 import type { SignatureInfo } from '../../components/public/contract-editor/ReviewStep';
 import { PaymentStep } from '../../components/public/contract-editor/PaymentStep';
 import { SignatureStep } from '../../components/public/contract-editor/SignatureStep';
+import { FormularioInicialStep } from '../../components/public/contract-editor/FormularioInicialStep';
+import { CompletarFormularioStep } from '../../components/public/contract-editor/CompletarFormularioStep';
 import { Navbar } from '../../components/landing/Navbar';
 import { ProgressBar } from '../../components/shared/ProgressBar';
 import { extractVariables } from '../../components/public/contract-editor/utils/templateParser';
+import type { ContractData } from '../../types/contract';
 
 interface Template {
   id: string;
@@ -25,8 +28,18 @@ interface Template {
   capsules: any[];
 }
 
-type Step = 'editor' | 'review' | 'payment' | 'signatures';
+type Step = 'formulario-inicial' | 'payment' | 'completar' | 'review' | 'signatures' | 'editor';
 
+// Nuevo flujo: Formulario Inicial -> Pago -> Completar -> Review -> Firmas
+const NEW_FLOW_STEPS = [
+  { id: 'formulario-inicial', label: 'Datos iniciales' },
+  { id: 'payment', label: 'Pago' },
+  { id: 'completar', label: 'Completar formulario' },
+  { id: 'review', label: 'Revisar' },
+  { id: 'signatures', label: 'Firmar' },
+];
+
+// Flujo original (mantenido por compatibilidad)
 const PROGRESS_STEPS = [
   { id: 'editor', label: 'Completar datos' },
   { id: 'review', label: 'Revisar contrato' },
@@ -37,11 +50,15 @@ const PROGRESS_STEPS = [
 export function ContractEditorPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState<Step>('editor');
+  const [currentStep, setCurrentStep] = useState<Step>('formulario-inicial');
   const [signatureInfo, setSignatureInfo] = useState<SignatureInfo | undefined>(undefined);
+  
+  // Usar nuevo flujo por defecto
+  const [useNewFlow, setUseNewFlow] = useState(true);
 
   // Contract data
   const [selectedCapsules, setSelectedCapsules] = useState<number[]>([]);
@@ -52,6 +69,11 @@ export function ContractEditorPage() {
   const [templateText, setTemplateText] = useState<string>('');
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  
+  // Datos del contrato para el nuevo flujo
+  const [contractData, setContractData] = useState<ContractData | null>(null);
+  const [buyerRut, setBuyerRut] = useState<string>('');
+  const [signatureType, setSignatureType] = useState<'none' | 'simple' | 'fea'>('simple');
 
   // Auto-save - TODO: implement useAutoSave hook
   // const { isSaving, lastSaved } = useAutoSave(
@@ -65,8 +87,18 @@ export function ContractEditorPage() {
     if (slug) {
       loadTemplate();
       loadSignatureInfo();
+      
+      // Verificar si hay parámetros de resume
+      const stepParam = searchParams.get('step');
+      const idParam = searchParams.get('id');
+      const rutParam = searchParams.get('rut');
+      
+      if (stepParam && idParam && rutParam) {
+        // Cargar contrato existente
+        loadExistingContract(idParam, rutParam, stepParam);
+      }
     }
-  }, [slug]);
+  }, [slug, searchParams]);
 
   const loadTemplate = async () => {
     try {
@@ -107,6 +139,39 @@ export function ContractEditorPage() {
       }
     } catch (error) {
       console.error('Error loading signature info:', error);
+    }
+  };
+
+  const loadExistingContract = async (id: string, rut: string, step: string) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/contracts/resume?id=${id}&rut=${encodeURIComponent(rut)}`
+      );
+      
+      if (response.data.success) {
+        const data = response.data.data;
+        setContractData(data);
+        setContractId(data.id);
+        setTrackingCode(data.tracking_code);
+        setBuyerRut(data.buyer_rut);
+        setFormData(data.form_data || {});
+        setContractTotalAmount(data.total_amount);
+        setSignatureType(data.signature_type || 'simple');
+        
+        // Establecer cápsulas seleccionadas
+        if (data.selectedCapsules) {
+          setSelectedCapsules(data.selectedCapsules.map((c: any) => c.id));
+        }
+        
+        // Ir al paso correspondiente
+        if (step === 'completar' && data.status === 'draft') {
+          setCurrentStep('completar');
+        } else if (data.status === 'waiting_signatures') {
+          setCurrentStep('signatures');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading existing contract:', error);
     }
   };
 
@@ -290,8 +355,70 @@ export function ContractEditorPage() {
     );
   }
 
-  console.log('Rendering ContractEditorPage with:', { template, currentStep, selectedCapsules });
+  console.log('Rendering ContractEditorPage with:', { template, currentStep, selectedCapsules, useNewFlow });
   console.log('Template has capsules:', template.capsules?.length);
+
+  // Función para aprobar revisión y enviar a firma (nuevo flujo)
+  const handleApproveAndSign = async () => {
+    if (!contractId || !trackingCode || !buyerRut) {
+      alert('Error: Faltan datos del contrato');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      // Primero subir el PDF borrador
+      if (renderedContractHtml) {
+        // Generar PDF y subirlo
+        const html2pdf = (await import('html2pdf.js')).default;
+        
+        const container = document.createElement('div');
+        container.innerHTML = renderedContractHtml;
+        container.style.cssText = 'font-family: Arial, sans-serif; background: white; color: #1f2937; padding: 20px; font-size: 14px;';
+        document.body.appendChild(container);
+
+        const pdfBlob = await html2pdf()
+          .set({
+            margin: [20, 20, 20, 20],
+            filename: 'contract.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          })
+          .from(container)
+          .output('blob');
+
+        document.body.removeChild(container);
+
+        // Subir PDF
+        await uploadDraftPdf(contractId, trackingCode, buyerRut, pdfBlob);
+      }
+
+      // Aprobar revisión
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/contracts/${contractId}/approve-review`,
+        {
+          tracking_code: trackingCode,
+          rut: buyerRut
+        }
+      );
+
+      if (response.data.success) {
+        setCurrentStep('signatures');
+      } else {
+        alert(response.data.error || 'Error al aprobar la revisión');
+      }
+    } catch (error: any) {
+      console.error('Error approving review:', error);
+      alert(`Error: ${error.response?.data?.error || error.message}`);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // Determinar qué pasos mostrar según el flujo
+  const currentSteps = useNewFlow ? NEW_FLOW_STEPS : PROGRESS_STEPS;
 
   return (
     <div className="h-screen flex flex-col bg-slate-100">
@@ -299,11 +426,97 @@ export function ContractEditorPage() {
       <Navbar />
       
       {/* Progress Bar */}
-      <ProgressBar steps={PROGRESS_STEPS} currentStep={currentStep} />
+      <ProgressBar steps={currentSteps} currentStep={currentStep} />
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
-        {currentStep === 'editor' && (
+        {/* NUEVO FLUJO: Paso 1 - Formulario Inicial */}
+        {currentStep === 'formulario-inicial' && useNewFlow && template && (
+          <FormularioInicialStep
+            template={template}
+            signatureInfo={signatureInfo}
+            onContinue={(data) => {
+              setContractId(data.contractId);
+              setTrackingCode(data.trackingCode);
+              setContractTotalAmount(data.totalAmount);
+              setFormData(data.formData);
+              setSelectedCapsules(data.selectedCapsules);
+              setSignatureType(data.signatureType);
+              setBuyerRut(template.signers_config?.[0] ? data.formData[template.signers_config[0].rut_variable] : '');
+              
+              // Crear contractData para pasar a los siguientes pasos
+              setContractData({
+                id: data.contractId,
+                tracking_code: data.trackingCode,
+                status: 'pending_payment',
+                form_data: data.formData,
+                template_version_id: template.version_id,
+                total_amount: data.totalAmount,
+                signature_type: data.signatureType,
+                signature_price: 0,
+                selectedCapsules: data.selectedCapsules.map(id => ({ id, price_at_purchase: 0 })),
+                buyer_rut: template.signers_config?.[0] ? data.formData[template.signers_config[0].rut_variable] : '',
+                buyer_email: template.signers_config?.[0] ? data.formData[template.signers_config[0].email_variable] : '',
+              });
+              
+              setCurrentStep('payment');
+            }}
+            onBack={() => navigate('/')}
+          />
+        )}
+
+        {/* NUEVO FLUJO: Paso 2 - Pago (después del formulario inicial) */}
+        {currentStep === 'payment' && useNewFlow && template && contractId && (
+          <PaymentStep
+            contractId={contractId}
+            trackingCode={trackingCode || ''}
+            buyerRut={buyerRut || (template.signers_config?.[0] ? formData[template.signers_config[0].rut_variable] : '')}
+            totalAmount={contractTotalAmount}
+            onPaymentSuccess={() => {
+              // Actualizar contractData con estado draft
+              if (contractData) {
+                setContractData({ ...contractData, status: 'draft' });
+              }
+              setCurrentStep('completar');
+            }}
+            onPaymentFailed={() => setCurrentStep('formulario-inicial')}
+            onBack={() => setCurrentStep('formulario-inicial')}
+          />
+        )}
+
+        {/* NUEVO FLUJO: Paso 3 - Completar Formulario */}
+        {currentStep === 'completar' && useNewFlow && template && contractData && (
+          <CompletarFormularioStep
+            template={template}
+            contractData={contractData}
+            onComplete={(newFormData, html) => {
+              setFormData(newFormData);
+              setRenderedContractHtml(html);
+              setCurrentStep('review');
+            }}
+            onBack={() => setCurrentStep('payment')}
+          />
+        )}
+
+        {/* NUEVO FLUJO: Paso 4 - Revisión */}
+        {currentStep === 'review' && useNewFlow && template && renderedContractHtml && (
+          <ReviewStep
+            renderedContractHtml={renderedContractHtml}
+            totalPrice={contractTotalAmount}
+            onApprove={() => {}} // No usado en nuevo flujo
+            onBack={() => setCurrentStep('completar')}
+            isProcessing={isProcessingPayment}
+            signatureInfo={signatureInfo}
+            isNewFlow={true}
+            contractId={contractId || undefined}
+            trackingCode={trackingCode || undefined}
+            buyerRut={buyerRut}
+            onApproveAndSign={handleApproveAndSign}
+          />
+        )}
+
+        {/* FLUJO ORIGINAL: Editor */}
+        {currentStep === 'editor' && !useNewFlow && (
           <ContractEditor
             templateText={templateText}
             formData={formData}
@@ -330,7 +543,8 @@ export function ContractEditorPage() {
           />
         )}
 
-        {currentStep === 'review' && template && renderedContractHtml && (
+        {/* FLUJO ORIGINAL: Review */}
+        {currentStep === 'review' && !useNewFlow && template && renderedContractHtml && (
           <ReviewStep
             renderedContractHtml={renderedContractHtml}
             totalPrice={template.base_price + 
@@ -345,7 +559,8 @@ export function ContractEditorPage() {
           />
         )}
 
-        {currentStep === 'payment' && template && (
+        {/* FLUJO ORIGINAL: Payment */}
+        {currentStep === 'payment' && !useNewFlow && template && (
           <PaymentStep
             contractId={contractId}
             trackingCode={trackingCode || ''}
@@ -361,11 +576,12 @@ export function ContractEditorPage() {
           />
         )}
 
+        {/* AMBOS FLUJOS: Paso de Firmas */}
         {currentStep === 'signatures' && contractId && trackingCode && (
           <SignatureStep
             contractId={contractId}
             trackingCode={trackingCode}
-            onBack={() => setCurrentStep('payment')}
+            onBack={() => setCurrentStep(useNewFlow ? 'review' : 'payment')}
           />
         )}
       </main>

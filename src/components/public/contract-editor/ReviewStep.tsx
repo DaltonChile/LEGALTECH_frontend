@@ -25,6 +25,12 @@ interface ReviewStepProps {
   onBack: () => void;
   isProcessing?: boolean;
   signatureInfo?: SignatureInfo;
+  // Nuevas props para el nuevo flujo
+  isNewFlow?: boolean;
+  contractId?: string;
+  trackingCode?: string;
+  buyerRut?: string;
+  onApproveAndSign?: () => void;
 }
 
 export function ReviewStep({
@@ -34,6 +40,11 @@ export function ReviewStep({
   onBack,
   isProcessing = false,
   signatureInfo,
+  isNewFlow = false,
+  contractId,
+  trackingCode,
+  buyerRut,
+  onApproveAndSign,
 }: ReviewStepProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
@@ -271,6 +282,13 @@ export function ReviewStep({
   };
 
   const handleApprove = () => {
+    // Si es el nuevo flujo, usar la función de aprobar y firmar
+    if (isNewFlow && onApproveAndSign) {
+      onApproveAndSign();
+      return;
+    }
+    
+    // Flujo original
     if (!pdfBlob || loading || isProcessing) return;
     onApprove(pdfBlob, signatureType);
   };
@@ -466,7 +484,7 @@ export function ReviewStep({
                   : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105'
               }`}
             >
-              {isProcessing ? 'Procesando...' : 'Aprobar y continuar al pago →'}
+              {isProcessing ? 'Procesando...' : isNewFlow ? 'Aprobar y Firmar →' : 'Aprobar y continuar al pago →'}
             </button>
 
             <button

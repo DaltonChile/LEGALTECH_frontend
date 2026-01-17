@@ -10,6 +10,7 @@ const ContractCatalogPage = lazy(() => import('../pages/public/ContractCatalogPa
 const ContractEditorPage = lazy(() => import('../pages/public/ContractEditorPage').then(m => ({ default: m.ContractEditorPage })));
 const TrackingPage = lazy(() => import('../pages/public/TrackingPage').then(m => ({ default: m.TrackingPage })));
 const HelpPage = lazy(() => import('../pages/public/HelpPage').then(m => ({ default: m.HelpPage })));
+const ResumeContractPage = lazy(() => import('../pages/public/ResumeContractPage').then(m => ({ default: m.ResumeContractPage })));
 
 // Admin pages - lazy loaded
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
@@ -37,8 +38,9 @@ export function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/seguimiento" element={<TrackingPage />} />
         <Route path="/ayuda" element={<HelpPage />} />
-        <Route path="/:slug" element={<ContractEditorPage />} />
+        <Route path="/resume" element={<ResumeContractPage />} />
         <Route path="/catalogo" element={<ContractCatalogPage />} />
+        <Route path="/:slug" element={<ContractEditorPage />} />
 
       {/* Admin Routes with Layout */}
       <Route
