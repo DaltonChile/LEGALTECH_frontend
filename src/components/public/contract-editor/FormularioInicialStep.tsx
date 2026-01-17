@@ -281,7 +281,7 @@ export function FormularioInicialStep({
         </div>
 
         {/* Panel derecho: Formulario y opciones */}
-        <div className="w-[400px] space-y-4 min-w-0 overflow-y-auto">
+        <div className="w-[480px] space-y-4 min-w-0 overflow-y-auto">
           {/* Barra de progreso */}
 
 
@@ -346,7 +346,7 @@ export function FormularioInicialStep({
           {template.capsules.length > 0 && (
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
               <div className="p-3 bg-slate-50 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
                   <Plus className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -355,29 +355,36 @@ export function FormularioInicialStep({
                 </div>
               </div>
               
-              <div className="border-t border-slate-100 p-3 space-y-2 max-h-[150px] overflow-y-auto">
+              <div className="border-t border-slate-100 p-3 space-y-3 max-h-[300px] overflow-y-auto">
                 {template.capsules.map((capsule) => {
                   const isSelected = selectedCapsules.includes(capsule.id);
                   return (
                     <div
                       key={capsule.id}
                       onClick={() => toggleCapsule(capsule.id)}
-                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all ${
-                        isSelected ? 'bg-cyan-50 ring-2 ring-cyan-500' : 'bg-white hover:bg-slate-50'
+                      className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all border ${
+                        isSelected ? 'bg-cyan-50 ring-2 ring-cyan-500 border-cyan-200' : 'bg-white hover:bg-slate-50 border-slate-200'
                       }`}
                     >
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                      <div className={`w-5 h-5 mt-0.5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                         isSelected ? 'bg-cyan-500 border-cyan-500' : 'border-slate-300 bg-white'
                       }`}>
                         {isSelected && <Check className="w-3 h-3 text-white" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">{capsule.title}</div>
-                      </div>
-                      <div className={`text-xs font-bold px-2 py-1 rounded ${
-                        isSelected ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-600'
-                      }`}>
-                        +{formatPrice(capsule.price)}
+                        <div className="flex justify-between gap-2 mb-1">
+                            <div className="text-sm font-bold text-slate-900 leading-tight">{capsule.title}</div>
+                            <div className={`text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap ${
+                                isSelected ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-600'
+                            }`}>
+                                +{formatPrice(capsule.price)}
+                            </div>
+                        </div>
+                         {(capsule.description || capsule.legal_text) && (
+                            <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed">
+                                {capsule.description || capsule.legal_text}
+                            </p>
+                         )}
                       </div>
                     </div>
                   );
