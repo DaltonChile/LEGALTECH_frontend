@@ -204,8 +204,13 @@ export function ContractEditorPage() {
       if (renderedContractHtml) {
         const html2pdf = (await import('html2pdf.js')).default;
         
+        // Sanitizar HTML para remover colores oklch que no son soportados por html2canvas
+        let sanitizedHtml = renderedContractHtml
+          .replace(/oklch\([^)]*\)/gi, '#1f2937') // Reemplazar oklch con color seguro
+          .replace(/color-mix\([^)]*\)/gi, '#1f2937'); // También color-mix no es soportado
+        
         const container = document.createElement('div');
-        container.innerHTML = renderedContractHtml;
+        container.innerHTML = sanitizedHtml;
         container.style.cssText = 'font-family: Arial, sans-serif; background: white; color: #1f2937; padding: 20px; font-size: 14px;';
         document.body.appendChild(container);
 
