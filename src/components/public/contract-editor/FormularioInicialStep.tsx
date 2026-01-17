@@ -281,23 +281,9 @@ export function FormularioInicialStep({
         </div>
 
         {/* Panel derecho: Formulario y opciones */}
-        <div className="w-[400px] flex flex-col gap-4 min-w-0 overflow-y-auto">
+        <div className="w-[400px] space-y-4 min-w-0 overflow-y-auto">
           {/* Barra de progreso */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-slate-700">Progreso inicial</span>
-              <span className="text-sm font-bold text-cyan-600">{completionPercentage}%</span>
-            </div>
-            <div className="w-full bg-slate-200 rounded-full h-2">
-              <div 
-                className="h-2 rounded-full transition-all duration-300 bg-gradient-to-r from-cyan-500 to-cyan-600"
-                style={{ width: `${completionPercentage}%` }}
-              />
-            </div>
-            <p className="text-xs text-slate-500 mt-2">
-              Completa los campos que desees antes de continuar
-            </p>
-          </div>
+
 
           {/* Campos de datos del comprador - REQUERIDOS */}
           <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl shadow-lg border-2 border-cyan-200 p-4 space-y-4">

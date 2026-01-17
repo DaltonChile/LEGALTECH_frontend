@@ -269,12 +269,6 @@ export function SignatureStep({ contractId, trackingCode, onBack }: SignatureSte
         {/* Actions */}
         <div className="flex justify-between">
           <button
-            onClick={onBack}
-            className="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            ← Volver
-          </button>
-          <button
             onClick={() => (window.location.href = '/')}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
