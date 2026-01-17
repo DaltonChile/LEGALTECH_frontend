@@ -2,35 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import html2pdf from 'html2pdf.js';
 import { FileText, CheckCircle, AlertCircle, Shield, Zap } from 'lucide-react';
 
-export interface SignatureInfo {
-  numberOfSigners: number;
-  requiresNotary: boolean;
-  requiresSignatures: boolean;
-  pricing: {
-    fes: {
-      pricePerSigner: number;
-      totalPrice: number;
-    };
-    fea: {
-      pricePerSigner: number;
-      totalPrice: number;
-    };
-  };
-}
-
 interface ReviewStepProps {
   renderedContractHtml: string;
   totalPrice: number;
-  onApprove: (pdfBlob: Blob, signatureType?: 'simple' | 'fea' | 'none') => void;
+  onApprove: () => void;
   onBack: () => void;
   isProcessing?: boolean;
-  signatureInfo?: SignatureInfo;
-  // Nuevas props para el nuevo flujo
-  isNewFlow?: boolean;
-  contractId?: string;
-  trackingCode?: string;
-  buyerRut?: string;
-  onApproveAndSign?: () => void;
+  // Tipo de firma ya seleccionado en paso 1
+  signatureType?: 'simple' | 'fea' | 'none';
 }
 
 export function ReviewStep({
@@ -39,27 +18,13 @@ export function ReviewStep({
   onApprove,
   onBack,
   isProcessing = false,
-  signatureInfo,
-  isNewFlow = false,
-  contractId,
-  trackingCode,
-  buyerRut,
-  onApproveAndSign,
+  signatureType = 'simple',
 }: ReviewStepProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [signatureType, setSignatureType] = useState<'simple' | 'fea' | 'none'>('simple');
   const hasGeneratedRef = useRef(false);
-
-  const requiresSignature = signatureInfo?.requiresSignatures || false;
-
-  useEffect(() => {
-    if (!requiresSignature) {
-      setSignatureType('none');
-    }
-  }, [requiresSignature]);
 
   useEffect(() => {
     // Only generate once to prevent duplicate uploads
@@ -270,27 +235,9 @@ export function ReviewStep({
     }
   };
 
-  const getSignaturePrice = () => {
-    if (!signatureInfo || signatureType === 'none') return 0;
-    return signatureType === 'fea' 
-      ? signatureInfo.pricing.fea.totalPrice 
-      : signatureInfo.pricing.fes.totalPrice;
-  };
-
-  const getTotalPriceWithSignature = () => {
-    return totalPrice + getSignaturePrice();
-  };
-
   const handleApprove = () => {
-    // Si es el nuevo flujo, usar la función de aprobar y firmar
-    if (isNewFlow && onApproveAndSign) {
-      onApproveAndSign();
-      return;
-    }
-    
-    // Flujo original
-    if (!pdfBlob || loading || isProcessing) return;
-    onApprove(pdfBlob, signatureType);
+    if (loading || isProcessing) return;
+    onApprove();
   };
 
   const formatPrice = (price: number) => {
@@ -354,99 +301,41 @@ export function ReviewStep({
           </div>
         </div>
 
-        {/* Sidebar - Resumen y Acciones (w-1/5 will take 1/5 of space) */}
+        {/* Sidebar - Resumen y Acciones */}
         <div className="w-1/5 flex flex-col gap-4">
-          {/* Signature Selection */}
-          {requiresSignature && signatureInfo && (
+          {/* Info de firma seleccionada */}
+          {signatureType !== 'none' && (
             <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                 <Shield className="w-4 h-4 text-blue-600" />
-                Tipo de Firma
+                Firma Electrónica
               </h3>
               
-              <div className="space-y-3">
-                {/* FES Option */}
-                <label className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  signatureType === 'simple' 
-                    ? 'border-blue-600 bg-blue-50' 
-                    : 'border-gray-200 hover:border-blue-300'
-                }`}>
-                  <input
-                    type="radio"
-                    name="signatureType"
-                    value="simple"
-                    checked={signatureType === 'simple'}
-                    onChange={(e) => setSignatureType(e.target.value as 'simple')}
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-green-600" />
-                      <span className="font-semibold text-sm">FES (Simple)</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Firma electrónica simple
-                    </p>
-                    <p className="text-sm font-bold text-green-600 mt-1">
-                      {formatPrice(signatureInfo.pricing.fes.totalPrice)}
-                    </p>
-                  </div>
-                </label>
-
-                {/* FEA Option */}
-                <label className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  signatureType === 'fea' 
-                    ? 'border-blue-600 bg-blue-50' 
-                    : 'border-gray-200 hover:border-blue-300'
-                }`}>
-                  <input
-                    type="radio"
-                    name="signatureType"
-                    value="fea"
-                    checked={signatureType === 'fea'}
-                    onChange={(e) => setSignatureType(e.target.value as 'fea')}
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-blue-600" />
-                      <span className="font-semibold text-sm">FEA (Avanzada)</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Firma electrónica avanzada
-                    </p>
-                    <p className="text-sm font-bold text-blue-600 mt-1">
-                      {formatPrice(signatureInfo.pricing.fea.totalPrice)}
-                    </p>
-                  </div>
-                </label>
+              <div className={`flex items-center gap-3 p-3 rounded-lg border-2 ${
+                signatureType === 'fea' ? 'border-blue-600 bg-blue-50' : 'border-green-600 bg-green-50'
+              }`}>
+                {signatureType === 'fea' ? (
+                  <Shield className="w-5 h-5 text-blue-600" />
+                ) : (
+                  <Zap className="w-5 h-5 text-green-600" />
+                )}
+                <div>
+                  <span className="font-semibold text-sm">
+                    {signatureType === 'fea' ? 'FEA (Avanzada)' : 'FES (Simple)'}
+                  </span>
+                  <p className="text-xs text-gray-600">
+                    Incluida en tu pago
+                  </p>
+                </div>
               </div>
-
-              <p className="text-xs text-gray-500 mt-3">
-                {signatureInfo.numberOfSigners} {signatureInfo.numberOfSigners === 1 ? 'firmante' : 'firmantes'}
-                {signatureInfo.requiresNotary && ' + firma manual notario'}
-              </p>
             </div>
           )}
 
           {/* Precio Total */}
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6">
-            <h3 className="text-sm font-medium text-slate-500 mb-2">Total a pagar</h3>
-            {requiresSignature && getSignaturePrice() > 0 && (
-              <div className="text-sm text-slate-600 mb-2">
-                <div className="flex justify-between">
-                  <span>Contrato base:</span>
-                  <span>{formatPrice(totalPrice)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Firma electrónica:</span>
-                  <span>{formatPrice(getSignaturePrice())}</span>
-                </div>
-                <div className="border-t border-slate-200 my-2"></div>
-              </div>
-            )}
+            <h3 className="text-sm font-medium text-slate-500 mb-2">Total pagado</h3>
             <div className="text-3xl font-bold text-slate-900">
-              {formatPrice(getTotalPriceWithSignature())}
+              {formatPrice(totalPrice)}
             </div>
           </div>
 
@@ -457,17 +346,7 @@ export function ReviewStep({
               <div>
                 <h4 className="font-semibold text-slate-900 mb-1">Revisa cuidadosamente</h4>
                 <p className="text-sm text-slate-600">
-                  Verifica que toda la información esté correcta antes de continuar al pago.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Cápsulas con blur</h4>
-                <p className="text-sm text-slate-600">
-                  Las cápsulas seleccionadas aparecen difuminadas. Se desbloquearán tras el pago.
+                  Verifica que toda la información esté correcta antes de enviar a firma.
                 </p>
               </div>
             </div>
@@ -477,14 +356,14 @@ export function ReviewStep({
           <div className="flex flex-col gap-3">
             <button
               onClick={handleApprove}
-              disabled={!pdfUrl || !pdfBlob || loading || isProcessing}
+              disabled={loading || isProcessing}
               className={`w-full py-4 rounded-xl font-semibold text-white transition-all shadow-lg ${
-                !pdfUrl || !pdfBlob || loading || isProcessing
+                loading || isProcessing
                   ? 'bg-slate-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105'
               }`}
             >
-              {isProcessing ? 'Procesando...' : isNewFlow ? 'Aprobar y Firmar →' : 'Aprobar y continuar al pago →'}
+              {isProcessing ? 'Procesando...' : 'Aprobar y Firmar →'}
             </button>
 
             <button
