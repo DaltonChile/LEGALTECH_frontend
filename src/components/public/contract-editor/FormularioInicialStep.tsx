@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react';
 import axios from 'axios';
-import { ArrowLeft, Lock, Shield, Check, Plus, ArrowRight, AlertCircle, Edit3, User, FileText } from 'lucide-react';
+import { Lock, Shield, Check, Plus, ArrowRight, AlertCircle, Edit3, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { EditorHeader } from './EditorHeader';
 import { useContractRenderer } from './hooks/useContractRenderer';
 import { extractVariables, formatVariableName } from './utils/templateParser';
-import { formatPrice } from './utils/formatPrice';
 import { contractEditorStyles } from './styles';
 import type { InitialFormResponse } from '../../../types/contract';
 import type { Capsule } from './types';
@@ -28,6 +27,12 @@ interface Template {
   base_price: number;
   template_content: string;
   capsules: Capsule[];
+  clause_numbering?: Array<{
+    order: number;
+    title: string;
+    is_in_capsule: boolean;
+    capsule_slug: string | null;
+  }>;
   signers_config?: Array<{
     role: string;
     name_variable: string;
@@ -73,6 +78,8 @@ export function FormularioInicialStep({
   const [activeField, setActiveField] = useState<string | null>(null);
   const [contactEmail, setContactEmail] = useState(''); // Email para recibir el código
   const [contactRut, setContactRut] = useState(''); // RUT del comprador
+  const [showContactModal, setShowContactModal] = useState(false); // Mostrar modal al inicio
+  const [expandedCapsules, setExpandedCapsules] = useState<number[]>([]);
 
   const requiresSignature = signatureInfo?.requiresSignatures ?? true;
 
@@ -107,7 +114,7 @@ export function FormularioInicialStep({
     extractedVariables: allVariables,
     capsules: template.capsules,
     selectedCapsules,
-    clauseNumbering: [],
+    clauseNumbering: template.clause_numbering || [],
     signersConfig: (template.signers_config || []) as any,
     activeField,
   });
@@ -256,21 +263,12 @@ export function FormularioInicialStep({
          totalPrice={totalPrice}
          rightAction={
             <button
-              onClick={handleGoToPayment}
+              onClick={() => setShowContactModal(true)}
               disabled={isSubmitting}
               className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10"
             >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
-                  <span>Procesando...</span>
-                </>
-              ) : (
-                <>
-                  <span>Continuar al pago</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
+              <span>Continuar al pago</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
          }
       />
@@ -292,62 +290,7 @@ export function FormularioInicialStep({
         </div>
 
         {/* Right: Sidebar */}
-        <div className="w-[420px] h-full overflow-y-auto pr-2 space-y-4 pb-20 custom-scrollbar">
-           
-           {/* Contact Info Card */}
-           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
-              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                   <User className="w-4 h-4 text-blue-600" />
-                </div>
-                Datos de contacto
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">Tu RUT <span className="text-red-500">*</span></label>
-                  <input 
-                    type="text" 
-                    value={contactRut}
-                    onChange={(e) => setContactRut(formatRut(e.target.value))}
-                    placeholder="12.345.678-9"
-                    maxLength={12}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">Tu Email <span className="text-red-500">*</span></label>
-                  <input 
-                    type="email" 
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="nombre@ejemplo.com"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                  />
-                  <p className="text-[10px] text-slate-500 mt-1.5">Aquí recibirás el código de seguimiento</p>
-                </div>
-              </div>
-           </div>
-
-           {/* Fields Form */}
-           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
-              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                   <Edit3 className="w-4 h-4 text-emerald-600" />
-                </div>
-                Datos del documento
-              </h3>
-              <FieldsForm
-                 variables={filteredVariables}
-                 formData={formData}
-                 onFormChange={handleFormChange}
-                 searchTerm={searchTerm}
-                 onSearchChange={setSearchTerm}
-                 activeField={activeField}
-                 onFieldFocus={setActiveField}
-                 onFieldBlur={() => setActiveField(null)}
-              />
-           </div>
+        <div className="flex-1 h-full overflow-y-auto pr-2 space-y-4 pb-20 custom-scrollbar">
 
             {/* Capsules */}
             {template.capsules.length > 0 && (
@@ -361,25 +304,41 @@ export function FormularioInicialStep({
                   </h3>
                    <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">{selectedCapsules.length} seleccionadas</span>
                 </div>
-                <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                <div className="divide-y divide-slate-100 overflow-y-auto">
                    {template.capsules.map((capsule) => {
                       const isSelected = selectedCapsules.includes(capsule.id);
+                      const isExpanded = expandedCapsules.includes(capsule.id);
                       return (
                         <div 
                           key={capsule.id}
-                          onClick={() => toggleCapsule(capsule.id)}
-                          className={`p-4 cursor-pointer transition-colors hover:bg-slate-50 flex items-start gap-3 group ${isSelected ? 'bg-violet-50/30' : ''}`}
+                          className={`transition-colors flex flex-col group ${isSelected ? 'bg-violet-50/30' : 'hover:bg-slate-50'}`}
                         >
-                           <div className={`mt-0.5 w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-violet-600 border-violet-600' : 'border-slate-300 bg-white group-hover:border-violet-400'}`}>
-                              {isSelected && <Check className="w-3 h-3 text-white" />}
+                           {/* Header */}
+                           <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => toggleCapsule(capsule.id)}>
+                               <div className={`w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-violet-600 border-violet-600' : 'border-slate-300 bg-white group-hover:border-violet-400'}`}>
+                                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                               </div>
+                               <div className="flex-1 flex items-center justify-between gap-2">
+                                  <span className={`text-sm font-medium ${isSelected ? 'text-violet-900' : 'text-slate-900'}`}>{capsule.title}</span>
+                                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">+{formatPrice(capsule.price)}</span>
+                               </div>
+                               <button 
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   setExpandedCapsules(prev => prev.includes(capsule.id) ? prev.filter(id => id !== capsule.id) : [...prev, capsule.id]);
+                                 }}
+                                 className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+                               >
+                                 {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                               </button>
                            </div>
-                           <div className="flex-1">
-                              <div className="flex items-center justify-between gap-2 mb-1">
-                                <span className={`text-sm font-medium ${isSelected ? 'text-violet-900' : 'text-slate-900'}`}>{capsule.title}</span>
-                                <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">+{formatPrice(capsule.price)}</span>
-                              </div>
-                              <p className="text-xs text-slate-500 line-clamp-2">{capsule.description || capsule.legal_text}</p>
-                           </div>
+                           
+                           {/* Body (Accordion Content) */}
+                           {isExpanded && (
+                             <div className="px-4 pb-4 pl-12">
+                               <p className="text-xs text-slate-500 leading-relaxed">{capsule.description || capsule.legal_text}</p>
+                             </div>
+                           )}
                         </div>
                       )
                    })}
@@ -432,6 +391,26 @@ export function FormularioInicialStep({
                 </div>
               </div>
             )}
+
+           {/* Fields Form */}
+           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
+              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                   <Edit3 className="w-4 h-4 text-emerald-600" />
+                </div>
+                Datos del documento
+              </h3>
+              <FieldsForm
+                 variables={filteredVariables}
+                 formData={formData}
+                 onFormChange={handleFormChange}
+                 searchTerm={searchTerm}
+                 onSearchChange={setSearchTerm}
+                 activeField={activeField}
+                 onFieldFocus={setActiveField}
+                 onFieldBlur={() => setActiveField(null)}
+              />
+           </div>
             
             {/* Error Display */}
             {error && (
@@ -442,6 +421,88 @@ export function FormularioInicialStep({
             )}
         </div>
       </div>
+      {/* Contact Data Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fade-in-up">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                  <User className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Datos de contacto</h3>
+              </div>
+              <button 
+                onClick={() => setShowContactModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                disabled={isSubmitting}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <p className="text-slate-600 mb-6 text-sm">
+              Ingresa tus datos para enviarte el código de seguimiento y el acceso a tu borrador.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Tu RUT <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={contactRut}
+                  onChange={(e) => setContactRut(formatRut(e.target.value))}
+                  placeholder="12.345.678-9"
+                  maxLength={12}
+                  disabled={isSubmitting}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all font-mono disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Tu Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="nombre@ejemplo.com"
+                  disabled={isSubmitting}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all disabled:opacity-50"
+                />
+              </div>
+              
+              {/* Error Display inside Modal */}
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex items-start gap-2 animate-fade-in-up">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p>{error}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleGoToPayment}
+                  disabled={isSubmitting || !contactRut || !contactEmail}
+                  className="w-full px-4 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
+                      <span>Procesando...</span>
+                    </>
+                  ) : (
+                    <span>Continuar al pago</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <style>{contractEditorStyles}</style>
     </div>
   );

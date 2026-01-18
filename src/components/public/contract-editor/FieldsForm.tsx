@@ -1,4 +1,4 @@
-import { Search, Edit3, AlertCircle } from 'lucide-react';
+import { Search, AlertCircle } from 'lucide-react';
 import { formatVariableName } from './utils/templateParser';
 
 interface FieldsFormProps {

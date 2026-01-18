@@ -7,7 +7,6 @@ import { SignatureStep } from '../../components/public/contract-editor/Signature
 import { FormularioInicialStep } from '../../components/public/contract-editor/FormularioInicialStep';
 import { CompletarFormularioStep } from '../../components/public/contract-editor/CompletarFormularioStep';
 import { Navbar } from '../../components/landing/Navbar';
-import { ProgressBar } from '../../components/shared/ProgressBar';
 import type { ContractData } from '../../types/contract';
 
 interface SignatureInfo {
@@ -368,7 +367,6 @@ export function ContractEditorPage() {
             contractId={contractId}
             trackingCode={trackingCode}
             steps={PROGRESS_STEPS}
-            onBack={() => setCurrentStep('review')}
           />
         )}
       </main>

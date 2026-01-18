@@ -20,7 +20,6 @@ export function useContractRenderer({
   capsules,
   selectedCapsules,
   clauseNumbering,
-  signersConfig,
   activeField,
 }: UseContractRendererProps) {
   // Calculate dynamic clause numbers based on selected capsules
@@ -49,18 +48,70 @@ export function useContractRenderer({
   const renderedContract = useMemo(() => {
     let result = templateText;
 
-    // 1. Replace NUMERACIÓN with dynamic numbers
+    // 1. FIRST: Process capsules to handle their content including numbering
+    capsules.forEach(capsule => {
+      if (!capsule.title) return;
+      
+      const isSelected = selectedCapsules.includes(capsule.id);
+      const escapedTitle = capsule.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const capsulePattern = `\\[\\s*CAPSULA\\s*:\\s*${escapedTitle}[^\\]]*\\]([\\s\\S]*?)\\[\\s*/\\s*CAPSULA\\s*\\]`;
+      const capsuleRegex = new RegExp(capsulePattern, 'gi');
+      
+      if (isSelected) {
+        result = result.replace(capsuleRegex, (_fullMatch, capsuleContent) => {
+          let processedContent = capsuleContent;
+          
+          // A. Apply numbering FIRST within capsules
+          if (clauseNumbering) {
+            clauseNumbering
+              .filter(clause => clause.is_in_capsule && clause.capsule_slug === capsule.slug)
+              .forEach(clause => {
+                const number = clauseNumbers[clause.order];
+                if (number) {
+                  const numRegex = new RegExp(`NUMERACI[OÓ]N\\s*:\\s*${clause.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
+                  processedContent = processedContent.replace(numRegex, `<strong>${number}:</strong> ${clause.title}`);
+                }
+              });
+          }
+          
+          // B. Then replace variables in capsule content
+          extractedVariables.forEach((variable) => {
+            if (!variable) return;
+            const value = formData[variable] || '';
+            const escapedVar = variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`\\{\\{\\s*${escapedVar}(?:\\s*:\\s*[^}]*)?\\s*\\}\\}`, 'gi');
+            const isActive = activeField === variable;
+            
+            if (value) {
+              processedContent = processedContent.replace(regex, `<span class="filled-var${isActive ? ' active-var' : ''}" data-variable="${variable}">${value}</span>`);
+            } else {
+              processedContent = processedContent.replace(regex, `<span class="empty-var${isActive ? ' active-var' : ''}" data-variable="${variable}">[${formatVariableName(variable)}]</span>`);
+            }
+          });
+          
+          return `\n${processedContent}\n`;
+        });
+      } else {
+        // Remove unselected capsules
+        result = result.replace(capsuleRegex, '');
+      }
+    });
+
+    // 2. Apply NUMERACIÓN for clauses NOT in capsules (base content)
     if (clauseNumbering && clauseNumbering.length > 0) {
-      clauseNumbering.forEach(clause => {
-        const number = clauseNumbers[clause.order];
-        if (number) {
-          const regex = new RegExp(`NUMERACI[OÓ]N\\s*:\\s*${clause.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
-          result = result.replace(regex, `${number}: ${clause.title}`);
-        }
-      });
+      clauseNumbering
+        .filter(clause => !clause.is_in_capsule) // Only base content clauses
+        .forEach(clause => {
+          const number = clauseNumbers[clause.order];
+          if (number) {
+            const regex = new RegExp(`NUMERACI[OÓ]N\\s*:\\s*${clause.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
+            result = result.replace(regex, `<strong>${number}:</strong> ${clause.title}`);
+          }
+        });
     }
 
-    // 2. Replace variables with values
+    // 3. Replace variables with values in base content
+    // 3. Replace variables with values in base content
     extractedVariables.forEach((variable) => {
       if (!variable) return;
       const value = formData[variable] || '';
@@ -75,62 +126,11 @@ export function useContractRenderer({
       }
     });
 
-    // 3. Process capsules
-    capsules.forEach(capsule => {
-      if (!capsule.title) return;
-      
-      const isSelected = selectedCapsules.includes(capsule.id);
-      const escapedTitle = capsule.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const capsulePattern = `\\[\\s*CAPSULA\\s*:\\s*${escapedTitle}[^\\]]*\\]([\\s\\S]*?)\\[\\s*/\\s*CAPSULA\\s*\\]`;
-      const capsuleRegex = new RegExp(capsulePattern, 'gi');
-      
-      if (isSelected) {
-        result = result.replace(capsuleRegex, (_fullMatch, capsuleContent) => {
-          let processedContent = capsuleContent;
-          
-          // Replace numbering in capsules
-          if (clauseNumbering) {
-            clauseNumbering
-              .filter(clause => clause.is_in_capsule && clause.capsule_slug === capsule.slug)
-              .forEach(clause => {
-                const number = clauseNumbers[clause.order];
-                if (number) {
-                  const numRegex = new RegExp(`NUMERACI[OÓ]N\\s*:\\s*${clause.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
-                  processedContent = processedContent.replace(numRegex, `${number}: ${clause.title}`);
-                }
-              });
-          }
-          
-          // Replace variables in capsule content
-          extractedVariables.forEach((variable) => {
-            if (!variable) return;
-            const value = formData[variable] || '';
-            const escapedVar = variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`\\{\\{\\s*${escapedVar}(?:\\s*:\\s*[^}]*)?\\s*\\}\\}`, 'gi');
-            
-            if (value) {
-              processedContent = processedContent.replace(regex, `<span class="filled-var">${value}</span>`);
-            } else {
-              processedContent = processedContent.replace(regex, `<span class="empty-var">[${formatVariableName(variable)}]</span>`);
-            }
-          });
-          
-          return `\n${processedContent}\n`;
-        });
-      } else {
-        result = result.replace(capsuleRegex, '');
-      }
-    });
-
-    // 4. Remove signature blocks from main content
+    // 4. Remove signature blocks from main content (they're rendered separately)
     result = result.replace(/\[\s*FIRMA\s*:[^\]]+\]([\s\S]*?)\[\s*\/\s*FIRMA\s*\]/gi, '');
 
-    // 5. Add signatures section at the end (REMOVED)
-    // The user requested to remove the signatures section from the preview and PDF
-    // but keep asking for the info (variables are still in the template text so they are asked).
-
     return result;
-  }, [templateText, formData, extractedVariables, selectedCapsules, capsules, clauseNumbers, clauseNumbering, signersConfig, activeField]);
+  }, [templateText, formData, extractedVariables, selectedCapsules, capsules, clauseNumbers, clauseNumbering, activeField]);
 
   return { renderedContract, clauseNumbers };
 }

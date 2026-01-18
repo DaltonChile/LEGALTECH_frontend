@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { CreditCard, CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { EditorHeader } from './EditorHeader';
 
 interface PaymentStepProps {

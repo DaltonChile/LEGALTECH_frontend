@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 import { 
-  CheckCircle, 
   FileSignature, 
   Mail, 
   Clock, 
-  ExternalLink, 
   Scale, 
   Copy, 
   ArrowRight,
   CheckCircle2,
   Circle,
-  XCircle
+  AlertCircle
 } from 'lucide-react';
 import axios from 'axios';
 import { EditorHeader } from './EditorHeader';
@@ -19,7 +17,6 @@ interface SignatureStepProps {
   contractId: string;
   trackingCode: string;
   steps: { id: string; label: string }[];
-  onBack: () => void;
 }
 
 interface Signer {
@@ -43,7 +40,7 @@ interface ContractStatus {
   signers: Signer[];
 }
 
-export function SignatureStep({ contractId, trackingCode, steps, onBack }: SignatureStepProps) {
+export function SignatureStep({ contractId, trackingCode, steps }: SignatureStepProps) {
   const [contractStatus, setContractStatus] = useState<ContractStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +102,7 @@ export function SignatureStep({ contractId, trackingCode, steps, onBack }: Signa
          <div className="flex-1 flex items-center justify-center p-6">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-md w-full text-center">
                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ExternalLink className="w-8 h-8 text-red-500" />
+                    <AlertCircle className="w-8 h-8 text-red-500" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">Error al cargar</h3>
                 <p className="text-slate-600 mb-6">{error}</p>
@@ -231,21 +228,9 @@ export function SignatureStep({ contractId, trackingCode, steps, onBack }: Signa
                                         FIRMADO
                                     </span>
                                 ) : (
-                                    signer.signature_url ? (
-                                        <a
-                                            href={signer.signature_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium shadow-sm"
-                                        >
-                                            Firmar ahora
-                                            <ExternalLink className="w-3.5 h-3.5" />
-                                        </a>
-                                    ) : (
-                                        <span className="px-3 py-1 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-full border border-yellow-100">
-                                            PENDIENTE
-                                        </span>
-                                    )
+                                    <span className="px-3 py-1 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-full border border-yellow-100">
+                                        PENDIENTE
+                                    </span>
                                 )}
                             </div>
                         </div>

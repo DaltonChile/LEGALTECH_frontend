@@ -131,10 +131,10 @@ export function DocumentPreview({
           ) : (
             <div className="relative">
               {/* Contenedor con altura limitada si es vista parcial */}
-              <div className={`${isPartialView ? 'relative' : ''}`} style={isPartialView ? { maxHeight: '400px', overflow: 'hidden' } : {}}>
+              <div className={`${isPartialView ? 'relative' : ''}`} style={isPartialView ? { maxHeight: `${visiblePercentage}vh`, overflow: 'hidden' } : {}}>
                 <div
                   ref={contractRef}
-                  className="contract-preview prose prose-sm max-w-none"
+                  className="contract-preview prose prose-sm max-w-none select-none"
                   dangerouslySetInnerHTML={{ __html: renderedContract }}
                 />
                 

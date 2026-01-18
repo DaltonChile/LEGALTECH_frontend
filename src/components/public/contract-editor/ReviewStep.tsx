@@ -107,11 +107,11 @@ export function ReviewStep({
               {isProcessing ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
-                  <span>Procesando...</span>
+                  <span>Enviando...</span>
                 </>
               ) : (
                 <>
-                  <span>Aprobar y Firmar</span>
+                  <span>Aprobar y Enviar</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -233,9 +233,9 @@ export function ReviewStep({
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Revisa cuidadosamente</h4>
+                <h4 className="font-semibold text-slate-900 mb-1">Próximo paso</h4>
                 <p className="text-sm text-slate-600">
-                  Verifica que toda la información esté correcta antes de enviar a firma.
+                  Al aprobar, todas las partes recibirán un enlace por correo electrónico para firmar el contrato.
                 </p>
               </div>
             </div>

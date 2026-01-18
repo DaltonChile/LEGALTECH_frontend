@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Circle } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 import { formatPrice } from './utils/formatPrice';
 
 interface Step {

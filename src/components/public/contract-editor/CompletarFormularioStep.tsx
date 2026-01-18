@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import axios from 'axios';
-import { ArrowRight, FileText, CheckCircle, Edit3, AlertCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Edit3, AlertCircle } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { EditorHeader } from './EditorHeader';
@@ -231,7 +231,7 @@ export function CompletarFormularioStep({
         </div>
 
         {/* Formulario */}
-        <div className="w-[420px] h-full overflow-y-auto pr-2 pb-20 custom-scrollbar space-y-4">
+        <div className="flex-1 h-full overflow-y-auto pr-2 pb-20 custom-scrollbar space-y-4">
            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
                <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">

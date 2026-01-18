@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { HelpCircle, FileText, Shield, Mail, Phone, BookOpen, ChevronRight, Scale, CheckCircle2 } from 'lucide-react';
+import { HelpCircle, FileText, Shield, BookOpen, ChevronRight, Scale, CheckCircle2 } from 'lucide-react';
 import { Navbar } from '../../components/landing/Navbar';
 
 export function HelpPage() {
