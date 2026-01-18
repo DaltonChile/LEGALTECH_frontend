@@ -3,12 +3,7 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 
 export function Hero() {
   return (
-    <section className="relative bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 overflow-hidden">
-      {/* Background Decorations */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/20 to-lime-400/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-400/20 to-emerald-400/20 rounded-full blur-3xl"></div>
-      </div>
+    <section className="relative overflow-hidden">
       
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
         <div className="grid lg:grid-cols-2 gap-16 items-center">

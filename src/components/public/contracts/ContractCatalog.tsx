@@ -67,7 +67,7 @@ export function ContractCatalog() {
 
   if (loading) {
     return (
-      <section className="py-24 px-6 lg:px-8 bg-white">
+      <section className="py-24 px-6 lg:px-8 bg-transparent">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
@@ -80,7 +80,7 @@ export function ContractCatalog() {
 
   if (error) {
     return (
-      <section className="py-24 px-6 lg:px-8 bg-white">
+      <section className="py-24 px-6 lg:px-8 bg-transparent">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center justify-center py-20">
             <div className="text-red-600 mb-4 text-5xl">⚠️</div>
@@ -100,7 +100,7 @@ export function ContractCatalog() {
 
   if (templates.length === 0) {
     return (
-      <section className="py-24 px-6 lg:px-8 bg-white">
+      <section className="py-24 px-6 lg:px-8 bg-transparent">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center justify-center py-20">
             <FileText className="w-16 h-16 text-slate-300 mb-4" />
@@ -113,7 +113,7 @@ export function ContractCatalog() {
   }
 
   return (
-    <section className="py-24 px-6 lg:px-8 bg-white" id="productos">
+    <section className="py-24 px-6 lg:px-8 bg-transparent" id="productos">
       <div className="max-w-7xl mx-auto">
         <div className="text-center space-y-6 mb-16">
           <h2 className="text-5xl text-slate-900 font-bold">
