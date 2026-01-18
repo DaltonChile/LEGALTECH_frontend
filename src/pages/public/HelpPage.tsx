@@ -1,167 +1,163 @@
-import { HelpCircle, FileText, Shield, Mail, Phone, BookOpen } from 'lucide-react';
+import { useState } from 'react';
+import { HelpCircle, FileText, Shield, BookOpen, ChevronRight, Scale, CheckCircle2 } from 'lucide-react';
 import { Navbar } from '../../components/landing/Navbar';
 
 export function HelpPage() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30">
+    <div className="min-h-screen relative bg-slate-50">
       <Navbar />
 
-      {/* Background Decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/10 to-lime-400/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-400/10 to-emerald-400/10 rounded-full blur-3xl"></div>
-      </div>
+      {/* Grid Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+      
+      {/* Gradient Overlay */}
+      <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"></div>
 
-      <div className="relative max-w-6xl mx-auto px-6 py-12">
+      <div className="relative z-10 font-sans max-w-6xl mx-auto px-6 py-12">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl mb-4 shadow-lg">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-slate-900 to-slate-700 rounded-2xl mb-6 shadow-xl shadow-slate-200">
             <HelpCircle className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-slate-900 mb-3">
-            Ayuda y Políticas
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+            Ayuda y Centro de Políticas
           </h1>
-          <p className="text-slate-600 text-lg py-4">
-            Información importante sobre el uso de nuestra plataforma
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
+            Encuentra respuestas rápidas, guías detalladas e información legal sobre nuestra plataforma de gestión contractual.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {/* Cómo funciona */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-blue-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900">¿Cómo funciona?</h2>
+        <div className="grid lg:grid-cols-3 gap-8 mb-16">
+          {/* Cómo funciona - Main Column */}
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+               <div className="p-8 border-b border-slate-50">
+                  <div className="flex items-center gap-4 mb-2">
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900">¿Cómo funciona?</h2>
+                  </div>
+                  <p className="text-slate-500">El proceso de creación de contratos simplificado en 5 pasos.</p>
+               </div>
+               
+               <div className="p-8">
+                  <div className="space-y-8">
+                    {[
+                      { title: "1. Configuración Inicial", desc: "Elige tu contrato y completa los datos clave para generar tu cotización inicial." },
+                      { title: "2. Pago Seguro", desc: "Realiza el pago del servicio para habilitar la redacción completa y desbloquear el documento." },
+                      { title: "3. Redacción Detallada", desc: "Completa el resto de la información en tu borrador habilitado. Tus respuestas redactan el contrato." },
+                      { title: "4. Revisión Legal", desc: "Verifica el documento generado automáticamente. Si todo está correcto, apruébalo para firmas." },
+                      { title: "5. Firma y Notaría", desc: "Se inicia el proceso de firma digital avanzado y gestión notarial si el documento lo requiere." }
+                    ].map((step, index) => (
+                      <div key={index} className="flex gap-4 group">
+                         <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                              {index + 1}
+                            </div>
+                            {index < 4 && <div className="w-0.5 flex-1 bg-slate-100 my-2 group-hover:bg-slate-200 transition-colors"></div>}
+                         </div>
+                         <div className="pb-8">
+                            <h3 className="font-semibold text-slate-900 text-lg mb-1">{step.title}</h3>
+                            <p className="text-slate-500 leading-relaxed">{step.desc}</p>
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+               </div>
             </div>
-            <div className="space-y-4 text-slate-700">
-              <div>
-                <h3 className="font-semibold text-lg mb-2">1. Selecciona tu contrato</h3>
-                <p className="text-sm">Navega por nuestro catálogo y elige el tipo de contrato que necesitas.</p>
+
+            {/* FAQ */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
+                  <HelpCircle className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Preguntas Frecuentes</h2>
+                  <p className="text-slate-500 text-sm">Respuestas a las dudas más comunes de nuestros usuarios.</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">2. Completa los datos</h3>
-                <p className="text-sm">Llena el formulario con la información requerida. Los campos se destacarán en el documento.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">3. Personaliza con cláusulas</h3>
-                <p className="text-sm">Agrega cláusulas opcionales para adaptar el contrato a tus necesidades.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">4. Revisa y paga</h3>
-                <p className="text-sm">Verifica que todo esté correcto y procede con el pago seguro.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">5. Firma electrónica</h3>
-                <p className="text-sm">Todas las partes firmarán el contrato electrónicamente con validez legal.</p>
+              
+              <div className="grid gap-4">
+                {[
+                  { q: "¿Cuánto tiempo tarda el proceso?", a: "El tiempo depende de cuándo todas las partes firmen el contrato. El proceso de creación automatizada y pago toma solo unos minutos." },
+                  { q: "¿Puedo modificar el contrato después de pagar?", a: "Una vez pagado, tu contrato pasa a estado de borrador final. Puedes editar los datos antes de enviarlo a firmas, pero la estructura legal base se mantiene." },
+                  { q: "¿Qué pasa si necesito ayuda de un notario?", a: "Algunos documentos requieren protocolización. Nuestra plataforma coordina automáticamente con notarios asociados si el trámite lo exige." },
+                  { q: "¿Cómo hago seguimiento?", a: "Utiliza la sección 'Seguimiento' en el menú principal e ingresa el código único de 6 caracteres que recibiste tras la compra." },
+                  { q: "¿Tienen validez legal?", a: "Absolutamente. Todos nuestros modelos son redactados por abogados expertos y las firmas electrónicas cumplen con la legislación chilena vigente." }
+                ].map((faq, i) => (
+                  <div key={i} className="bg-slate-50 rounded-xl overflow-hidden transition-colors hover:bg-slate-100">
+                    <button 
+                      onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                      className="w-full text-left p-5 flex items-start gap-3 focus:outline-none"
+                    >
+                      <span className={`text-emerald-500 mt-1 transition-transform duration-200 ${openFaq === i ? 'rotate-90' : ''}`}>
+                        <ChevronRight className="w-4 h-4" />
+                      </span>
+                      <span className="font-semibold text-slate-900">{faq.q}</span>
+                    </button>
+                    
+                    <div 
+                      className={`grid transition-all duration-200 ease-in-out ${
+                        openFaq === i ? 'grid-rows-[1fr] opacity-100 mb-5' : 'grid-rows-[0fr] opacity-0'
+                      }`}
+                    >
+                      <div className="overflow-hidden">
+                        <p className="text-slate-600 text-sm pl-12 pr-5 leading-relaxed">
+                          {faq.a}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Políticas */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Shield className="w-6 h-6 text-purple-600" />
+          {/* Sidebar Column - Policies & Contact */}
+          <div className="space-y-8">
+            
+            {/* Policies Card */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sticky top-24">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-50">
+                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                  <Scale className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Políticas y Legal</h2>
+                  <p className="text-xs text-slate-400">Términos de uso de la plataforma</p>
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">Políticas</h2>
-            </div>
-            <div className="space-y-4 text-slate-700">
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Privacidad de Datos</h3>
-                <p className="text-sm">Toda tu información personal está protegida y encriptada. No compartimos tus datos con terceros sin tu consentimiento.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Seguridad</h3>
-                <p className="text-sm">Utilizamos protocolos de seguridad de nivel bancario para proteger tus documentos y transacciones.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Validez Legal</h3>
-                <p className="text-sm">Todos nuestros contratos están diseñados por profesionales del derecho y cumplen con la legislación vigente.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Firma Electrónica</h3>
-                <p className="text-sm">Las firmas electrónicas tienen plena validez legal según la Ley N° 19.799 sobre documentos electrónicos.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Términos de Servicio</h3>
-                <p className="text-sm">Al usar nuestra plataforma, aceptas nuestros términos y condiciones de uso.</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* FAQ */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-cyan-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900">Preguntas Frecuentes</h2>
-          </div>
-          
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-semibold text-lg text-slate-900 mb-2">¿Cuánto tiempo tarda el proceso?</h3>
-              <p className="text-slate-700">El tiempo depende de cuándo todas las partes firmen el contrato. El proceso de creación y pago toma solo minutos.</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg text-slate-900 mb-2">¿Puedo modificar el contrato después de crearlo?</h3>
-              <p className="text-slate-700">Una vez pagado, no se pueden hacer modificaciones. Asegúrate de revisar todo antes de proceder al pago.</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg text-slate-900 mb-2">¿Qué pasa si necesito ayuda de un notario?</h3>
-              <p className="text-slate-700">Algunos contratos requieren validación notarial. En ese caso, un notario revisará y firmará el documento.</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg text-slate-900 mb-2">¿Cómo puedo hacer seguimiento de mi contrato?</h3>
-              <p className="text-slate-700">Usa la sección de "Seguimiento" en el menú principal e ingresa tu código de seguimiento de 6 caracteres.</p>
+              <div className="space-y-6">
+                {[
+                  { title: "Privacidad de Datos", icon: Shield, desc: "Encriptación de grado militar para proteger tu información personal y sensible." },
+                  { title: "Seguridad Bancaria", icon: Shield, desc: "Protocolos seguros para todas las transacciones financieras." },
+                  { title: "Validez Jurídica", icon: FileText, desc: "Cumplimiento estricto con la legislación chilena vigente." },
+                  { title: "Firma Electrónica", icon: CheckCircle2, desc: "Certificada bajo la Ley 19.799 de documentos electrónicos." }
+                ].map((policy, i) => (
+                  <div key={i} className="flex gap-4 items-start">
+                    <div className="mt-1">
+                      <policy.icon className="w-5 h-5 text-slate-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-slate-900 text-sm">{policy.title}</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed mt-1">{policy.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-slate-50">
+                <button className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Ver Términos de Servicio Completos
+                </button>
+              </div>
             </div>
 
-            <div>
-              <h3 className="font-semibold text-lg text-slate-900 mb-2">¿Los contratos tienen validez legal?</h3>
-              <p className="text-slate-700">Sí, todos nuestros contratos están diseñados por abogados y cumplen con la legislación chilena vigente. Las firmas electrónicas tienen plena validez legal.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact */}
-        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl shadow-lg p-8 text-white">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold mb-2">¿Necesitas más ayuda?</h2>
-            <p className="text-blue-100">Estamos aquí para ayudarte</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <a 
-              href="mailto:soporte@legaltech.cl"
-              className="flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all"
-            >
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Mail className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="font-semibold">Email</div>
-                <div className="text-sm text-blue-100">soporte@legaltech.cl</div>
-              </div>
-            </a>
-            
-            <a 
-              href="tel:+56912345678"
-              className="flex items-center gap-3 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl p-4 transition-all"
-            >
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Phone className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="font-semibold">Teléfono</div>
-                <div className="text-sm text-blue-100">+56 9 1234 5678</div>
-              </div>
-            </a>
           </div>
         </div>
       </div>

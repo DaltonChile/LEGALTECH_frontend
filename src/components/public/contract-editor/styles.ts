@@ -4,6 +4,12 @@ export const contractEditorStyles = `
     color: #1f2937;
     font-size: 14px;
   }
+  .contract-preview strong {
+    font-weight: 700;
+    color: #0891b2;
+    font-size: 1.05em;
+    letter-spacing: 0.5px;
+  }
   .filled-var {
     background-color: #dbeafe;
     padding: 1px 4px;
@@ -13,10 +19,10 @@ export const contractEditorStyles = `
     transition: all 0.3s ease;
   }
   .empty-var {
-    background-color: #fee2e2;
+    background-color: #e5e7eb;
     padding: 1px 4px;
     border-radius: 3px;
-    color: #991b1b;
+    color: #6b7280;
     font-weight: 500;
     transition: all 0.3s ease;
   }
@@ -65,5 +71,20 @@ export const contractEditorStyles = `
     margin: 0.5rem 0;
     font-size: 0.875rem;
     color: #4b5563;
+  }
+  
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
   }
 `;

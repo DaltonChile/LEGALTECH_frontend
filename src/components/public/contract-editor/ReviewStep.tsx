@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { FileText, CheckCircle, AlertCircle, Shield, Zap, RefreshCw } from 'lucide-react';
+import { FileText, CheckCircle, AlertCircle, Shield, Zap, RefreshCw, ArrowRight } from 'lucide-react';
+import { EditorHeader } from './EditorHeader';
 
 interface ReviewStepProps {
   contractId: string;
   trackingCode: string;
   buyerRut: string;
   totalPrice: number;
+  steps: { id: string; label: string }[];
   onApprove: () => void;
   onBack: () => void;
   isProcessing?: boolean;
@@ -17,6 +19,7 @@ export function ReviewStep({
   trackingCode,
   buyerRut,
   totalPrice,
+  steps,
   onApprove,
   onBack,
   isProcessing = false,
@@ -86,10 +89,39 @@ export function ReviewStep({
   };
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 p-6">
-      <div className="flex-1 flex gap-6 max-w-7xl mx-auto w-full">
+    <div className="h-full flex flex-col bg-slate-50">
+       {/* Background Grid */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
+      {/* Header */}
+      <EditorHeader
+         steps={steps}
+         currentStep="review"
+         onBack={onBack}
+         rightAction={
+             <button
+              onClick={handleApprove}
+              disabled={loading || isProcessing || !pdfUrl}
+              className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
+                  <span>Enviando...</span>
+                </>
+              ) : (
+                <>
+                  <span>Aprobar y Enviar</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+         }
+      />
+
+      <div className="flex-1 flex gap-6 max-w-[1920px] mx-auto w-full p-6 relative z-10 overflow-hidden min-h-0">
         {/* PDF Preview */}
-        <div className="flex-1 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -201,43 +233,16 @@ export function ReviewStep({
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Revisa cuidadosamente</h4>
+                <h4 className="font-semibold text-slate-900 mb-1">Próximo paso</h4>
                 <p className="text-sm text-slate-600">
-                  Verifica que toda la información esté correcta antes de enviar a firma.
+                  Al aprobar, todas las partes recibirán un enlace por correo electrónico para firmar el contrato.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Acciones */}
-          <div className="flex flex-col gap-3 mt-auto">
-            <button
-              onClick={handleApprove}
-              disabled={loading || isProcessing || !pdfUrl}
-              className={`w-full py-4 rounded-xl font-semibold text-white transition-all shadow-lg ${
-                loading || isProcessing || !pdfUrl
-                  ? 'bg-slate-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 transform hover:scale-[1.02]'
-              }`}
-            >
-              {isProcessing ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Procesando...
-                </span>
-              ) : (
-                'Aprobar y Firmar →'
-              )}
-            </button>
-
-            <button
-              onClick={onBack}
-              disabled={isProcessing}
-              className="w-full py-3 rounded-xl font-medium text-slate-700 bg-white border-2 border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
-            >
-              ← Volver a editar
-            </button>
-          </div>
+          {/* Moved to Header */}
         </div>
       </div>
     </div>

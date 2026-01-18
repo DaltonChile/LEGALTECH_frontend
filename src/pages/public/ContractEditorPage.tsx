@@ -7,7 +7,6 @@ import { SignatureStep } from '../../components/public/contract-editor/Signature
 import { FormularioInicialStep } from '../../components/public/contract-editor/FormularioInicialStep';
 import { CompletarFormularioStep } from '../../components/public/contract-editor/CompletarFormularioStep';
 import { Navbar } from '../../components/landing/Navbar';
-import { ProgressBar } from '../../components/shared/ProgressBar';
 import type { ContractData } from '../../types/contract';
 
 interface SignatureInfo {
@@ -271,8 +270,8 @@ export function ContractEditorPage() {
       {/* Navbar */}
       <Navbar />
       
-      {/* Progress Bar */}
-      <ProgressBar steps={PROGRESS_STEPS} currentStep={currentStep} />
+      {/* Progress Bar - Only show for steps that don't have their own Header (Review, Signatures, Payment use internal or we migrate them later) */}
+      {/* ProgressBar removed, now all steps handle their own header */}
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
@@ -280,6 +279,7 @@ export function ContractEditorPage() {
         {currentStep === 'formulario-inicial' && template && (
           <FormularioInicialStep
             template={template}
+            steps={PROGRESS_STEPS}
             signatureInfo={signatureInfo}
             onContinue={(data) => {
               setContractId(data.contractId);
@@ -318,6 +318,7 @@ export function ContractEditorPage() {
             trackingCode={trackingCode || ''}
             buyerRut={buyerRut || ''}
             totalAmount={contractTotalAmount}
+            steps={PROGRESS_STEPS}
             onPaymentSuccess={() => {
               // Actualizar contractData con estado draft
               if (contractData) {
@@ -335,6 +336,7 @@ export function ContractEditorPage() {
           <CompletarFormularioStep
             template={template}
             contractData={contractData}
+            steps={PROGRESS_STEPS}
             onComplete={(newFormData, html) => {
               setFormData(newFormData);
               setRenderedContractHtml(html);
@@ -351,6 +353,7 @@ export function ContractEditorPage() {
             trackingCode={trackingCode}
             buyerRut={buyerRut}
             totalPrice={contractTotalAmount}
+            steps={PROGRESS_STEPS}
             onApprove={handleApproveAndSign}
             onBack={() => setCurrentStep('completar')}
             isProcessing={isProcessingPayment}
@@ -363,7 +366,7 @@ export function ContractEditorPage() {
           <SignatureStep
             contractId={contractId}
             trackingCode={trackingCode}
-            onBack={() => setCurrentStep('review')}
+            steps={PROGRESS_STEPS}
           />
         )}
       </main>

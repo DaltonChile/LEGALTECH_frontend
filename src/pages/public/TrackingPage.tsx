@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Package, Clock, CheckCircle, XCircle, FileText, Users, AlertCircle, Edit } from 'lucide-react';
+import { Search, Package, XCircle, FileText, Users, AlertCircle, Scale, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
 import { Navbar } from '../../components/landing/Navbar';
 
@@ -21,56 +21,55 @@ interface ContractStatus {
   created_at: string;
 }
 
-const STATUS_CONFIG = {
-  draft: {
-    label: 'Borrador',
-    color: 'slate',
-    bgGradient: 'bg-gradient-to-r from-slate-600 to-slate-500',
-    icon: FileText,
-    description: 'El contrato está en proceso de creación'
-  },
-  pending_payment: {
-    label: 'Pendiente de Pago',
-    color: 'amber',
-    bgGradient: 'bg-gradient-to-r from-amber-600 to-amber-500',
-    icon: Clock,
-    description: 'Esperando confirmación de pago'
-  },
-  paid: {
-    label: 'Pagado',
-    color: 'emerald',
-    bgGradient: 'bg-gradient-to-r from-emerald-600 to-emerald-500',
-    icon: CheckCircle,
-    description: 'El pago ha sido confirmado, esperando firmas'
-  },
-  pending_signatures: {
-    label: 'Pendiente de Firmas',
-    color: 'blue',
-    bgGradient: 'bg-gradient-to-r from-blue-600 to-blue-500',
-    icon: Users,
-    description: 'El contrato está esperando las firmas de las partes'
-  },
-  pending_notary: {
-    label: 'Pendiente de Notario',
-    color: 'purple',
-    bgGradient: 'bg-gradient-to-r from-purple-600 to-purple-500',
-    icon: AlertCircle,
-    description: 'Esperando revisión y firma del notario'
-  },
-  completed: {
-    label: 'Completado',
-    color: 'green',
-    bgGradient: 'bg-gradient-to-r from-green-600 to-green-500',
-    icon: CheckCircle,
-    description: 'El contrato ha sido firmado por todas las partes'
-  },
-  cancelled: {
-    label: 'Cancelado',
-    color: 'red',
-    bgGradient: 'bg-gradient-to-r from-red-600 to-red-500',
-    icon: XCircle,
-    description: 'El contrato ha sido cancelado'
-  }
+const STEPS = [
+  { id: 'payment', label: 'Pago' },
+  { id: 'draft', label: 'Borrador' },
+  { id: 'signatures', label: 'Firmas' },
+  { id: 'completed', label: 'Completado' }
+];
+
+const getStepStatus = (stepId: string, currentStatus: string) => {
+  // Define the logical progression of statuses
+  const statusProgression: Record<string, number> = {
+    'pending_payment': 0,
+    'paid': 1,
+    'draft': 1,
+    'waiting_signatures': 2,
+    'waiting_notary': 2,
+    'signed': 2,
+    'completed': 3
+  };
+
+  const stepIndices: Record<string, number> = {
+    'payment': 0,
+    'draft': 1,
+    'signatures': 2,
+    'completed': 3
+  };
+
+  const currentProgression = statusProgression[currentStatus] ?? -1;
+  const stepIndex = stepIndices[stepId];
+
+  if (currentStatus === 'failed' || currentStatus === 'cancelled') return 'error';
+  
+  if (currentProgression > stepIndex) return 'completed';
+  if (currentProgression === stepIndex) return 'current';
+  return 'waiting';
+};
+
+const getStatusDescription = (status: string) => {
+  const map: Record<string, string> = {
+   pending_payment: 'Esperando confirmación del pago para proceder.',
+   paid: 'Pago recibido. Puedes continuar con la edición del borrador.',
+   draft: 'El documento está en borrador. Completa los datos para proceder a las firmas.',
+   waiting_signatures: 'Esperando que todas las partes firmen el documento.',
+   waiting_notary: 'El notario está revisando y firmando el documento.',
+   signed: 'Documento firmado. Finalizando proceso...',
+   completed: 'El proceso ha finalizado con éxito. Documento legalmente válido.',
+   failed: 'El proceso ha fallado o ha sido cancelado.',
+   cancelled: 'El proceso ha sido anulado.'
+ };
+ return map[status] || 'Estado actual del documento.';
 };
 
 export function TrackingPage() {
@@ -83,6 +82,7 @@ export function TrackingPage() {
   const [showRutForm, setShowRutForm] = useState(false);
   const [buyerRut, setBuyerRut] = useState('');
   const [rutError, setRutError] = useState('');
+  const [showDetails, setShowDetails] = useState(true);
 
   const formatRut = (value: string) => {
     let rut = value.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -124,13 +124,8 @@ export function TrackingPage() {
       return;
     }
 
-    // Navegar con el tracking code y el RUT
-    // El backend verificará que el RUT coincida con el contrato
     const cleanRut = buyerRut.replace(/[.-]/g, '');
     const url = `/resume?code=${contractData.tracking_code}&rut=${encodeURIComponent(cleanRut)}`;
-    console.log('🚀 Navegando a:', url);
-    console.log('📋 Tracking code:', contractData.tracking_code);
-    console.log('🆔 RUT:', cleanRut);
     navigate(url);
   };
 
@@ -148,25 +143,16 @@ export function TrackingPage() {
     setSearched(true);
 
     try {
-      console.log('🔍 Buscando contrato con código:', trackingCode.trim().toUpperCase());
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/contracts/track/${trackingCode.trim().toUpperCase()}`
       );
 
-      console.log('📦 Respuesta recibida:', response.data);
-
       if (response.data.success) {
-        console.log('✅ Contrato encontrado:', response.data.data);
-        console.log('📊 Status del contrato:', response.data.data.status);
-        console.log('👥 Firmantes:', response.data.data.signers);
         setContractData(response.data.data);
       } else {
-        console.log('❌ No se encontró el contrato');
         setError('No se encontró el contrato');
       }
     } catch (err: any) {
-      console.error('💥 Error fetching contract:', err);
-      console.error('💥 Error response:', err.response?.data);
       if (err.response?.status === 404) {
         setError('No se encontró ningún contrato con ese código de seguimiento');
       } else {
@@ -177,279 +163,277 @@ export function TrackingPage() {
     }
   };
 
-  const statusConfig = contractData ? STATUS_CONFIG[contractData.status as keyof typeof STATUS_CONFIG] : null;
-  const StatusIcon = statusConfig?.icon || Package;
+  const copyToClipboard = () => {
+    if (contractData?.tracking_code) {
+      navigator.clipboard.writeText(contractData.tracking_code);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30">
-      <Navbar />
+    <div className="min-h-screen relative bg-slate-50">
+       {/* Grid Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+      
+      {/* Gradient Overlay */}
+      <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"></div>
 
-      {/* Background Decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/10 to-lime-400/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-400/10 to-emerald-400/10 rounded-full blur-3xl"></div>
-      </div>
+      <div className="relative z-10 font-sans">
+        <Navbar />
 
-      <div className="relative max-w-4xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl mb-4 shadow-lg">
-            <Package className="w-8 h-8 text-white" />
+        <main className="max-w-3xl mx-auto px-6 py-12">
+          
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">Rastrear Contrato</h1>
+            <p className="text-slate-500 text-lg">Consulta el estado de tu documento legal en tiempo real</p>
           </div>
-          <h1 className="text-4xl font-bold text-slate-900 mb-3 py-4">
-            Seguimiento de Contrato
-          </h1>
-          <p className="text-slate-600 text-lg py-4">
-            Ingresa tu código de seguimiento para ver el estado de tu contrato
-          </p>
-        </div>
 
-        {/* Search Form */}
-        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-8 mb-8">
-          <form onSubmit={handleSearch} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2 py-4">
-                Código de Seguimiento
-              </label>
-              <div className="relative py-4">
-                <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 py-4" />
+          {/* Search Box */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-2 mb-8 mx-auto max-w-xl">
+             <form onSubmit={handleSearch} className="flex items-center">
+                <div className="pl-4 text-slate-400">
+                  <Search className="w-5 h-5" />
+                </div>
                 <input
                   type="text"
                   value={trackingCode}
                   onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
-                  placeholder="Ej: ABC123"
-                  className="w-full pl-12 pr-4 py-4 text-lg border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                  maxLength={6}
+                  placeholder="Ingresa tu código de seguimiento (ej: CNT-123)"
+                  className="flex-1 px-4 py-3 bg-transparent outline-none text-slate-900 placeholder-slate-400 w-full uppercase"
                 />
-              </div>
-              <p className="text-sm text-slate-500 mt-2 py-4">
-                El código de seguimiento tiene 6 caracteres (letras y números)
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Buscando...
-                </>
-              ) : (
-                <>
-                  <Search className="w-5 h-5" />
-                  Buscar Contrato
-                </>
-              )}
-            </button>
-          </form>
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Buscando...' : 'Rastrear'}
+                </button>
+             </form>
+          </div>
 
           {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-red-700">{error}</p>
+            <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3 mb-8 animate-fade-in-up">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <p>{error}</p>
             </div>
           )}
 
-          {loading && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-              <p className="text-blue-700">Buscando contrato con código: <span className="font-mono font-bold">{trackingCode}</span></p>
-            </div>
-          )}
-        </div>
-
-        {/* Contract Status */}
-        {contractData && (
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-            {/* Status Header */}
-            <div className={`${statusConfig?.bgGradient || 'bg-gradient-to-r from-blue-600 to-blue-500'} p-6`}>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <StatusIcon className="w-7 h-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-white/80 text-sm mb-1">Estado del Contrato</div>
-                  <div className="text-white font-bold text-2xl">{statusConfig?.label || contractData.status}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-white/80 text-sm">Código de seguimiento</div>
-                  <div className="text-white font-mono font-bold text-xl">{contractData.tracking_code}</div>
-                </div>
-              </div>
-              <p className="text-white/90 mt-3">{statusConfig?.description || 'Información del contrato'}</p>
-            </div>
-
-            {/* Contract Details */}
-            <div className="p-6 space-y-6">
-              {/* General Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 rounded-lg p-4">
-                  <div className="text-sm text-slate-600 mb-1">Monto Total</div>
-                  <div className="text-2xl font-bold text-slate-900">
-                    ${contractData.total_amount.toLocaleString('es-CL')}
+          {/* Results Card */}
+          {contractData && (
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden animate-fade-in-up">
+              
+              {/* Card Header */}
+              <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <Scale className="w-6 h-6 text-blue-600" />
                   </div>
-                </div>
-                <div className="bg-slate-50 rounded-lg p-4">
-                  <div className="text-sm text-slate-600 mb-1">Fecha de Creación</div>
-                  <div className="text-lg font-semibold text-slate-900">
-                    {new Date(contractData.created_at).toLocaleDateString('es-CL', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Notary Info */}
-              {contractData.requires_notary && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <div className="font-semibold text-purple-900 mb-1">Requiere Notario</div>
-                    <div className="text-sm text-purple-700">
-                      Este contrato requiere revisión y firma de un notario público
+                    <h3 className="font-bold text-slate-900">LegalTech Signature</h3>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <span>Ref: {contractData.tracking_code}</span>
+                      <button onClick={copyToClipboard} className="hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-slate-50">
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 </div>
-              )}
-
-              {/* Signers Status */}
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Firmantes ({contractData.signers?.filter(s => s.has_signed).length || 0}/{contractData.signers?.length || 0})
-                </h3>
-                {contractData.signers && contractData.signers.length > 0 ? (
-                  <div className="space-y-3">
-                    {contractData.signers.map((signer) => (
-                      <div
-                        key={signer.id}
-                        className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${
-                          signer.has_signed
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
-                      >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          signer.has_signed ? 'bg-green-500' : 'bg-slate-300'
-                        }`}>
-                          {signer.has_signed ? (
-                            <CheckCircle className="w-6 h-6 text-white" />
-                          ) : (
-                            <Clock className="w-6 h-6 text-white" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-semibold text-slate-900">{signer.full_name}</div>
-                          <div className="text-sm text-slate-600">{signer.role}</div>
-                        </div>
-                        <div className="text-right">
-                          {signer.has_signed ? (
-                            <>
-                              <div className="text-sm font-medium text-green-700">Firmado</div>
-                              {signer.signed_at && (
-                                <div className="text-xs text-green-600">
-                                  {new Date(signer.signed_at).toLocaleDateString('es-CL')}
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="text-sm font-medium text-slate-500">Pendiente</div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center text-slate-600">
-                    No hay firmantes registrados
-                  </div>
+                {(contractData.status === 'draft' || contractData.status === 'paid') && (
+                  <button 
+                    onClick={() => setShowRutForm(true)}
+                    className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors flex items-center gap-2"
+                  >
+                    Continuar editando
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
                 )}
               </div>
 
-              {/* Timeline or Next Steps */}
-              {contractData.status !== 'completed' && contractData.status !== 'cancelled' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="font-semibold text-blue-900 mb-2">Próximos Pasos</div>
-                  <div className="text-sm text-blue-700 mb-3">
-                    {contractData.status === 'draft' && 'Completa y paga el contrato para continuar con el proceso.'}
-                    {contractData.status === 'pending_payment' && 'Completa el pago para avanzar al proceso de firmas.'}
-                    {contractData.status === 'paid' && 'El pago ha sido confirmado. Espera a que todas las partes firmen el contrato.'}
-                    {contractData.status === 'pending_signatures' && 'Espera a que todas las partes firmen el contrato.'}
-                    {contractData.status === 'pending_notary' && 'El notario revisará y firmará el contrato.'}
+              {/* Status Section */}
+              <div className="p-8">
+                <div className="mb-8">
+                   <p className="text-slate-500 text-sm mb-6">
+                    {getStatusDescription(contractData.status)}
+                  </p>
+
+                  {/* Progress Bar */}
+                  <div className="relative mb-12 px-4">
+                     <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-100 -translate-y-1/2 rounded-full"></div>
+                     <div className="absolute top-1/2 left-0 h-1 bg-green-500 -translate-y-1/2 rounded-full transition-all duration-1000"
+                          style={{ width: `${(Math.max(0, STEPS.findIndex(s => getStepStatus(s.id, contractData.status) === 'current') ) / (STEPS.length - 1)) * 100}%` }}>
+                     </div>
+                     
+                     <div className="relative flex justify-between">
+                        {STEPS.map((step) => {
+                          const status = getStepStatus(step.id, contractData.status);
+                          const isCompleted = status === 'completed';
+                          const isCurrent = status === 'current';
+                          const isError = status === 'error';
+                          
+                          return (
+                            <div key={step.id} className="flex flex-col items-center gap-2 relative">
+                               <div className={`w-8 h-8 rounded-full flex items-center justify-center border-4 transition-colors z-10 bg-white
+                                  ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 
+                                    isCurrent ? 'bg-white border-green-500 text-green-500' : 
+                                    isError ? 'bg-red-500 border-red-500 text-white' :
+                                    'bg-slate-50 border-slate-200 text-slate-300'}
+                               `}>
+                                  {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : 
+                                   isError ? <XCircle className="w-4 h-4" /> :
+                                   <Circle className="w-4 h-4 fill-current" />}
+                               </div>
+                               <span className={`text-xs font-medium absolute -bottom-6 w-max ${isCurrent ? 'text-slate-900' : 'text-slate-400'} hidden sm:block`}>
+                                 {step.label}
+                               </span>
+                            </div>
+                          );
+                        })}
+                     </div>
                   </div>
-                  {contractData.status === 'draft' && (
-                    <div className="space-y-3">
-                      {!showRutForm ? (
-                        <button
-                          onClick={() => setShowRutForm(true)}
-                          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
-                        >
-                          <Edit className="w-5 h-5" />
-                          Continuar Editando
-                        </button>
-                      ) : (
-                        <div className="bg-white rounded-lg p-4 border-2 border-blue-300">
-                          <div className="mb-3">
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                              Tu RUT <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              value={buyerRut}
-                              onChange={(e) => {
-                                setBuyerRut(formatRut(e.target.value));
-                                setRutError('');
-                              }}
-                              placeholder="12.345.678-9"
-                              maxLength={12}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-sm"
-                            />
-                            <p className="text-xs text-slate-500 mt-1">Ingresa tu RUT para verificar tu identidad</p>
-                            {rutError && (
-                              <p className="text-xs text-red-600 mt-1">{rutError}</p>
-                            )}
+                </div>
+
+                {/* Detail Sections */}
+                <div className="border rounded-xl border-slate-100 divide-y divide-slate-100 mt-6">
+                  
+                  {/* Timeline Toggle */}
+                  <button 
+                    onClick={() => setShowDetails(!showDetails)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                  >
+                     <span className="font-semibold text-slate-900 text-sm">Detalles del Proceso</span>
+                     {showDetails ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                  </button>
+                  
+                  {showDetails && (
+                    <div className="p-4 space-y-6 bg-slate-50/50">
+                       
+                       {/* Signers Info */}
+                       <div>
+                         <h4 className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                           <Users className="w-3 h-3" /> Firmantes
+                         </h4>
+                         <div className="space-y-3 pl-2 border-l-2 border-slate-200 ml-1">
+                           {contractData.signers?.map((signer) => (
+                             <div key={signer.id} className="flex items-start gap-3 ml-3 relative">
+                               <div className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${signer.has_signed ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                               <div className="flex-1">
+                                 <p className="text-sm font-medium text-slate-900">{signer.full_name}</p>
+                                 <p className="text-xs text-slate-500 capitalize">{signer.role === 'buyer' ? 'Comprador' : signer.role === 'seller' ? 'Vendedor' : signer.role}</p>
+                                 {signer.has_signed && (
+                                    <div className="flex items-center gap-1 mt-1 text-xs text-green-600 bg-green-50 inline-flex px-1.5 py-0.5 rounded">
+                                      <CheckCircle2 className="w-3 h-3" /> Firmado {signer.signed_at && `el ${new Date(signer.signed_at).toLocaleDateString()}`}
+                                    </div>
+                                 )}
+                               </div>
+                             </div>
+                           )) || <p className="text-sm text-slate-500 ml-3">No hay firmantes registrados</p>}
+                         </div>
+                       </div>
+
+                       {/* Contract Info */}
+                       <div>
+                          <h4 className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                            <FileText className="w-3 h-3" /> Documento
+                          </h4>
+                          <div className="bg-white p-3 rounded-lg border border-slate-200 ml-1">
+                            <div className="flex justify-between items-center text-sm mb-2 border-b border-slate-100 pb-2">
+                              <span className="text-slate-500">Creación</span>
+                              <span className="text-slate-900 font-medium">{contractData.created_at ? new Date(contractData.created_at).toLocaleDateString() : 'Fecha no disponible'}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-slate-500">Notario</span>
+                              <span className="text-slate-900 font-medium">{contractData.requires_notary ? 'Requerido' : 'No requerido'}</span>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={handleContinueEditing}
-                              className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200"
-                            >
-                              Continuar
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowRutForm(false);
-                                setBuyerRut('');
-                                setRutError('');
-                              }}
-                              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all duration-200"
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                       </div>
+
                     </div>
                   )}
                 </div>
-              )}
+
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {searched && !contractData && !loading && !error && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center animate-fade-in-up">
+              <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-600 font-medium">No se encontraron resultados</p>
+              <p className="text-slate-500 text-sm mt-1">Verifica el código de seguimiento e inténtalo nuevamente</p>
+            </div>
+          )}
+
+          {/* Help Section */}
+          <div className="mt-8 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+             <div>
+               <h3 className="font-bold text-slate-900 mb-1">¿Necesitas ayuda con tu contrato?</h3>
+               <p className="text-slate-500 text-sm">Nuestro equipo de soporte está disponible 24/7</p>
+             </div>
+             <div className="flex gap-3">
+                <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                  Contactar soporte
+                </button>
+             </div>
+          </div>
+
+        </main>
+      </div>
+
+      {/* RUT Modal */}
+      {showRutForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fade-in-up">
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Verificación de seguridad</h3>
+            <p className="text-slate-600 mb-6 text-sm">
+              Para retomar la edición del contrato, por favor verifica tu identidad ingresando tu RUT.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  RUT del Usuario
+                </label>
+                <input
+                  type="text"
+                  value={buyerRut}
+                  onChange={(e) => {
+                    setBuyerRut(formatRut(e.target.value));
+                    setRutError('');
+                  }}
+                  placeholder="12.345.678-9"
+                  className={`w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 transition-all ${
+                    rutError 
+                      ? 'border-red-300 focus:ring-red-100' 
+                      : 'border-slate-200 focus:ring-blue-100 focus:border-blue-400'
+                  }`}
+                />
+                {rutError && (
+                  <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {rutError}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowRutForm(false)}
+                  className="flex-1 px-4 py-3 text-slate-600 font-medium hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleContinueEditing}
+                  className="flex-1 px-4 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  Continuar
+                </button>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Empty State */}
-        {searched && !contractData && !loading && !error && (
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-12 text-center">
-            <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-600">No se encontraron resultados</p>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

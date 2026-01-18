@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef } from 'react';
 import axios from 'axios';
-import { ArrowRight, FileText, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Edit3, AlertCircle } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
+import { EditorHeader } from './EditorHeader';
 import { useContractRenderer } from './hooks/useContractRenderer';
 import { extractVariables, formatVariableName } from './utils/templateParser';
 import { contractEditorStyles } from './styles';
@@ -24,6 +25,7 @@ interface Template {
 interface CompletarFormularioStepProps {
   template: Template;
   contractData: ContractData;
+  steps: { id: string; label: string }[];
   onComplete: (formData: Record<string, string>, renderedHtml: string) => void;
   onBack?: () => void;
 }
@@ -31,6 +33,7 @@ interface CompletarFormularioStepProps {
 export function CompletarFormularioStep({
   template,
   contractData,
+  steps,
   onComplete,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onBack: _onBack,
@@ -173,29 +176,50 @@ export function CompletarFormularioStep({
   };
 
   return (
-    <div className="relative h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 p-6 overflow-hidden">
-      {/* Background Decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/20 to-lime-400/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-400/20 to-emerald-400/20 rounded-full blur-3xl"></div>
-      </div>
-      
-      {/* Header con info del pago */}
-      <div className="relative mb-6">
-        <div className="flex items-center justify-end">
-          <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-lg px-4 py-2">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <div>
-              <span className="text-sm font-medium text-green-800">Pago confirmado</span>
-              <span className="text-xs text-green-600 ml-2">Código: {contractData.tracking_code}</span>
+    <div className="h-full bg-slate-50 flex flex-col">
+       {/* Background Grid */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
+      {/* Header */}
+      <EditorHeader
+         steps={steps}
+         currentStep="completar"
+         onBack={_onBack}
+         rightAction={
+            <div className="flex items-center gap-6">
+                 {/* Payment Info Badge */}
+                 <div className="hidden lg:flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <div>
+                      <div className="text-xs font-bold text-green-800 leading-none">Pago OK</div>
+                      <div className="text-[10px] text-green-600 font-mono leading-none mt-0.5">{contractData.tracking_code}</div>
+                    </div>
+                </div>
+
+                 <button
+                    onClick={handleContinueToReview}
+                    disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting}
+                    className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
+                        <span>Guardando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Continuar a Revisión</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
             </div>
-          </div>
-        </div>
-      </div>
+         }
+      />
       
-      <div className="relative flex gap-6 h-[calc(100%-80px)]" ref={documentRef}>  
+      <div className="relative z-10 flex-1 w-full max-w-[1920px] mx-auto p-6 flex gap-6 overflow-hidden min-h-0" ref={documentRef}>  
         {/* Vista previa del documento */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0">
           <DocumentPreview
             templateText={template.template_content}
             renderedContract={renderedContract}
@@ -207,57 +231,41 @@ export function CompletarFormularioStep({
         </div>
 
         {/* Formulario */}
-        <div className="w-[400px] flex flex-col gap-4 min-w-0">
+        <div className="flex-1 h-full overflow-y-auto pr-2 pb-20 custom-scrollbar space-y-4">
+           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
+               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <Edit3 className="w-4 h-4 text-emerald-600" />
+                 </div>
+                 Completar Contrato
+               </h3>
+               
+               <p className="text-xs text-slate-500 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                 Has completado el <strong>{completionPercentage}%</strong> del documento. Rellena los campos faltantes para continuar.
+               </p>
 
+               <FieldsForm
+                  variables={filteredVariables}
+                  formData={formData}
+                  onFormChange={handleFormChange}
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  activeField={activeField}
+                  onFieldFocus={setActiveField}
+                  onFieldBlur={() => setActiveField(null)}
+               />
+           </div>
 
-          {/* Campos del formulario */}
-          <FieldsForm
-            variables={filteredVariables}
-            formData={formData}
-            onFormChange={handleFormChange}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            activeField={activeField}
-            onFieldFocus={setActiveField}
-            onFieldBlur={() => setActiveField(null)}
-          />
+           {/* Validation Errors */}
+           {(error || (completionPercentage < 100)) && (
+             <div className={`p-4 rounded-xl border flex items-start gap-3 ${error ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                   {error ? <p className="font-medium">{error}</p> : <p>Completa todos los campos obligatorios marcados con * para continuar.</p>}
+                </div>
+             </div>
+           )}
 
-          {/* Error message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-
-          {/* Botón de continuar */}
-          <button
-            onClick={handleContinueToReview}
-            disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting}
-            className={`w-full py-4 rounded-xl font-semibold text-white transition-all shadow-lg flex items-center justify-center gap-2 ${
-              completionPercentage === 100 && !hasValidationErrors && !isSubmitting
-                ? 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 transform hover:scale-[1.02]'
-                : 'bg-slate-400 cursor-not-allowed'
-            }`}
-          >
-            {isSubmitting ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Guardando...
-              </>
-            ) : (
-              <>
-                <FileText className="w-5 h-5" />
-                Continuar a Revisión
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-
-          {completionPercentage < 100 && (
-            <p className="text-center text-sm text-slate-500">
-              Completa todos los campos para continuar
-            </p>
-          )}
         </div>
       </div>
 
