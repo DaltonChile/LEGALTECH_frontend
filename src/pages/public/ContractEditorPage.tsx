@@ -271,8 +271,10 @@ export function ContractEditorPage() {
       {/* Navbar */}
       <Navbar />
       
-      {/* Progress Bar */}
-      <ProgressBar steps={PROGRESS_STEPS} currentStep={currentStep} />
+      {/* Progress Bar - Only show for steps that don't have their own Header (Review, Signatures, Payment use internal or we migrate them later) */}
+      {!['formulario-inicial', 'completar'].includes(currentStep) && (
+        <ProgressBar steps={PROGRESS_STEPS} currentStep={currentStep} />
+      )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
@@ -280,6 +282,7 @@ export function ContractEditorPage() {
         {currentStep === 'formulario-inicial' && template && (
           <FormularioInicialStep
             template={template}
+            steps={PROGRESS_STEPS}
             signatureInfo={signatureInfo}
             onContinue={(data) => {
               setContractId(data.contractId);
@@ -335,6 +338,7 @@ export function ContractEditorPage() {
           <CompletarFormularioStep
             template={template}
             contractData={contractData}
+            steps={PROGRESS_STEPS}
             onComplete={(newFormData, html) => {
               setFormData(newFormData);
               setRenderedContractHtml(html);

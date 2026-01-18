@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react';
 import axios from 'axios';
-import { ArrowLeft, Lock, Shield, Zap, Check, Plus, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Lock, Shield, Check, Plus, ArrowRight, AlertCircle, Edit3, User, FileText } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
+import { EditorHeader } from './EditorHeader';
 import { useContractRenderer } from './hooks/useContractRenderer';
 import { extractVariables, formatVariableName } from './utils/templateParser';
+import { formatPrice } from './utils/formatPrice';
+import { contractEditorStyles } from './styles';
 import type { InitialFormResponse } from '../../../types/contract';
 import type { Capsule } from './types';
 
@@ -37,6 +40,7 @@ interface Template {
 
 interface FormularioInicialStepProps {
   template: Template;
+  steps: { id: string; label: string }[];
   signatureInfo?: SignatureInfo;
   onContinue: (data: {
     contractId: string;
@@ -55,6 +59,7 @@ const VISIBLE_PERCENTAGE = 60; // Mostrar solo el 60% del documento
 
 export function FormularioInicialStep({
   template,
+  steps,
   signatureInfo,
   onContinue,
   onBack,
@@ -239,314 +244,205 @@ export function FormularioInicialStep({
   );
 
   return (
-    <div className="relative h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 p-6 overflow-hidden">
-      {/* Background Decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/20 to-lime-400/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-400/20 to-emerald-400/20 rounded-full blur-3xl"></div>
-      </div>
-      
+    <div className="h-full bg-slate-50 flex flex-col">
+      {/* Grid Pattern */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
       {/* Header */}
-      <div className="relative mb-4">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg shadow-md border border-slate-200 transition-all"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver al catálogo
-          </button>
-          
-          <div className="text-center flex-1 px-4">
-            <h1 className="text-xl font-bold text-slate-900">{template.title}</h1>
-            <p className="text-sm text-slate-500">Completa los datos iniciales para continuar al pago</p>
-          </div>
-          
-          <div className="w-[140px]"></div>
-        </div>
-      </div>
-      
-      <div className="relative flex gap-6 h-[calc(100%-80px)]">
-        {/* Vista previa del documento - usa el mismo DocumentPreview */}
-        <div className="flex-1 flex flex-col">
+      <EditorHeader 
+         steps={steps}
+         currentStep="formulario-inicial"
+         onBack={onBack}
+         totalPrice={totalPrice}
+         rightAction={
+            <button
+              onClick={handleGoToPayment}
+              disabled={isSubmitting}
+              className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
+                  <span>Procesando...</span>
+                </>
+              ) : (
+                <>
+                  <span>Continuar al pago</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+         }
+      />
+
+      {/* Main Content */}
+      <div className="relative z-10 flex-1 w-full max-w-[1920px] mx-auto p-6 flex gap-6 overflow-hidden min-h-0">
+        
+        {/* Left: Document Preview */}
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0">
           <DocumentPreview
             templateText={template.template_content}
             renderedContract={renderedContract}
             completionPercentage={completionPercentage}
             activeField={activeField}
-            variablesMetadata={template.variables_metadata || []}
             visiblePercentage={VISIBLE_PERCENTAGE}
             lockedOverlayContent={lockedOverlayContent}
+            variablesMetadata={template.variables_metadata || []}
           />
         </div>
 
-        {/* Panel derecho: Formulario y opciones */}
-        <div className="w-[480px] space-y-4 min-w-0 overflow-y-auto">
-          {/* Barra de progreso */}
-
-
-          {/* Campos de datos del comprador - REQUERIDOS */}
-          <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl shadow-lg border-2 border-cyan-200 p-4 space-y-4">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-sm font-semibold text-slate-900">Tus datos de contacto</span>
-                <p className="text-xs text-slate-500">Necesarios para continuar con el proceso</p>
-              </div>
-            </div>
-
-            {/* Campo RUT */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 mb-1 block">
-                Tu RUT <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={contactRut}
-                onChange={(e) => setContactRut(formatRut(e.target.value))}
-                placeholder="12.345.678-9"
-                maxLength={12}
-                className="w-full px-4 py-3 rounded-xl border-2 border-cyan-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 outline-none transition-all text-sm"
-              />
-            </div>
-
-            {/* Campo Email */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 mb-1 block">
-                Tu correo electrónico <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
-                placeholder="ejemplo@correo.com"
-                className="w-full px-4 py-3 rounded-xl border-2 border-cyan-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 outline-none transition-all text-sm"
-              />
-              <p className="text-xs text-slate-500 mt-1">Recibirás tu código de seguimiento aquí</p>
-            </div>
-          </div>
-
-          {/* 1. Formulario de campos - PRIMERO */}
-          <FieldsForm
-            variables={filteredVariables}
-            formData={formData}
-            onFormChange={handleFormChange}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            activeField={activeField}
-            onFieldFocus={setActiveField}
-            onFieldBlur={() => setActiveField(null)}
-          />
-
-          {/* 2. Selector de cápsulas - SEGUNDO */}
-          {template.capsules.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-              <div className="p-3 bg-slate-50 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                  <Plus className="w-4 h-4 text-white" />
+        {/* Right: Sidebar */}
+        <div className="w-[420px] h-full overflow-y-auto pr-2 space-y-4 pb-20 custom-scrollbar">
+           
+           {/* Contact Info Card */}
+           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
+              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                   <User className="w-4 h-4 text-blue-600" />
+                </div>
+                Datos de contacto
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">Tu RUT <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" 
+                    value={contactRut}
+                    onChange={(e) => setContactRut(formatRut(e.target.value))}
+                    placeholder="12.345.678-9"
+                    maxLength={12}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">Cláusulas opcionales</div>
-                  <div className="text-xs text-slate-500">{selectedCapsules.length} seleccionadas</div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">Tu Email <span className="text-red-500">*</span></label>
+                  <input 
+                    type="email" 
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="nombre@ejemplo.com"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1.5">Aquí recibirás el código de seguimiento</p>
                 </div>
               </div>
-              
-              <div className="border-t border-slate-100 p-3 space-y-3 max-h-[300px] overflow-y-auto">
-                {template.capsules.map((capsule) => {
-                  const isSelected = selectedCapsules.includes(capsule.id);
-                  return (
-                    <div
-                      key={capsule.id}
-                      onClick={() => toggleCapsule(capsule.id)}
-                      className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all border ${
-                        isSelected ? 'bg-cyan-50 ring-2 ring-cyan-500 border-cyan-200' : 'bg-white hover:bg-slate-50 border-slate-200'
-                      }`}
-                    >
-                      <div className={`w-5 h-5 mt-0.5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-                        isSelected ? 'bg-cyan-500 border-cyan-500' : 'border-slate-300 bg-white'
-                      }`}>
-                        {isSelected && <Check className="w-3 h-3 text-white" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between gap-2 mb-1">
-                            <div className="text-sm font-bold text-slate-900 leading-tight">{capsule.title}</div>
-                            <div className={`text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap ${
-                                isSelected ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-600'
-                            }`}>
-                                +{formatPrice(capsule.price)}
-                            </div>
-                        </div>
-                         {(capsule.description || capsule.legal_text) && (
-                            <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed">
-                                {capsule.description || capsule.legal_text}
-                            </p>
-                         )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+           </div>
 
-          {/* 3. Selector de tipo de firma - TERCERO con mejor diseño */}
-          {requiresSignature && signatureInfo && (
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4">
-              <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-cyan-600" />
-                Tipo de Firma Electrónica
+           {/* Fields Form */}
+           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
+              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                   <Edit3 className="w-4 h-4 text-emerald-600" />
+                </div>
+                Datos del documento
               </h3>
-              <p className="text-xs text-slate-500 mb-4">
-                Selecciona el tipo de firma según tus necesidades legales
-              </p>
-              
-              <div className="space-y-3">
-                {/* Opción FES */}
-                <button
-                  onClick={() => setSignatureType('simple')}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden ${
-                    signatureType === 'simple' 
-                      ? 'border-green-500 bg-gradient-to-r from-green-50 to-emerald-50 shadow-lg shadow-green-100' 
-                      : 'border-gray-200 hover:border-green-300 hover:bg-green-50/30'
-                  }`}
-                >
-                  {signatureType === 'simple' && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <Check className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      signatureType === 'simple' 
-                        ? 'bg-green-500' 
-                        : 'bg-green-100'
-                    }`}>
-                      <Zap className={`w-5 h-5 ${signatureType === 'simple' ? 'text-white' : 'text-green-600'}`} />
-                    </div>
-                    <div>
-                      <span className="font-bold text-base">FES - Firma Simple</span>
-                      <p className="text-lg font-bold text-green-600">
-                        {formatPrice(signatureInfo.pricing.fes.totalPrice)}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-600 ml-13">
-                    Rápida y sencilla. Ideal para contratos de bajo riesgo y acuerdos internos.
-                  </p>
-                </button>
+              <FieldsForm
+                 variables={filteredVariables}
+                 formData={formData}
+                 onFormChange={handleFormChange}
+                 searchTerm={searchTerm}
+                 onSearchChange={setSearchTerm}
+                 activeField={activeField}
+                 onFieldFocus={setActiveField}
+                 onFieldBlur={() => setActiveField(null)}
+              />
+           </div>
 
-                {/* Opción FEA */}
-                <button
-                  onClick={() => setSignatureType('fea')}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden ${
-                    signatureType === 'fea' 
-                      ? 'border-cyan-500 bg-gradient-to-r from-cyan-50 to-blue-50 shadow-lg shadow-cyan-100' 
-                      : 'border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/30'
-                  }`}
-                >
-                  {signatureType === 'fea' && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center">
-                        <Check className="w-4 h-4 text-white" />
-                      </div>
+            {/* Capsules */}
+            {template.capsules.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-shadow hover:shadow-md">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
+                       <Plus className="w-4 h-4 text-violet-600" />
                     </div>
-                  )}
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      signatureType === 'fea' 
-                        ? 'bg-cyan-500' 
-                        : 'bg-cyan-100'
-                    }`}>
-                      <Shield className={`w-5 h-5 ${signatureType === 'fea' ? 'text-white' : 'text-cyan-600'}`} />
-                    </div>
-                    <div>
-                      <span className="font-bold text-base">FEA - Firma Avanzada</span>
-                      <p className="text-lg font-bold text-cyan-600">
-                        {formatPrice(signatureInfo.pricing.fea.totalPrice)}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-600 ml-13">
-                    Mayor validez legal. Recomendada para contratos importantes y con terceros.
-                  </p>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Resumen y botón de pago */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4">
-            <div className="space-y-2 text-sm mb-4">
-              <div className="flex justify-between">
-                <span className="text-slate-600">Contrato base</span>
-                <span>{formatPrice(template.base_price)}</span>
-              </div>
-              
-              {selectedCapsules.length > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Cláusulas ({selectedCapsules.length})</span>
-                  <span>
-                    {formatPrice(
-                      template.capsules
-                        .filter(c => selectedCapsules.includes(c.id))
-                        .reduce((sum, c) => sum + c.price, 0)
-                    )}
-                  </span>
+                    Cláusulas adicionales
+                  </h3>
+                   <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">{selectedCapsules.length} seleccionadas</span>
                 </div>
-              )}
-              
-              {requiresSignature && signatureInfo && signatureType !== 'none' && (
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Firma {signatureType.toUpperCase()}</span>
-                  <span>
-                    {formatPrice(
-                      signatureType === 'fea' 
-                        ? signatureInfo.pricing.fea.totalPrice 
-                        : signatureInfo.pricing.fes.totalPrice
-                    )}
-                  </span>
-                </div>
-              )}
-              
-              <div className="border-t border-slate-200 pt-2 mt-2">
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span className="text-cyan-600">{formatPrice(totalPrice)}</span>
+                <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                   {template.capsules.map((capsule) => {
+                      const isSelected = selectedCapsules.includes(capsule.id);
+                      return (
+                        <div 
+                          key={capsule.id}
+                          onClick={() => toggleCapsule(capsule.id)}
+                          className={`p-4 cursor-pointer transition-colors hover:bg-slate-50 flex items-start gap-3 group ${isSelected ? 'bg-violet-50/30' : ''}`}
+                        >
+                           <div className={`mt-0.5 w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-violet-600 border-violet-600' : 'border-slate-300 bg-white group-hover:border-violet-400'}`}>
+                              {isSelected && <Check className="w-3 h-3 text-white" />}
+                           </div>
+                           <div className="flex-1">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className={`text-sm font-medium ${isSelected ? 'text-violet-900' : 'text-slate-900'}`}>{capsule.title}</span>
+                                <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">+{formatPrice(capsule.price)}</span>
+                              </div>
+                              <p className="text-xs text-slate-500 line-clamp-2">{capsule.description || capsule.legal_text}</p>
+                           </div>
+                        </div>
+                      )
+                   })}
                 </div>
               </div>
-            </div>
-
-            {/* Botón de pago - siempre disponible */}
-            <button
-              onClick={handleGoToPayment}
-              disabled={isSubmitting}
-              className="w-full py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  Continuar al Pago
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
-
-            {error && (
-              <p className="mt-3 text-red-600 text-sm text-center">{error}</p>
             )}
-          </div>
+
+            {/* Signature Type */}
+            {requiresSignature && signatureInfo && (
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
+                <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                   <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                      <Shield className="w-4 h-4 text-amber-600" />
+                   </div>
+                   Tipo de Firma
+                </h3>
+
+                <div className="space-y-3">
+                   {/* Simple */}
+                   <button
+                     onClick={() => setSignatureType('simple')}
+                     className={`w-full p-3 rounded-lg border text-left transition-all relative ${
+                        signatureType === 'simple' 
+                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                     }`}
+                   >
+                     <div className="flex items-center justify-between mb-1">
+                        <span className={`text-sm font-semibold ${signatureType === 'simple' ? 'text-blue-900' : 'text-slate-900'}`}>Firma Simple (FES)</span>
+                        <span className="font-bold text-slate-900">{formatPrice(signatureInfo.pricing.fes.totalPrice)}</span>
+                     </div>
+                     <p className="text-xs text-slate-500">Rápida y estándar. Para la mayoría de los casos.</p>
+                   </button>
+
+                   {/* Advanced */}
+                   <button
+                     onClick={() => setSignatureType('fea')}
+                     className={`w-full p-3 rounded-lg border text-left transition-all ${
+                        signatureType === 'fea' 
+                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                     }`}
+                   >
+                     <div className="flex items-center justify-between mb-1">
+                        <span className={`text-sm font-semibold ${signatureType === 'fea' ? 'text-blue-900' : 'text-slate-900'}`}>Firma Avanzada (FEA)</span>
+                        <span className="font-bold text-slate-900">{formatPrice(signatureInfo.pricing.fea.totalPrice)}</span>
+                     </div>
+                     <p className="text-xs text-slate-500">Máxima seguridad legal. Verificación de identidad.</p>
+                   </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex items-start gap-2 animate-fade-in-up">
+                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                 <p>{error}</p>
+              </div>
+            )}
         </div>
       </div>
+      <style>{contractEditorStyles}</style>
     </div>
   );
 }
