@@ -41,63 +41,19 @@ export function PaymentStep({
     setError(null);
     
     try {
-      // HARDCODED PAYMENT - Simulate immediate success
-      console.log('💳 HARDCODED PAYMENT - Simulating payment for:', {
+      // Redirigir a la página de pago de Mercado Pago
+      console.log('💳 Redirigiendo a Mercado Pago:', {
         contractId,
         trackingCode,
         buyerRut,
         totalAmount
       });
 
-      // Simular delay de 1 segundo
-      setTimeout(async () => {
-        try {
-          // Simular webhook de pago aprobado actualizando el status del contrato
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/contracts/${contractId}/simulate-payment`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'approved' })
-          });
-
-          if (response.ok) {
-            console.log('✅ Payment simulation successful');
-          } else {
-            console.warn('⚠️ Payment simulation endpoint not found, continuing anyway');
-          }
-        } catch (err) {
-          console.warn('⚠️ Payment simulation failed, continuing anyway:', err);
-        }
-
-        setLoading(false);
-        setPaymentStatus('success');
-        
-        // Después de 2 segundos más, avanzar al siguiente paso
-        setTimeout(() => {
-          onPaymentSuccess();
-        }, 2000);
-      }, 1000);
-
-      /* CÓDIGO REAL COMENTADO PARA CUANDO SE INTEGRE LA PASARELA
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/payments/${contractId}/initiate`,
-        {
-          contract_id: contractId,
-          tracking_code: trackingCode,
-          rut: buyerRut,
-        }
-      );
-
-      if (response.data.success) {
-        setPaymentUrl(response.data.payment_url);
-        // El webhook de la pasarela actualizará el estado
-      } else {
-        setError(response.data.error || 'Error al iniciar pago');
-        setPaymentStatus('failed');
-      }
-      */
+      // Redirigir a la página de pago
+      window.location.href = `/payment/${contractId}?tracking_code=${trackingCode}&rut=${encodeURIComponent(buyerRut)}`;
     } catch (err: any) {
-      console.error('Error initiating payment:', err);
-      setError(err.response?.data?.error || 'Error al procesar el pago');
+      console.error('Error redirecting to payment:', err);
+      setError('Error al redirigir al pago');
       setPaymentStatus('failed');
       setLoading(false);
     }
