@@ -272,9 +272,7 @@ export function ContractEditorPage() {
       <Navbar />
       
       {/* Progress Bar - Only show for steps that don't have their own Header (Review, Signatures, Payment use internal or we migrate them later) */}
-      {!['formulario-inicial', 'completar'].includes(currentStep) && (
-        <ProgressBar steps={PROGRESS_STEPS} currentStep={currentStep} />
-      )}
+      {/* ProgressBar removed, now all steps handle their own header */}
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
@@ -321,6 +319,7 @@ export function ContractEditorPage() {
             trackingCode={trackingCode || ''}
             buyerRut={buyerRut || ''}
             totalAmount={contractTotalAmount}
+            steps={PROGRESS_STEPS}
             onPaymentSuccess={() => {
               // Actualizar contractData con estado draft
               if (contractData) {
@@ -355,6 +354,7 @@ export function ContractEditorPage() {
             trackingCode={trackingCode}
             buyerRut={buyerRut}
             totalPrice={contractTotalAmount}
+            steps={PROGRESS_STEPS}
             onApprove={handleApproveAndSign}
             onBack={() => setCurrentStep('completar')}
             isProcessing={isProcessingPayment}
@@ -367,6 +367,7 @@ export function ContractEditorPage() {
           <SignatureStep
             contractId={contractId}
             trackingCode={trackingCode}
+            steps={PROGRESS_STEPS}
             onBack={() => setCurrentStep('review')}
           />
         )}

@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { CreditCard, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CreditCard, CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
+import { EditorHeader } from './EditorHeader';
 
 interface PaymentStepProps {
   contractId: string | null;
   trackingCode: string;
   buyerRut: string;
   totalAmount: number;
+  steps: { id: string; label: string }[];
   onPaymentSuccess: () => void;
   onPaymentFailed: () => void;
   onBack: () => void;
@@ -16,6 +18,7 @@ export function PaymentStep({
   trackingCode,
   buyerRut,
   totalAmount,
+  steps,
   onPaymentSuccess,
   onPaymentFailed,
   onBack,
@@ -108,8 +111,20 @@ export function PaymentStep({
   };
 
   return (
-    <div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 p-6">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-8 max-w-lg w-full">
+    <div className="h-full flex flex-col bg-slate-50">
+       {/* Background Grid */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
+      {/* Header */}
+      <EditorHeader
+         steps={steps}
+         currentStep="payment"
+         onBack={onBack}
+         totalPrice={totalAmount}
+      />
+
+    <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-lg w-full">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center">
@@ -207,6 +222,7 @@ export function PaymentStep({
           </button>
         )}
       </div>
+    </div>
     </div>
   );
 }

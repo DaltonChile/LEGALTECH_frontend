@@ -199,7 +199,7 @@ export function CompletarFormularioStep({
                  <button
                     onClick={handleContinueToReview}
                     disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting}
-                    className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm whitespace-nowrap"
+                    className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap"
                   >
                     {isSubmitting ? (
                       <>
