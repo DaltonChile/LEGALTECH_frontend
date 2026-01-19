@@ -12,6 +12,12 @@ const TrackingPage = lazy(() => import('../pages/public/TrackingPage').then(m =>
 const HelpPage = lazy(() => import('../pages/public/HelpPage').then(m => ({ default: m.HelpPage })));
 const ResumeContractPage = lazy(() => import('../pages/public/ResumeContractPage').then(m => ({ default: m.ResumeContractPage })));
 
+// Payment pages - lazy loaded
+const PaymentPage = lazy(() => import('../pages/public/PaymentPage'));
+const PaymentSuccessPage = lazy(() => import('../pages/public/PaymentSuccessPage'));
+const PaymentFailurePage = lazy(() => import('../pages/public/PaymentFailurePage'));
+const PaymentPendingPage = lazy(() => import('../pages/public/PaymentPendingPage'));
+
 // Admin pages - lazy loaded
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const TemplatesPage = lazy(() => import('../pages/admin/TemplatesPage').then(m => ({ default: m.TemplatesPage })));
@@ -40,7 +46,15 @@ export function AppRoutes() {
         <Route path="/ayuda" element={<HelpPage />} />
         <Route path="/resume" element={<ResumeContractPage />} />
         <Route path="/retomar" element={<ResumeContractPage />} />
+        <Route path="/contracts/resume" element={<ResumeContractPage />} />
         <Route path="/catalogo" element={<ContractCatalogPage />} />
+        
+        {/* Payment routes */}
+        <Route path="/payment/:contractId" element={<PaymentPage />} />
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/failure" element={<PaymentFailurePage />} />
+        <Route path="/payment/pending" element={<PaymentPendingPage />} />
+        
         <Route path="/:slug" element={<ContractEditorPage />} />
 
       {/* Admin Routes with Layout */}
