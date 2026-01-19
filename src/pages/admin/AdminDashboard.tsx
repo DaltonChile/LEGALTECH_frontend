@@ -389,7 +389,11 @@ interface ContractRowProps {
 }
 
 const ContractRow: React.FC<ContractRowProps> = ({ contract, onView }) => {
-  const status = STATUS_CONFIG[contract.status];
+  const status = STATUS_CONFIG[contract.status] || { 
+    label: contract.status, 
+    color: 'bg-gray-100 text-gray-600', 
+    dotColor: 'bg-gray-400' 
+  };
 
   return (
     <tr className="hover:bg-slate-50/80 transition-colors group">
@@ -459,12 +463,16 @@ interface ContractDetailModalProps {
 }
 
 const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onClose }) => {
-  const status = STATUS_CONFIG[contract.status];
+  const status = STATUS_CONFIG[contract.status] || { 
+    label: contract.status, 
+    color: 'bg-gray-100 text-gray-600', 
+    dotColor: 'bg-gray-400' 
+  };
   const statusIcons = {
     draft: FileText, pending_payment: Clock, paid: CheckCircle,
     waiting_notary: AlertCircle, waiting_signatures: Clock, signed: CheckCircle, failed: XCircle
   };
-  const StatusIcon = statusIcons[contract.status];
+  const StatusIcon = statusIcons[contract.status] || FileText;
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
