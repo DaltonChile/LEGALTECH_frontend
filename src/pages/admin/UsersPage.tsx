@@ -1,6 +1,6 @@
 // LEGALTECH_frontend/src/pages/admin/UsersPage.tsx
 import React, { useEffect, useState } from 'react';
-import { Search, Filter, ChevronDown, MoreVertical, X, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Search, Filter, Trash2, Edit, Eye, EyeOff, UserPlus, X } from 'lucide-react';
 import { getAdminUsers, createUser, updateUser, deleteUser, reactivateUser } from '../../services/api';
 
 interface User {
@@ -107,263 +107,152 @@ export function UsersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="p-0">
       {/* Header */}
-      <div className="flex items-center pt-6 justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Usuarios</h1>
+          <p className="text-slate-500 text-sm mt-1">Gestiona los administradores y notarios del sistema</p>
+        </div>
         
-        
-        <div className="flex items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar usuario"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-56 pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-            />
-          </div>
+        <button 
+          onClick={() => setShowNewUserModal(true)}
+          className="px-4 py-2.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 flex items-center gap-2 text-sm"
+        >
+          <UserPlus className="w-4 h-4" />
+          Nuevo Usuario
+        </button>
+      </div>
 
-          {/* Role Dropdown */}
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowRoleDropdown(!showRoleDropdown);
-                setShowFilterDropdown(false);
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+      {/* Toolbar: Search & Filter */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 flex flex-wrap items-center gap-4 shadow-sm">
+        <div className="flex-1 min-w-[240px] relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre, email o RUT..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+          />
+        </div>
+
+        <div className="flex bg-slate-100 p-1 rounded-lg">
+          {(['all', 'admin', 'notario'] as const).map((role) => (
+            <button 
+              key={role}
+              onClick={() => setFilterRole(role)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                filterRole === role 
+                  ? 'bg-white text-slate-900 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
             >
-              {getRoleLabel()}
-              <ChevronDown className="w-4 h-4" />
+              {role === 'all' && 'Todos'}
+              {role === 'admin' && 'Admin'}
+              {role === 'notario' && 'Notario'}
             </button>
-            {showRoleDropdown && (
-              <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-10 py-1">
-                <button
-                  onClick={() => { setFilterRole('all'); setShowRoleDropdown(false); }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${filterRole === 'all' ? 'text-cyan-600 font-medium' : 'text-slate-700'}`}
-                >
-                  Todos los roles
-                </button>
-                <button
-                  onClick={() => { setFilterRole('admin'); setShowRoleDropdown(false); }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${filterRole === 'admin' ? 'text-cyan-600 font-medium' : 'text-slate-700'}`}
-                >
-                  Administrador
-                </button>
-                <button
-                  onClick={() => { setFilterRole('notario'); setShowRoleDropdown(false); }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${filterRole === 'notario' ? 'text-cyan-600 font-medium' : 'text-slate-700'}`}
-                >
-                  Notario
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowFilterDropdown(!showFilterDropdown);
-                setShowRoleDropdown(false);
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Filter className="w-4 h-4" />
-              Filtrar
-            </button>
-            {showFilterDropdown && (
-              <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-10 py-1">
-                <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase">Estado</div>
-                <button
-                  onClick={() => { setFilterStatus('all'); setShowFilterDropdown(false); }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${filterStatus === 'all' ? 'text-cyan-600 font-medium' : 'text-slate-700'}`}
-                >
-                  Todos
-                </button>
-                <button
-                  onClick={() => { setFilterStatus('active'); setShowFilterDropdown(false); }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2 ${filterStatus === 'active' ? 'text-cyan-600 font-medium' : 'text-slate-700'}`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  Activos
-                </button>
-                <button
-                  onClick={() => { setFilterStatus('inactive'); setShowFilterDropdown(false); }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2 ${filterStatus === 'inactive' ? 'text-cyan-600 font-medium' : 'text-slate-700'}`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                  Inactivos
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* New User Button */}
-          <button
-            onClick={() => setShowNewUserModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            Nuevo usuario
-          </button>
+          ))}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-100">
-              <th className="text-left px-6 py-4 text-xs font-medium text-slate-500">Nombre</th>
-              <th className="text-left px-6 py-4 text-xs font-medium text-slate-500">Rol</th>
-              <th className="text-left px-6 py-4 text-xs font-medium text-slate-500">Email</th>
-              <th className="text-left px-6 py-4 text-xs font-medium text-slate-500">RUT</th>
-              <th className="text-left px-6 py-4 text-xs font-medium text-slate-500">Estado</th>
-              <th className="text-right px-6 py-4 text-xs font-medium text-slate-500">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                  No se encontraron usuarios
-                </td>
-              </tr>
-            ) : (
-              filteredUsers.map((user) => (
-                <tr key={user.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  {/* Name with Avatar */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold ${getAvatarColor(user.role, user.is_active)}`}>
-                        {getInitials(user.full_name)}
-                      </div>
-                      <span className={`font-medium text-sm ${user.is_active ? 'text-slate-900' : 'text-slate-400'}`}>
-                        {user.full_name}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Role */}
-                  <td className="px-6 py-4">
-                    <span className={`text-sm ${user.is_active ? 'text-slate-600' : 'text-slate-400'}`}>
-                      {user.role === 'admin' ? 'Administrador' : 'Notario'}
-                    </span>
-                  </td>
-
-                  {/* Email */}
-                  <td className="px-6 py-4">
-                    <span className={`text-sm ${user.is_active ? 'text-slate-600' : 'text-slate-400'}`}>
-                      {user.email}
-                    </span>
-                  </td>
-
-                  {/* RUT */}
-                  <td className="px-6 py-4">
-                    <span className={`text-sm font-mono ${user.is_active ? 'text-slate-600' : 'text-slate-400'}`}>
-                      {user.rut || '—'}
-                    </span>
-                  </td>
-
-                  {/* Status */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-slate-300'}`}></span>
-                      <span className={`text-sm ${user.is_active ? 'text-slate-700' : 'text-slate-400'}`}>
-                        {user.is_active ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-4 text-right">
-                    <div className="relative inline-block">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActionMenuUser(actionMenuUser === user.id ? null : user.id);
-                        }}
-                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                      
-                      {actionMenuUser === user.id && (
-                        <div 
-                          className="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-20 py-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setActionMenuUser(null);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleToggleUserStatus(user)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2 ${
-                              user.is_active ? 'text-red-600' : 'text-green-600'
-                            }`}
-                          >
-                            {user.is_active ? (
-                              <>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                </svg>
-                                Desactivar
-                              </>
-                            ) : (
-                              <>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Reactivar
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-
-        {/* Footer */}
-        <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>
-            Mostrando {filteredUsers.length} de {users.length} usuarios
-          </span>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              {users.filter(u => u.role === 'admin').length} admins
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-              {users.filter(u => u.role === 'notario').length} notarios
-            </span>
+      {/* Users Table */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        {filteredUsers.length === 0 ? (
+          <div className="text-center py-16 px-6">
+            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+              <UserPlus className="w-8 h-8 text-slate-300" />
+            </div>
+            <h3 className="text-slate-900 font-medium text-lg mb-1">No se encontraron usuarios</h3>
+            <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">
+              {searchQuery ? 'Intenta ajustar tus filtros o búsqueda' : 'Crea tu primer usuario'}
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50/50 border-b border-slate-100">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[30%]">Usuario</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Rol</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalles</th>
+                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${getAvatarColor(user.role, user.is_active)}`}>
+                          {getInitials(user.full_name)}
+                        </div>
+                        <div>
+                          <h3 className={`text-sm font-bold ${user.is_active ? 'text-slate-900' : 'text-slate-400'}`}>
+                            {user.full_name}
+                          </h3>
+                        </div>
+                      </div>
+                    </td>
+                    
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                        user.role === 'admin' 
+                          ? 'bg-purple-50 text-purple-700 border-purple-100' 
+                          : 'bg-blue-50 text-blue-700 border-blue-100'
+                      }`}>
+                         {user.role === 'admin' ? 'Administrador' : 'Notario'}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-slate-600">{user.email}</span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-slate-500 uppercase tracking-wider">RUT</span>
+                        <span className="text-sm font-mono text-slate-700">{user.rut || '—'}</span>
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => setSelectedUser(user)}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Editar usuario"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => handleToggleUserStatus(user)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            user.is_active 
+                              ? 'text-slate-400 hover:text-red-600 hover:bg-red-50' 
+                              : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                          }`}
+                          title={user.is_active ? 'Desactivar usuario' : 'Activar usuario'}
+                        >
+                          {user.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* New User Modal */}

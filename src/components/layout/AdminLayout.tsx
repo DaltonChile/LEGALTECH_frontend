@@ -1,18 +1,88 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../admin/dashboard/Sidebar';
+import { Menu, Search, Bell, HelpCircle } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 export function AdminLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { user } = useAuth();
+  const firstName = user?.full_name?.split(' ')[0] || 'Admin';
+
   return (
-    <div className="flex gap-6 min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 font-sans text-slate-900">
-      {/* Persistent Sidebar */}
-      <Sidebar />
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 relative">
+      {/* Grid Background - Global for Admin */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none fixed"></div>
       
-      {/* Dynamic Content Area */}
-      <main className="flex-1 p-4 overflow-y-auto h-screen">
-        <div className="space-y-4">
-          <Outlet />
-        </div>
-      </main>
+      {/* Sidebar - Desktop & Mobile */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <Sidebar onClose={() => setIsSidebarOpen(false)} />
+      </div>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col md:ml-64 relative z-10 min-h-screen transition-all duration-200">
+        
+        {/* Top Navbar */}
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 px-4 md:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+             {/* Mobile Menu Button */}
+             <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 hover:bg-slate-100 rounded-lg md:hidden">
+              <Menu className="w-6 h-6 text-slate-600" />
+            </button>
+
+            {/* Welcome Text */}
+            <div className="hidden md:block">
+              <h1 className="text-sm font-medium text-slate-500">
+                Bienvenido de vuelta, <span className="text-slate-900 font-bold">{firstName}</span>
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Search Bar - Hidden on small mobile */}
+            <div className="hidden sm:flex items-center bg-slate-100/80 hover:bg-slate-100 rounded-full px-4 py-2 transition-colors border border-transparent hover:border-slate-200 w-64">
+              <Search className="w-4 h-4 text-slate-400 mr-2" />
+              <input 
+                type="text" 
+                placeholder="Buscar..." 
+                className="bg-transparent border-none outline-none text-sm text-slate-700 placeholder-slate-400 w-full"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 border-l border-slate-200 pl-2 md:pl-4 ml-2">
+               <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all relative">
+                 <Bell className="w-5 h-5" />
+                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+               </button>
+               <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all md:block hidden">
+                 <HelpCircle className="w-5 h-5" />
+               </button>
+            </div>
+            
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 via-cyan-500 to-lime-500 p-[2px] cursor-pointer md:hidden">
+               <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                  <span className="text-xs font-bold text-slate-700">{firstName.charAt(0)}</span>
+               </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto animate-in fade-in zoom-in-95 duration-300">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
