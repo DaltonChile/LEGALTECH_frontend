@@ -319,13 +319,6 @@ export function ContractEditorPage() {
             buyerRut={buyerRut || ''}
             totalAmount={contractTotalAmount}
             steps={PROGRESS_STEPS}
-            onPaymentSuccess={() => {
-              // Actualizar contractData con estado draft
-              if (contractData) {
-                setContractData({ ...contractData, status: 'draft' });
-              }
-              setCurrentStep('completar');
-            }}
             onPaymentFailed={() => setCurrentStep('formulario-inicial')}
             onBack={() => setCurrentStep('formulario-inicial')}
           />

@@ -8,7 +8,6 @@ interface PaymentStepProps {
   buyerRut: string;
   totalAmount: number;
   steps: { id: string; label: string }[];
-  onPaymentSuccess: () => void;
   onPaymentFailed: () => void;
   onBack: () => void;
 }
@@ -19,7 +18,6 @@ export function PaymentStep({
   buyerRut,
   totalAmount,
   steps,
-  onPaymentSuccess,
   onPaymentFailed,
   onBack,
 }: PaymentStepProps) {
@@ -156,18 +154,7 @@ export function PaymentStep({
           </div>
         </div>
 
-        {/* Información adicional */}
-        {paymentStatus === 'pending' && !loading && (
-          <div className="bg-slate-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-slate-600 text-center">
-              <strong className="text-slate-900">Mock de pago:</strong> Esta es una simulación.
-              <br />
-              En producción, se integrará con Webpay, Flow o MercadoPago.
-            </p>
-          </div>
-        )}
-
-        {/* Botón volver (solo si no está pagado) */}
+        {/* Boton volver (solo si no esta pagado) */}
         {paymentStatus !== 'success' && (
           <button
             onClick={onBack}

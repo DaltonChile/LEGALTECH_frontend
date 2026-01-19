@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { CheckCircle, Loader2, AlertTriangle, ArrowRight } from 'lucide-react';
 import paymentService from '../../services/paymentService';
+import { EditorHeader } from '../../components/public/contract-editor/EditorHeader';
+
+const PROGRESS_STEPS = [
+  { id: 'formulario-inicial', label: 'Datos iniciales' },
+  { id: 'payment', label: 'Pago' },
+  { id: 'completar', label: 'Completar formulario' },
+  { id: 'review', label: 'Revisar' },
+  { id: 'signatures', label: 'Firmar' },
+];
 
 const PaymentSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -56,24 +66,34 @@ const PaymentSuccessPage: React.FC = () => {
 
   if (status === 'checking') {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-6"></div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            Verificando tu pago...
-          </h1>
-          <p className="text-gray-600 mb-4">
-            Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.
-          </p>
-          <div className="bg-gray-100 rounded-full h-2 mb-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(attempts / maxAttempts) * 100}%` }}
-            ></div>
+      <div className="min-h-screen flex flex-col bg-slate-50">
+        {/* Background Grid */}
+        <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
+        <EditorHeader
+          steps={PROGRESS_STEPS}
+          currentStep="payment"
+        />
+
+        <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-md w-full text-center">
+            <Loader2 className="w-16 h-16 text-blue-600 mx-auto mb-6 animate-spin" />
+            <h1 className="text-2xl font-bold text-slate-800 mb-4">
+              Verificando tu pago...
+            </h1>
+            <p className="text-slate-600 mb-6">
+              Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.
+            </p>
+            <div className="bg-slate-100 rounded-full h-2 mb-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(attempts / maxAttempts) * 100}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-slate-500">
+              Verificando... ({attempts}/{maxAttempts})
+            </p>
           </div>
-          <p className="text-sm text-gray-500">
-            Verificando... ({attempts}/{maxAttempts})
-          </p>
         </div>
       </div>
     );
@@ -81,80 +101,107 @@ const PaymentSuccessPage: React.FC = () => {
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="text-gray-600 mb-6">{errorMessage}</p>
-          <button
-            onClick={handleGoHome}
-            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors"
-          >
-            Volver al inicio
-          </button>
+      <div className="min-h-screen flex flex-col bg-slate-50">
+        {/* Background Grid */}
+        <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
+        <EditorHeader
+          steps={PROGRESS_STEPS}
+          currentStep="payment"
+        />
+
+        <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+            <p className="text-slate-600 mb-6">{errorMessage}</p>
+            <button
+              onClick={handleGoHome}
+              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-xl transition-colors"
+            >
+              Volver al inicio
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-md p-8 max-w-lg w-full text-center">
-        {/* Icono de éxito */}
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      {/* Background Grid */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
 
-        <h1 className="text-3xl font-bold text-green-600 mb-4">
-          ¡Pago Confirmado!
-        </h1>
-        
-        <p className="text-lg text-gray-700 mb-6">
-          Tu pago ha sido procesado exitosamente.
-        </p>
+      <EditorHeader
+        steps={PROGRESS_STEPS}
+        currentStep="payment"
+      />
 
-        {/* Código de seguimiento */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-          <p className="text-sm text-gray-600 mb-2">Tu código de seguimiento:</p>
-          <p className="text-3xl font-mono font-bold text-blue-600">{trackingCode}</p>
-          <p className="text-sm text-gray-500 mt-3">
-            Guarda este código. También te lo enviamos por email.
-          </p>
-        </div>
-
-        {/* Próximos pasos */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-          <h3 className="font-semibold text-gray-800 mb-3">Próximos pasos:</h3>
-          <ol className="text-sm text-gray-600 space-y-2">
-            <li className="flex items-start">
-              <span className="bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">1</span>
-              <span>Completa el formulario con los datos restantes</span>
-            </li>
-            <li className="flex items-start">
-              <span className="bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">2</span>
-              <span>Revisa el contrato generado</span>
-            </li>
-            <li className="flex items-start">
-              <span className="bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">3</span>
-              <span>Firma electrónicamente</span>
-            </li>
-          </ol>
-        </div>
-
-        {/* Botones */}
-        <div className="space-y-3">
-          <button
-            onClick={handleContinue}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-          >
-            Completar mi Contrato
-          </button>
+      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-2xl w-full">
           
-          <p className="text-sm text-gray-500">
-            Puedes continuar ahora o más tarde usando tu código de seguimiento.
-          </p>
+          {/* Success Icon & Header */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-600/20">
+              <CheckCircle className="w-12 h-12 text-white" />
+            </div>
+
+            <h1 className="text-3xl font-bold text-slate-800 mb-3">
+              ¡Pago Confirmado!
+            </h1>
+            
+            <p className="text-lg text-slate-600">
+              Tu pago ha sido procesado exitosamente por Mercado Pago.
+            </p>
+          </div>
+
+          {/* Código de seguimiento */}
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-6 mb-8">
+            <p className="text-sm text-slate-600 mb-2 text-center">Tu código de seguimiento:</p>
+            <p className="text-4xl font-mono font-bold text-blue-600 text-center tracking-wider">{trackingCode}</p>
+            <p className="text-sm text-slate-500 mt-3 text-center">
+              Guarda este código. También te lo enviamos por email.
+            </p>
+          </div>
+
+          {/* Próximos pasos */}
+          <div className="bg-slate-50 rounded-xl p-6 mb-8 border border-slate-100">
+            <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">→</span>
+              Próximos pasos
+            </h3>
+            <ol className="text-sm text-slate-600 space-y-3">
+              <li className="flex items-start gap-3">
+                <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shrink-0 mt-0.5">3</span>
+                <span><strong className="text-slate-800">Completar formulario:</strong> Ingresa los datos restantes del contrato</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="bg-slate-300 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shrink-0 mt-0.5">4</span>
+                <span><strong className="text-slate-800">Revisar:</strong> Verifica que todo esté correcto</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="bg-slate-300 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shrink-0 mt-0.5">5</span>
+                <span><strong className="text-slate-800">Firmar:</strong> Firma electrónicamente tu contrato</span>
+              </li>
+            </ol>
+          </div>
+
+          {/* Botones */}
+          <div className="space-y-4">
+            <button
+              onClick={handleContinue}
+              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+            >
+              Continuar con mi Contrato
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            
+            <p className="text-sm text-slate-500 text-center">
+              Puedes continuar ahora o más tarde usando tu código de seguimiento en la página de <button onClick={() => navigate('/retomar')} className="text-blue-600 hover:underline font-medium">Retomar Contrato</button>.
+            </p>
+          </div>
         </div>
       </div>
     </div>
