@@ -24,7 +24,6 @@ const PaymentSuccessPage: React.FC = () => {
   const [attempts, setAttempts] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [startTime] = useState(Date.now()); // Marca de tiempo inicial
-  const maxAttempts = 20;
 
   useEffect(() => {
     if (!contractId || !trackingCode || !rut) {
