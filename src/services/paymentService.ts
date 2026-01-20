@@ -24,7 +24,6 @@ export interface CreatePreferenceResponse {
     preference_id: string;
     public_key: string;
     amount: number;
-    init_point?: string;
   };
 }
 
@@ -81,8 +80,8 @@ class PaymentService {
     } = {}
   ): Promise<PaymentStatusResponse['data']> {
     const { 
-      intervalMs = 3000, 
-      maxAttempts = 20,
+      intervalMs = 800, // Chequeo cada 800ms para respuesta rápida
+      maxAttempts = 25, // 20 segundos total (800ms × 25 = 20s)
       onStatusChange 
     } = options;
 
@@ -98,10 +97,24 @@ class PaymentService {
             onStatusChange(response.data);
           }
 
-          // Si el contrato pasó a draft, el pago fue exitoso
-          if (response.data.contract_status === 'draft' && response.data.payment_status === 'approved') {
+          // VALIDACIÓN ESTRICTA: Esperamos confirmación del WEBHOOK
+          // El pago debe estar 'approved' Y el contrato debe estar 'draft'
+          // Esto garantiza que el webhook ya procesó todo correctamente
+          const isPaymentApproved = response.data.payment_status === 'approved';
+          const isContractReady = response.data.contract_status === 'draft';
+          
+          if (isPaymentApproved && isContractReady) {
+            console.log('✅ Pago confirmado por webhook de MercadoPago:', { 
+              payment_status: response.data.payment_status,
+              contract_status: response.data.contract_status
+            });
             resolve(response.data);
             return;
+          }
+          
+          // Log intermedio para debugging
+          if (isPaymentApproved && !isContractReady) {
+            console.log('⏳ Pago aprobado, esperando que webhook actualice contrato...');
           }
 
           // Si el pago fue rechazado

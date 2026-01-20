@@ -21,8 +21,8 @@ const PaymentPendingPage: React.FC = () => {
     const checkStatus = async () => {
       try {
         const result = await paymentService.pollPaymentStatus(contractId, trackingCode, rut, {
-          intervalMs: 5000,
-          maxAttempts: 12, // 1 minuto
+          intervalMs: 2000, // 2 segundos para pagos pendientes
+          maxAttempts: 30,  // 1 minuto total
         });
 
         if (result.contract_status === 'draft') {
