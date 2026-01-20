@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Upload, Clock, CheckCircle, FileText, Mail } from 'lucide-react';
+import { Download, Upload, Clock, CheckCircle, FileText, Mail, Search } from 'lucide-react';
 import { notaryApi, type NotaryContract } from '../../services/api';
 
 type ContractRequest = NotaryContract;
@@ -8,6 +8,7 @@ export const NotaryInboxPage: React.FC = () => {
   const [contracts, setContracts] = useState<ContractRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'pending' | 'signed' | 'all'>('pending');
+  const [searchQuery, setSearchQuery] = useState('');
   const [_selectedContract, setSelectedContract] = useState<ContractRequest | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -69,6 +70,16 @@ export const NotaryInboxPage: React.FC = () => {
     contract.signers.find(s => s.role === 'notary');
 
   const filteredContracts = contracts.filter(contract => {
+    // Search filter
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = 
+      contract.templateVersion.template.title.toLowerCase().includes(searchLower) ||
+      contract.tracking_code.toLowerCase().includes(searchLower) ||
+      contract.buyer_email.toLowerCase().includes(searchLower);
+
+    if (!matchesSearch) return false;
+
+    // Status filter
     const notary = notarySigner(contract);
     if (filter === 'pending') return notary && !notary.has_signed;
     if (filter === 'signed') return notary && notary.has_signed;
@@ -88,190 +99,208 @@ export const NotaryInboxPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-
+    <div className="p-0">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Bandeja de Entrada</h1>
+          <p className="text-slate-500 text-sm mt-1">Gestiona las firmas pendientes y contratos completados</p>
+        </div>
+      </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-2xl border-2 border-slate-200 p-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-500 mb-1">Pendientes</p>
-              <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
+              <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Pendientes</p>
+              <p className="text-2xl font-bold text-amber-600">{pendingCount}</p>
             </div>
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-              <Clock className="w-6 h-6 text-amber-600" />
+            <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center border border-amber-100">
+              <Clock className="w-5 h-5 text-amber-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border-2 border-slate-200 p-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-500 mb-1">Firmados</p>
-              <p className="text-3xl font-bold text-green-600">{signedCount}</p>
+              <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Firmados</p>
+              <p className="text-2xl font-bold text-green-600">{signedCount}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center border border-green-100">
+              <CheckCircle className="w-5 h-5 text-green-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border-2 border-slate-200 p-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-500 mb-1">Total</p>
-              <p className="text-3xl font-bold text-slate-900">{contracts.length}</p>
+              <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Total</p>
+              <p className="text-2xl font-bold text-slate-900">{contracts.length}</p>
             </div>
-            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-slate-600" />
+            <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100">
+              <FileText className="w-5 h-5 text-slate-600" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filter Buttons */}
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={() => setFilter('pending')}
-          className={`px-6 py-3 rounded-2xl font-semibold transition-all ${
-            filter === 'pending'
-              ? 'bg-amber-100 text-amber-700 border-2 border-amber-400'
-              : 'bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-300'
-          }`}
-        >
-          Pendientes ({pendingCount})
-        </button>
-        <button
-          onClick={() => setFilter('signed')}
-          className={`px-6 py-3 rounded-2xl font-semibold transition-all ${
-            filter === 'signed'
-              ? 'bg-green-100 text-green-700 border-2 border-green-400'
-              : 'bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-300'
-          }`}
-        >
-          Firmados ({signedCount})
-        </button>
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-6 py-3 rounded-2xl font-semibold transition-all ${
-            filter === 'all'
-              ? 'bg-slate-100 text-slate-700 border-2 border-slate-300'
-              : 'bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-300'
-          }`}
-        >
-          Todos ({contracts.length})
-        </button>
+      {/* Toolbar: Search & Filter */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 flex flex-wrap items-center gap-4 shadow-sm">
+        <div className="flex-1 min-w-[240px] relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Buscar por cliente, código o contrato..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+          />
+        </div>
+
+        <div className="flex bg-slate-100 p-1 rounded-lg">
+          {(['pending', 'signed', 'all'] as const).map((status) => (
+            <button 
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                filter === status 
+                  ? 'bg-white text-slate-900 shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {status === 'pending' && 'Pendientes'}
+              {status === 'signed' && 'Firmados'}
+              {status === 'all' && 'Todos'}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Contracts List */}
-      {filteredContracts.length === 0 ? (
-        <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-          <Mail className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg">No hay contratos en esta categoría</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredContracts.map((contract) => {
-            const signer = notarySigner(contract);
-            const isPending = contract.status === 'waiting_notary';
-            
-            return (
-              <div
-                key={contract.id}
-                className={`bg-white rounded-2xl border-2 p-6 transition-all hover:shadow-lg ${
-                  isPending 
-                    ? 'border-amber-200 hover:border-amber-400' 
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-slate-900">
-                        {contract.templateVersion.template.title}
-                      </h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border-2 ${
-                        isPending
-                          ? 'bg-amber-50 text-amber-700 border-amber-300'
-                          : 'bg-green-50 text-green-700 border-green-300'
-                      }`}>
-                        {isPending ? '⏱ Pendiente' : '✓ Firmado'}
-                      </span>
-                    </div>
+      {/* Table Container */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        {filteredContracts.length === 0 ? (
+          <div className="text-center py-16 px-6">
+            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+              <Mail className="w-8 h-8 text-slate-300" />
+            </div>
+            <h3 className="text-slate-900 font-medium text-lg mb-1">No se encontraron contratos</h3>
+            <p className="text-slate-500 text-sm max-w-sm mx-auto">
+              {searchQuery ? 'Intenta ajustar tus filtros o búsqueda' : 'No hay documentos pendientes de revisión'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50/50 border-b border-slate-100">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[35%]">Contrato / Código</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Solicitante</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalles</th>
+                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredContracts.map((contract) => {
+                  const signer = notarySigner(contract);
+                  const isPending = contract.status === 'waiting_notary';
+                  
+                  return (
+                    <tr key={contract.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${isPending ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-900">{contract.templateVersion.template.title}</h3>
+                            <p className="text-xs text-slate-500 font-mono mt-0.5">{contract.tracking_code}</p>
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td className="px-6 py-4">
+                        {isPending ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            Pendiente
+                          </span>
+                        ) : (
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                              Firmado
+                            </span>
+                            {signer?.signed_at && (
+                              <span className="text-[10px] text-slate-400">
+                                {new Date(signer.signed_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </td>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm text-slate-500">Código</p>
-                        <p className="font-mono text-sm font-semibold text-slate-900">{contract.tracking_code}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">Solicitante</p>
-                        <p className="text-sm font-semibold text-slate-900">{contract.buyer_email}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">Monto</p>
-                        <p className="text-sm font-semibold text-slate-900">${contract.total_amount.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">Fecha</p>
-                        <p className="text-sm font-semibold text-slate-900">
-                          {new Date(contract.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-slate-700 font-medium">{contract.buyer_email}</div>
+                      </td>
 
-                    {signer && signer.has_signed && (
-                      <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
-                        <p className="text-sm text-green-700">
-                          ✓ Firmado el {new Date(signer.signed_at!).toLocaleString()}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-900">${contract.total_amount.toLocaleString()}</span>
+                          <span className="text-xs text-slate-400">Created: {new Date(contract.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </td>
 
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleDownloadContract(contract.id)}
-                      className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 transition-all flex items-center gap-2"
-                    >
-                      <Download className="w-5 h-5" />
-                      Descargar
-                    </button>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                           {/* Download Button */}
+                           <button
+                            onClick={() => handleDownloadContract(contract.id)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Descargar PDF"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
 
-                    {isPending && (
-                      <label className="px-5 py-3 bg-gradient-to-r from-lime-100 to-cyan-100 text-slate-700 border-2 border-lime-400 rounded-xl font-semibold hover:from-lime-200 hover:to-cyan-200 transition-all flex items-center gap-2 cursor-pointer">
-                        <Upload className="w-5 h-5" />
-                        Subir Firmado
-                        <input
-                          type="file"
-                          accept=".pdf"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              if (confirm('¿Estás seguro de subir este documento firmado?')) {
-                                handleUploadSigned(contract.id, file);
-                              }
-                            }
-                          }}
-                          disabled={uploading}
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                          {/* Upload Signed Contract Button (Only if pending) */}
+                          {isPending && (
+                            <label className="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors cursor-pointer" title="Subir documento firmado">
+                              <Upload className="w-4 h-4" />
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    if (confirm('¿Estás seguro de subir este documento firmado?')) {
+                                      handleUploadSigned(contract.id, file);
+                                    }
+                                  }
+                                }}
+                                disabled={uploading}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

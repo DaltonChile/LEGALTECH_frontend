@@ -131,8 +131,15 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen relative bg-slate-50">
+      {/* Grid Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+      
+      {/* Gradient Overlay */}
+      <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"></div>
+
+      <div className="relative z-10 p-6 md:p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
         
 
 
@@ -171,7 +178,7 @@ export function AdminDashboard() {
           </div>
 
           {/* --- CHART: Ventas (8 Cols) --- */}
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="font-bold text-slate-900 text-lg">Gráfico Ventas</h3>
@@ -222,7 +229,7 @@ export function AdminDashboard() {
           </div>
 
           {/* --- CHART: Clientes (4 Cols) --- */}
-          <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col justify-between">
             <div>
               <h3 className="font-bold text-slate-900 text-lg mb-2">Gráfico Clientes</h3>
               <p className="text-xs text-slate-400">Distribución Nuevos vs Recurrentes</p>
@@ -276,7 +283,7 @@ export function AdminDashboard() {
           </div>
 
           {/* --- TABLE: Full Width (12 Cols) --- */}
-          <div className="lg:col-span-12 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="lg:col-span-12 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-100">
               <div>
                 <h3 className="font-bold text-slate-900 text-lg">Tabla Contratos</h3>
@@ -332,6 +339,7 @@ export function AdminDashboard() {
         />
       )}
     </div>
+    </div>
   );
 }
 
@@ -354,7 +362,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, sparkColor })
   const points = sparkData.map((val, i) => `${(i / (sparkData.length - 1)) * 100},${100 - (val / maxVal) * 100}`).join(' ');
 
   return (
-    <div className="h-full bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+    <div className="h-full bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
       <div className="flex items-start justify-between mb-4">
         <p className="text-sm text-slate-500 font-medium truncate pr-2">{title}</p>
         <span className={`text-xs font-bold flex items-center gap-0.5 px-2 py-1 rounded-full ${
