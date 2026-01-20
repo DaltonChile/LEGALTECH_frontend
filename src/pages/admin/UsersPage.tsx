@@ -1,6 +1,6 @@
 // LEGALTECH_frontend/src/pages/admin/UsersPage.tsx
 import React, { useEffect, useState } from 'react';
-import { Search, Filter, Trash2, Edit, Eye, EyeOff, UserPlus, X } from 'lucide-react';
+import { Search, Edit, Eye, EyeOff, UserPlus, X } from 'lucide-react';
 import { getAdminUsers, createUser, updateUser, deleteUser, reactivateUser } from '../../services/api';
 
 interface User {
@@ -22,12 +22,9 @@ export function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<FilterRole>('all');
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [filterStatus] = useState<FilterStatus>('all');
   const [showNewUserModal, setShowNewUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [actionMenuUser, setActionMenuUser] = useState<string | null>(null);
 
   const loadUsers = async () => {
     try {
@@ -45,16 +42,7 @@ export function UsersPage() {
     loadUsers();
   }, []);
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowRoleDropdown(false);
-      setShowFilterDropdown(false);
-      setActionMenuUser(null);
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+
 
   const handleToggleUserStatus = async (user: User) => {
     const action = user.is_active ? 'desactivar' : 'reactivar';
@@ -67,14 +55,12 @@ export function UsersPage() {
         await reactivateUser(user.id);
       }
       loadUsers();
-      setActionMenuUser(null);
     } catch (error) {
       console.error('Error toggling user status:', error);
       alert(`Error al ${action} usuario`);
     }
   };
 
-  // Filtrar usuarios
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -98,11 +84,6 @@ export function UsersPage() {
     return role === 'admin' 
       ? 'bg-amber-100 text-amber-700' 
       : 'bg-purple-100 text-purple-700';
-  };
-
-  const getRoleLabel = () => {
-    if (filterRole === 'all') return 'Cambiar rol';
-    return filterRole === 'admin' ? 'Administrador' : 'Notario';
   };
 
   if (loading) {
