@@ -23,7 +23,7 @@ const PaymentSuccessPage: React.FC = () => {
   const [status, setStatus] = useState<'checking' | 'confirmed' | 'error'>('checking');
   const [attempts, setAttempts] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const maxAttempts = 20;
+  const [startTime] = useState(Date.now()); // Marca de tiempo inicial
 
   useEffect(() => {
     if (!contractId || !trackingCode || !rut) {
@@ -37,13 +37,28 @@ const PaymentSuccessPage: React.FC = () => {
   const startPolling = async () => {
     try {
       await paymentService.pollPaymentStatus(contractId, trackingCode, rut, {
-        intervalMs: 3000,
-        maxAttempts: 20,
+        intervalMs: 800,  // Chequeo cada 800ms
+        maxAttempts: 25,  // 20 segundos total
         onStatusChange: (data) => {
           setAttempts((prev) => prev + 1);
-          console.log('Status check:', data);
+          console.log('📊 Verificando:', { 
+            attempt: attempts + 1,
+            contract: data.contract_status, 
+            payment: data.payment_status 
+          });
         },
       });
+      
+      // Asegurar que han pasado al menos 5 segundos antes de mostrar confirmación
+      const elapsed = Date.now() - startTime;
+      const minDisplayTime = 5000; // 5 segundos
+      
+      if (elapsed < minDisplayTime) {
+        const remainingTime = minDisplayTime - elapsed;
+        console.log(`⏱️ Esperando ${remainingTime}ms adicionales para mostrar confirmación...`);
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
+      
       setStatus('confirmed');
     } catch (error: any) {
       console.error('Error en polling:', error);
@@ -51,6 +66,14 @@ const PaymentSuccessPage: React.FC = () => {
         navigate(`/payment/failure?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}`);
       } else {
         // Timeout - mostrar mensaje pero aún puede haber funcionado
+        
+        // Asegurar tiempo mínimo incluso en timeout
+        const elapsed = Date.now() - startTime;
+        const minDisplayTime = 5000;
+        if (elapsed < minDisplayTime) {
+          await new Promise(resolve => setTimeout(resolve, minDisplayTime - elapsed));
+        }
+        
         setStatus('confirmed');
       }
     }
@@ -84,14 +107,17 @@ const PaymentSuccessPage: React.FC = () => {
             <p className="text-slate-600 mb-6">
               Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.
             </p>
-            <div className="bg-slate-100 rounded-full h-2 mb-2">
+            <div className="bg-slate-100 rounded-full h-2 mb-2 overflow-hidden">
               <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(attempts / maxAttempts) * 100}%` }}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                style={{ 
+                  width: `${Math.min((attempts / 25) * 100, 95)}%`,
+                  animation: attempts >= 25 ? 'pulse 2s ease-in-out infinite' : 'none'
+                }}
               ></div>
             </div>
             <p className="text-sm text-slate-500">
-              Verificando... ({attempts}/{maxAttempts})
+              {attempts < 25 ? `Verificando pago...` : `Confirmando últimos detalles...`}
             </p>
           </div>
         </div>
