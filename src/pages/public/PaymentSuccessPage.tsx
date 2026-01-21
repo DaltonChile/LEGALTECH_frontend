@@ -3,23 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Loader2, AlertTriangle, ArrowRight } from 'lucide-react';
 import paymentService from '../../services/paymentService';
 import { EditorHeader } from '../../components/public/contract-editor/EditorHeader';
-
-// Pasos base sin firma (4 pasos) - Flujos 1 y 2
-const STEPS_WITHOUT_SIGNATURES = [
-  { id: 'formulario-inicial', label: 'Datos iniciales' },
-  { id: 'payment', label: 'Pago' },
-  { id: 'completar', label: 'Completar formulario' },
-  { id: 'review', label: 'Revisar' },
-];
-
-// Pasos con firma (5 pasos) - Flujos 3, 4, 5 y 6
-const STEPS_WITH_SIGNATURES = [
-  { id: 'formulario-inicial', label: 'Datos iniciales' },
-  { id: 'payment', label: 'Pago' },
-  { id: 'completar', label: 'Completar formulario' },
-  { id: 'review', label: 'Revisar' },
-  { id: 'signatures', label: 'Firmar' },
-];
+import { getStepsForFlow } from '../../utils/flowConfig';
 
 const PaymentSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -31,10 +15,8 @@ const PaymentSuccessPage: React.FC = () => {
   // hasSigners determina si el flujo tiene paso de firmas (5 pasos) o no (4 pasos)
   const hasSigners = searchParams.get('hasSigners') === 'true';
 
-  // Calcular los pasos basándose en si hay firmantes
-  const PROGRESS_STEPS = useMemo(() => {
-    return hasSigners ? STEPS_WITH_SIGNATURES : STEPS_WITHOUT_SIGNATURES;
-  }, [hasSigners]);
+  // Calcular los pasos basándose en si hay firmantes (usando función centralizada)
+  const PROGRESS_STEPS = useMemo(() => getStepsForFlow(hasSigners), [hasSigners]);
 
   const [status, setStatus] = useState<'checking' | 'confirmed' | 'error'>('checking');
   const [attempts, setAttempts] = useState(0);

@@ -29,22 +29,79 @@ export interface FlowConfig {
   finalStateTitle: string;
 }
 
-/** Pasos base sin firmas (4 pasos) */
-const BASE_STEPS_NO_SIGNATURE = [
+/** Tipo para los pasos del progress bar */
+export interface FlowStep {
+  id: string;
+  label: string;
+}
+
+/** Pasos base sin firmas (4 pasos) - Casos 1 y 2 */
+export const STEPS_WITHOUT_SIGNATURES: FlowStep[] = [
   { id: 'formulario-inicial', label: 'Datos iniciales' },
   { id: 'payment', label: 'Pago' },
   { id: 'completar', label: 'Completar formulario' },
   { id: 'review', label: 'Revisar' },
 ];
 
-/** Pasos base con firmas (5 pasos) */
-const BASE_STEPS_WITH_SIGNATURE = [
+/** Pasos base con firmas (5 pasos) - Casos 3, 4, 5 y 6 */
+export const STEPS_WITH_SIGNATURES: FlowStep[] = [
   { id: 'formulario-inicial', label: 'Datos iniciales' },
   { id: 'payment', label: 'Pago' },
   { id: 'completar', label: 'Completar formulario' },
   { id: 'review', label: 'Revisar' },
   { id: 'signatures', label: 'Firmar' },
 ];
+
+/**
+ * Obtiene los pasos del flujo basándose en si hay firmantes
+ * Esta es la función más simple para obtener los pasos cuando solo se conoce hasSigners
+ */
+export function getStepsForFlow(hasSigners: boolean): FlowStep[] {
+  return hasSigners ? STEPS_WITH_SIGNATURES : STEPS_WITHOUT_SIGNATURES;
+}
+
+/**
+ * Información del badge para mostrar en tarjetas de contrato
+ */
+export interface FlowBadgeInfo {
+  label: string;
+  colorClass: string;
+  /** Nombre del icono de lucide-react a usar */
+  iconName: 'none' | 'scale' | 'users' | 'user-check';
+}
+
+/**
+ * Obtiene la información del badge para mostrar el tipo de flujo en las tarjetas
+ */
+export function getFlowBadgeInfo(hasSigners: boolean, requiresNotary: boolean): FlowBadgeInfo {
+  if (!hasSigners && !requiresNotary) {
+    return { 
+      label: 'Sin firmas', 
+      iconName: 'none',
+      colorClass: 'bg-slate-100 text-slate-600'
+    };
+  }
+  if (!hasSigners && requiresNotary) {
+    return { 
+      label: 'Solo notario', 
+      iconName: 'scale',
+      colorClass: 'bg-purple-100 text-purple-700'
+    };
+  }
+  if (hasSigners && !requiresNotary) {
+    return { 
+      label: 'Con firmas', 
+      iconName: 'users',
+      colorClass: 'bg-blue-100 text-blue-700'
+    };
+  }
+  // hasSigners && requiresNotary
+  return { 
+    label: 'Firmas + Notario', 
+    iconName: 'user-check',
+    colorClass: 'bg-emerald-100 text-emerald-700'
+  };
+}
 
 /**
  * Obtiene la configuración del flujo basada en el tipo de firma y si requiere notario
@@ -59,7 +116,7 @@ export function getFlowConfig(signatureType: SignatureType, requiresNotary: bool
       hasSignatureStep: false,
       requiresNotary: false,
       signatureType,
-      steps: BASE_STEPS_NO_SIGNATURE,
+      steps: STEPS_WITHOUT_SIGNATURES,
       finalStateTitle: '¡Contrato Completado!',
       finalStateDescription: 'Tu contrato ha sido generado exitosamente y está listo para descargar.',
     };
@@ -72,7 +129,7 @@ export function getFlowConfig(signatureType: SignatureType, requiresNotary: bool
       hasSignatureStep: false,
       requiresNotary: true,
       signatureType,
-      steps: BASE_STEPS_NO_SIGNATURE,
+      steps: STEPS_WITHOUT_SIGNATURES,
       finalStateTitle: 'Esperando Notario',
       finalStateDescription: 'Tu contrato ha sido enviado al notario para su revisión y validación. Te notificaremos cuando esté listo.',
     };
@@ -85,7 +142,7 @@ export function getFlowConfig(signatureType: SignatureType, requiresNotary: bool
       hasSignatureStep: true,
       requiresNotary: false,
       signatureType,
-      steps: BASE_STEPS_WITH_SIGNATURE,
+      steps: STEPS_WITH_SIGNATURES,
       finalStateTitle: 'Esperando Firmas',
       finalStateDescription: 'Se han enviado los enlaces de firma a todos los firmantes. Recibirás una notificación cuando todos hayan firmado.',
     };
@@ -98,7 +155,7 @@ export function getFlowConfig(signatureType: SignatureType, requiresNotary: bool
       hasSignatureStep: true,
       requiresNotary: true,
       signatureType,
-      steps: BASE_STEPS_WITH_SIGNATURE,
+      steps: STEPS_WITH_SIGNATURES,
       finalStateTitle: 'Esperando Firmas y Notario',
       finalStateDescription: 'Se han enviado los enlaces de firma. Una vez firmado por todos, el documento será validado por el notario.',
     };
@@ -111,7 +168,7 @@ export function getFlowConfig(signatureType: SignatureType, requiresNotary: bool
       hasSignatureStep: true,
       requiresNotary: false,
       signatureType,
-      steps: BASE_STEPS_WITH_SIGNATURE,
+      steps: STEPS_WITH_SIGNATURES,
       finalStateTitle: 'Esperando Firmas Electrónicas Avanzadas',
       finalStateDescription: 'Se han enviado los enlaces de firma electrónica avanzada. Recibirás una notificación cuando todos hayan firmado.',
     };
@@ -123,7 +180,7 @@ export function getFlowConfig(signatureType: SignatureType, requiresNotary: bool
     hasSignatureStep: true,
     requiresNotary: true,
     signatureType,
-    steps: BASE_STEPS_WITH_SIGNATURE,
+    steps: STEPS_WITH_SIGNATURES,
     finalStateTitle: 'Esperando Firmas Avanzadas y Notario',
     finalStateDescription: 'Se han enviado los enlaces de firma electrónica avanzada. Una vez firmado por todos, el documento será validado por el notario.',
   };
