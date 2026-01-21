@@ -18,6 +18,8 @@ export interface Template {
   slug: string;
   base_price: number;
   description: string;
+  requires_notary?: boolean;
+  has_signers?: boolean;
   capsules?: Array<{
     id: string;
     title: string;

@@ -1,6 +1,7 @@
-import { type LucideIcon, HelpCircle } from 'lucide-react';
+import { type LucideIcon, HelpCircle, Users, UserCheck, Scale } from 'lucide-react';
 import { useState } from 'react';
 import { ContractInfoModal } from './ContractInfoModal';
+import { getFlowBadgeInfo } from '../../../utils/flowConfig';
 
 interface Capsule {
   id: string;
@@ -17,7 +18,17 @@ interface ContractCardProps {
   isPopular?: boolean;
   onPersonalize: () => void;
   capsules?: Capsule[];
+  requiresNotary?: boolean;
+  hasSigners?: boolean;
 }
+
+// Mapeo de iconos basado en el nombre del icono
+const iconMap = {
+  'none': null,
+  'scale': Scale,
+  'users': Users,
+  'user-check': UserCheck,
+};
 
 export function ContractCard({ 
   icon: Icon, 
@@ -26,7 +37,9 @@ export function ContractCard({
   price, 
   isPopular,
   onPersonalize,
-  capsules
+  capsules,
+  requiresNotary = false,
+  hasSigners = false
 }: ContractCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -42,6 +55,9 @@ export function ContractCard({
     e.stopPropagation();
     setIsModalOpen(true);
   };
+
+  const badgeInfo = getFlowBadgeInfo(hasSigners, requiresNotary);
+  const BadgeIcon = iconMap[badgeInfo.iconName];
 
   return (
     <>
@@ -80,6 +96,12 @@ export function ContractCard({
 
           <div className="flex-1 space-y-4 mb-8">
             <h3 className="text-xl font-semibold text-slate-900">{title}</h3>
+            
+            {/* Flow type badge */}
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${badgeInfo.colorClass}`}>
+              {BadgeIcon && <BadgeIcon className="w-3.5 h-3.5" />}
+              <span>{badgeInfo.label}</span>
+            </div>
           </div>
 
           <div className="space-y-5">

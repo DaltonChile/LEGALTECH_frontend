@@ -175,6 +175,8 @@ export function ContractCatalog() {
                 icon={getIconForTemplate(template.slug)}
                 onPersonalize={() => handlePersonalize(template.slug)}
                 capsules={template.capsules}
+                requiresNotary={template.requires_notary}
+                hasSigners={template.has_signers}
               />
             ))}
           </div>
