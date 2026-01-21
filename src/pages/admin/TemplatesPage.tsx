@@ -15,6 +15,7 @@ import {
   TemplateDetailModal 
 } from '../../components/admin/templates';
 import type { Template, FilterType } from '../../types/templates';
+import { downloadFromUrl } from '../../utils/fileDownload';
 
 export const TemplatesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -73,23 +74,7 @@ export const TemplatesPage: React.FC = () => {
       const result = await getTemplateVersionDownloadUrl(versionId);
       
       if (result.success) {
-        const link = document.createElement('a');
-        link.href = result.download_url;
-        link.download = result.filename || 'template.docx';
-        
-        // No abrir en nueva pestaña para blobs
-        if (!result.isBlob) {
-          link.target = '_blank';
-        }
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Liberar memoria del blob URL
-        if (result.isBlob) {
-          setTimeout(() => window.URL.revokeObjectURL(result.download_url), 100);
-        }
+        downloadFromUrl(result.download_url, result.filename || 'template.docx', result.isBlob);
       }
     } catch (error) {
       console.error('Error downloading version:', error);

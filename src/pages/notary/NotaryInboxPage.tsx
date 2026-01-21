@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, Upload, Clock, CheckCircle, FileText, Mail, Search } from 'lucide-react';
 import { notaryApi, type NotaryContract } from '../../services/api';
+import { downloadBlob } from '../../utils/fileDownload';
 
 type ContractRequest = NotaryContract;
 
@@ -42,18 +43,7 @@ export const NotaryInboxPage: React.FC = () => {
   const handleDownloadContract = async (contractId: string, trackingCode: string) => {
     try {
       const blob = await notaryApi.downloadContract(contractId);
-      
-      // Crear URL temporal del blob
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `contrato_${trackingCode}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Liberar la URL del blob
-      window.URL.revokeObjectURL(url);
+      downloadBlob(blob, `contrato_${trackingCode}.pdf`);
     } catch (error) {
       console.error('Error downloading contract:', error);
       alert('Error al descargar el contrato');
