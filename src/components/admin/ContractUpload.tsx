@@ -2,6 +2,8 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { uploadTemplateVersion, setCapsulePrices } from '../../services/api';
+import type { CapsulePending } from '../../types/templates';
+import { CapsulePricingForm } from './templates/shared/CapsulePricingForm';
 
 interface ContractUploaderProps {
   templateId: string;
