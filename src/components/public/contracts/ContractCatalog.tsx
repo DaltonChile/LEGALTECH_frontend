@@ -174,6 +174,7 @@ export function ContractCatalog() {
                 price={template.base_price}
                 icon={getIconForTemplate(template.slug)}
                 onPersonalize={() => handlePersonalize(template.slug)}
+                capsules={template.capsules}
               />
             ))}
           </div>

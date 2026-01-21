@@ -18,6 +18,12 @@ export interface Template {
   slug: string;
   base_price: number;
   description: string;
+  capsules?: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    price: number;
+  }>;
 }
 
 export interface TemplateDetail extends Template {
@@ -290,13 +296,30 @@ export interface NotaryContract {
 }
 
 export const notaryApi = {
-  getContracts: async (): Promise<NotaryContract[]> => {
-    const response = await api.get<{ success: boolean; data: NotaryContract[] }>('/notary/contracts');
+  getPendingContracts: async (startDate?: string, endDate?: string): Promise<NotaryContract[]> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const queryString = params.toString();
+    const url = `/notary/contracts/pending${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get<{ success: boolean; data: NotaryContract[] }>(url);
+    return response.data.data || [];
+  },
+
+  getSignedContracts: async (startDate?: string, endDate?: string): Promise<NotaryContract[]> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const queryString = params.toString();
+    const url = `/notary/contracts/signed${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get<{ success: boolean; data: NotaryContract[] }>(url);
     return response.data.data || [];
   },
 
   downloadContract: async (contractId: string) => {
-    const response = await api.get<{ success: boolean; download_url: string; filename: string }>(`/notary/contracts/${contractId}/download`);
+    const response = await api.get(`/notary/contracts/${contractId}/download`, {
+      responseType: 'blob'
+    });
     return response.data;
   },
 
