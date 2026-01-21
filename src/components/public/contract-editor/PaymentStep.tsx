@@ -8,6 +8,7 @@ interface PaymentStepProps {
   buyerRut: string;
   totalAmount: number;
   steps: { id: string; label: string }[];
+  hasSigners: boolean;
   onPaymentFailed: () => void;
   onBack: () => void;
 }
@@ -18,6 +19,7 @@ export function PaymentStep({
   buyerRut,
   totalAmount,
   steps,
+  hasSigners,
   onPaymentFailed,
   onBack,
 }: PaymentStepProps) {
@@ -47,8 +49,8 @@ export function PaymentStep({
         totalAmount
       });
 
-      // Redirigir a la página de pago
-      window.location.href = `/payment/${contractId}?tracking_code=${trackingCode}&rut=${encodeURIComponent(buyerRut)}`;
+      // Redirigir a la página de pago con info de firmantes para calcular pasos
+      window.location.href = `/payment/${contractId}?tracking_code=${trackingCode}&rut=${encodeURIComponent(buyerRut)}&hasSigners=${hasSigners}`;
     } catch (err: any) {
       console.error('Error redirecting to payment:', err);
       setError('Error al redirigir al pago');

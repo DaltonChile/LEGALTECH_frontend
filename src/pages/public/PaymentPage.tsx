@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Payment } from '@mercadopago/sdk-react';
 import { CreditCard, Shield, AlertTriangle, Loader2 } from 'lucide-react';
@@ -6,7 +6,16 @@ import paymentService from '../../services/paymentService';
 import mercadoPagoConfig from '../../config/mercadopago';
 import { EditorHeader } from '../../components/public/contract-editor/EditorHeader';
 
-const PROGRESS_STEPS = [
+// Pasos base sin firma (4 pasos) - Flujos 1 y 2
+const STEPS_WITHOUT_SIGNATURES = [
+  { id: 'formulario-inicial', label: 'Datos iniciales' },
+  { id: 'payment', label: 'Pago' },
+  { id: 'completar', label: 'Completar formulario' },
+  { id: 'review', label: 'Revisar' },
+];
+
+// Pasos con firma (5 pasos) - Flujos 3, 4, 5 y 6
+const STEPS_WITH_SIGNATURES = [
   { id: 'formulario-inicial', label: 'Datos iniciales' },
   { id: 'payment', label: 'Pago' },
   { id: 'completar', label: 'Completar formulario' },
@@ -21,6 +30,13 @@ const PaymentPage: React.FC = () => {
 
   const trackingCode = searchParams.get('tracking_code') || '';
   const rut = searchParams.get('rut') || '';
+  // hasSigners determina si el flujo tiene paso de firmas (5 pasos) o no (4 pasos)
+  const hasSigners = searchParams.get('hasSigners') === 'true';
+
+  // Calcular los pasos basándose en si hay firmantes
+  const PROGRESS_STEPS = useMemo(() => {
+    return hasSigners ? STEPS_WITH_SIGNATURES : STEPS_WITHOUT_SIGNATURES;
+  }, [hasSigners]);
 
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -237,9 +253,9 @@ const PaymentPage: React.FC = () => {
                               const result = await response.json();
                               
                               if (result.success) {
-                                // Pago exitoso - redirigir a página de éxito
+                                // Pago exitoso - redirigir a página de éxito con hasSigners
                                 resolve(undefined);
-                                navigate(`/payment/success?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}`);
+                                navigate(`/payment/success?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}`);
                               } else {
                                 reject();
                                 setError(result.error || 'Error procesando el pago');

@@ -6,7 +6,9 @@ import { PaymentStep } from '../../components/public/contract-editor/PaymentStep
 import { SignatureStep } from '../../components/public/contract-editor/SignatureStep';
 import { FormularioInicialStep } from '../../components/public/contract-editor/FormularioInicialStep';
 import { CompletarFormularioStep } from '../../components/public/contract-editor/CompletarFormularioStep';
+import { WaitingNotaryStep } from '../../components/public/contract-editor/WaitingNotaryStep';
 import { Navbar } from '../../components/landing/Navbar';
+import { getFlowConfig, type SignatureType } from '../../utils/flowConfig';
 import type { ContractData } from '../../types/contract';
 
 interface SignatureInfo {
@@ -34,16 +36,7 @@ interface Template {
   capsules: any[];
 }
 
-type Step = 'formulario-inicial' | 'payment' | 'completar' | 'review' | 'signatures';
-
-// Flujo: Formulario Inicial -> Pago -> Completar -> Review -> Firmas
-const PROGRESS_STEPS = [
-  { id: 'formulario-inicial', label: 'Datos iniciales' },
-  { id: 'payment', label: 'Pago' },
-  { id: 'completar', label: 'Completar formulario' },
-  { id: 'review', label: 'Revisar' },
-  { id: 'signatures', label: 'Firmar' },
-];
+type Step = 'formulario-inicial' | 'payment' | 'completar' | 'review' | 'signatures' | 'waiting-notary';
 
 export function ContractEditorPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -52,6 +45,7 @@ export function ContractEditorPage() {
 
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signatureInfoLoaded, setSignatureInfoLoaded] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>('formulario-inicial');
   const [signatureInfo, setSignatureInfo] = useState<SignatureInfo | undefined>(undefined);
 
@@ -67,7 +61,43 @@ export function ContractEditorPage() {
   // Datos del contrato para el nuevo flujo
   const [contractData, setContractData] = useState<ContractData | null>(null);
   const [buyerRut, setBuyerRut] = useState<string>('');
-  const [signatureType, setSignatureType] = useState<'none' | 'simple' | 'fea'>('simple');
+  const [signatureType, setSignatureType] = useState<SignatureType>('simple');
+  const [requiresNotary, setRequiresNotary] = useState<boolean>(false);
+
+  // Determinar si hay firmantes basándose en signatureInfo o template
+  // Esta es la fuente de verdad para saber si el flujo tiene paso de firma
+  const hasSigners = (): boolean => {
+    // Primero verificar signatureInfo (viene del endpoint signature-info)
+    if (signatureInfo) {
+      return signatureInfo.numberOfSigners > 0;
+    }
+    // Si no hay signatureInfo, usar signers_config del template
+    if (template?.signers_config) {
+      return template.signers_config.length > 0;
+    }
+    return false;
+  };
+
+  // Determinar si requiere notario
+  const getRequiresNotary = (): boolean => {
+    // Si ya se estableció desde un contrato existente, usarlo
+    if (requiresNotary) return true;
+    // Usar signatureInfo si está disponible
+    if (signatureInfo?.requiresNotary) return true;
+    return false;
+  };
+
+  // Para los pasos, lo que importa es si hay firmantes o no:
+  // - Sin firmantes (flujos 1 y 2): 4 pasos
+  // - Con firmantes (flujos 3, 4, 5, 6): 5 pasos
+  const effectiveSignatureType = hasSigners() ? signatureType : 'none';
+  const effectiveRequiresNotary = getRequiresNotary();
+
+  // Obtener la configuración del flujo actual
+  const flowConfig = getFlowConfig(effectiveSignatureType, effectiveRequiresNotary);
+
+  // Los pasos del progress bar vienen de la configuración del flujo
+  const PROGRESS_STEPS = flowConfig.steps;
 
 
   useEffect(() => {
@@ -125,7 +155,10 @@ export function ContractEditorPage() {
   };
 
   const loadSignatureInfo = async () => {
-    if (!slug) return;
+    if (!slug) {
+      setSignatureInfoLoaded(true);
+      return;
+    }
     
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/templates/${slug}/signature-info`);
@@ -135,6 +168,8 @@ export function ContractEditorPage() {
       }
     } catch (error) {
       console.error('Error loading signature info:', error);
+    } finally {
+      setSignatureInfoLoaded(true);
     }
   };
 
@@ -184,17 +219,20 @@ export function ContractEditorPage() {
         setFormData(data.form_data || {});
         setContractTotalAmount(data.total_amount);
         setSignatureType(data.signature_type || 'simple');
+        setRequiresNotary(data.template?.requires_notary || false);
         
         // Establecer cápsulas seleccionadas
         if (data.selectedCapsules) {
           setSelectedCapsules(data.selectedCapsules.map((c: any) => c.id));
         }
         
-        // Ir al paso correspondiente
+        // Ir al paso correspondiente según el estado
         if (step === 'completar' && data.status === 'draft') {
           setCurrentStep('completar');
         } else if (data.status === 'waiting_signatures') {
           setCurrentStep('signatures');
+        } else if (data.status === 'waiting_notary') {
+          setCurrentStep('waiting-notary');
         }
       }
     } catch (error) {
@@ -202,7 +240,7 @@ export function ContractEditorPage() {
     }
   };
 
-  // Función para aprobar revisión y enviar a firma
+  // Función para aprobar revisión y avanzar al siguiente paso según el flujo
   const handleApproveAndSign = async () => {
     if (!contractId || !trackingCode || !buyerRut) {
       alert('Error: Faltan datos del contrato');
@@ -222,7 +260,27 @@ export function ContractEditorPage() {
       );
 
       if (response.data.success) {
-        setCurrentStep('signatures');
+        const newStatus = response.data.data.status;
+        
+        console.log(`✅ Revisión aprobada. Nuevo estado: ${newStatus}. Flujo caso #${flowConfig.caseNumber}`);
+        
+        // Decidir siguiente paso basado en si hay firmantes o no
+        const hasFirmantes = hasSigners();
+        const needsNotary = effectiveRequiresNotary;
+        
+        if (!hasFirmantes && !needsNotary) {
+          // Caso 1: Sin firmantes + Sin notario → Página de éxito
+          console.log('🎉 Caso 1: Contrato completado directamente');
+          navigate(`/contracts/success?tracking_code=${trackingCode}&completed=true`);
+        } else if (!hasFirmantes && needsNotary) {
+          // Caso 2: Sin firmantes + Con notario → Esperando notario
+          console.log('⏳ Caso 2: Esperando notario');
+          setCurrentStep('waiting-notary');
+        } else {
+          // Casos 3-6: Con firmantes → Paso de firmas (que mostrará si requiere notario o no)
+          console.log(`📝 Caso ${flowConfig.caseNumber}: Esperando firmas`);
+          setCurrentStep('signatures');
+        }
       } else {
         alert(response.data.error || 'Error al aprobar la revisión');
       }
@@ -234,7 +292,8 @@ export function ContractEditorPage() {
     }
   };
 
-  if (loading) {
+  // Esperar a que se cargue el template Y la información de firma
+  if (loading || !signatureInfoLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 flex items-center justify-center">
         <div className="text-center">
@@ -289,6 +348,7 @@ export function ContractEditorPage() {
               setSelectedCapsules(data.selectedCapsules);
               setSignatureType(data.signatureType);
               setBuyerRut(data.buyerRut);
+              setRequiresNotary(data.requiresNotary || false);
               
               // Crear contractData para pasar a los siguientes pasos
               setContractData({
@@ -319,6 +379,7 @@ export function ContractEditorPage() {
             buyerRut={buyerRut || ''}
             totalAmount={contractTotalAmount}
             steps={PROGRESS_STEPS}
+            hasSigners={hasSigners()}
             onPaymentFailed={() => setCurrentStep('formulario-inicial')}
             onBack={() => setCurrentStep('formulario-inicial')}
           />
@@ -354,12 +415,24 @@ export function ContractEditorPage() {
           />
         )}
 
-        {/* Paso 5 - Firmas */}
+        {/* Paso 5 - Firmas (Casos 3, 4, 5, 6) */}
         {currentStep === 'signatures' && contractId && trackingCode && (
           <SignatureStep
             contractId={contractId}
             trackingCode={trackingCode}
             steps={PROGRESS_STEPS}
+            requiresNotary={requiresNotary}
+            signatureType={signatureType}
+          />
+        )}
+
+        {/* Paso Esperando Notario (Caso 2: sin firma + con notario) */}
+        {currentStep === 'waiting-notary' && trackingCode && (
+          <WaitingNotaryStep
+            trackingCode={trackingCode}
+            steps={PROGRESS_STEPS}
+            title={flowConfig.finalStateTitle}
+            description={flowConfig.finalStateDescription}
           />
         )}
       </main>

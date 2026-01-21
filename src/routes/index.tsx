@@ -11,6 +11,7 @@ const ContractEditorPage = lazy(() => import('../pages/public/ContractEditorPage
 const TrackingPage = lazy(() => import('../pages/public/TrackingPage').then(m => ({ default: m.TrackingPage })));
 const HelpPage = lazy(() => import('../pages/public/HelpPage').then(m => ({ default: m.HelpPage })));
 const ResumeContractPage = lazy(() => import('../pages/public/ResumeContractPage').then(m => ({ default: m.ResumeContractPage })));
+const ContractSuccessPage = lazy(() => import('../pages/public/ContractSuccessPage').then(m => ({ default: m.ContractSuccessPage })));
 
 // Payment pages - lazy loaded
 const PaymentPage = lazy(() => import('../pages/public/PaymentPage'));
@@ -47,6 +48,7 @@ export function AppRoutes() {
         <Route path="/resume" element={<ResumeContractPage />} />
         <Route path="/retomar" element={<ResumeContractPage />} />
         <Route path="/contracts/resume" element={<ResumeContractPage />} />
+        <Route path="/contracts/success" element={<ContractSuccessPage />} />
         <Route path="/catalogo" element={<ContractCatalogPage />} />
         
         {/* Payment routes */}

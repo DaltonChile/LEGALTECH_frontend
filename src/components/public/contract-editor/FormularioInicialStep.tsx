@@ -56,6 +56,7 @@ interface FormularioInicialStepProps {
     signatureType: 'none' | 'simple' | 'fea';
     buyerRut: string;
     buyerEmail: string;
+    requiresNotary: boolean;
   }) => void;
   onBack: () => void;
 }
@@ -222,7 +223,8 @@ export function FormularioInicialStep({
           selectedCapsules,
           signatureType: requiresSignature ? signatureType : 'none',
           buyerRut: contactRut.replace(/[.-]/g, ''),
-          buyerEmail: contactEmail
+          buyerEmail: contactEmail,
+          requiresNotary: signatureInfo?.requiresNotary ?? false
         });
       } else {
         setError(response.data.error || 'Error al crear el contrato');
