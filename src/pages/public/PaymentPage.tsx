@@ -5,23 +5,7 @@ import { CreditCard, Shield, AlertTriangle, Loader2 } from 'lucide-react';
 import paymentService from '../../services/paymentService';
 import mercadoPagoConfig from '../../config/mercadopago';
 import { EditorHeader } from '../../components/public/contract-editor/EditorHeader';
-
-// Pasos base sin firma (4 pasos) - Flujos 1 y 2
-const STEPS_WITHOUT_SIGNATURES = [
-  { id: 'formulario-inicial', label: 'Datos iniciales' },
-  { id: 'payment', label: 'Pago' },
-  { id: 'completar', label: 'Completar formulario' },
-  { id: 'review', label: 'Revisar' },
-];
-
-// Pasos con firma (5 pasos) - Flujos 3, 4, 5 y 6
-const STEPS_WITH_SIGNATURES = [
-  { id: 'formulario-inicial', label: 'Datos iniciales' },
-  { id: 'payment', label: 'Pago' },
-  { id: 'completar', label: 'Completar formulario' },
-  { id: 'review', label: 'Revisar' },
-  { id: 'signatures', label: 'Firmar' },
-];
+import { getFlowConfig } from '../../utils/flowConfig';
 
 const PaymentPage: React.FC = () => {
   const { contractId } = useParams<{ contractId: string }>();
@@ -33,9 +17,10 @@ const PaymentPage: React.FC = () => {
   // hasSigners determina si el flujo tiene paso de firmas (5 pasos) o no (4 pasos)
   const hasSigners = searchParams.get('hasSigners') === 'true';
 
-  // Calcular los pasos basándose en si hay firmantes
+  // Calcular los pasos basándose en si hay firmantes usando flowConfig
   const PROGRESS_STEPS = useMemo(() => {
-    return hasSigners ? STEPS_WITH_SIGNATURES : STEPS_WITHOUT_SIGNATURES;
+    const flowConfig = getFlowConfig(hasSigners ? 'simple' : 'none', false);
+    return flowConfig.steps;
   }, [hasSigners]);
 
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
