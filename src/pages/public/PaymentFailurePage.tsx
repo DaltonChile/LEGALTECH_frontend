@@ -8,9 +8,10 @@ const PaymentFailurePage: React.FC = () => {
   const contractId = searchParams.get('contract_id') || '';
   const trackingCode = searchParams.get('tracking_code') || '';
   const rut = searchParams.get('rut') || '';
+  const hasSigners = searchParams.get('hasSigners') || 'true';
 
   const handleRetry = () => {
-    navigate(`/payment/${contractId}?tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}`);
+    navigate(`/payment/${contractId}?tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}`);
   };
 
   const handleGoHome = () => {

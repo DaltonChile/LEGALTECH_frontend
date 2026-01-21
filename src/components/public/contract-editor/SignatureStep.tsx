@@ -8,15 +8,19 @@ import {
   ArrowRight,
   CheckCircle2,
   Circle,
-  AlertCircle
+  AlertCircle,
+  Gavel
 } from 'lucide-react';
 import axios from 'axios';
 import { EditorHeader } from './EditorHeader';
+import { getWaitingState, type SignatureType } from '../../../utils/flowConfig';
 
 interface SignatureStepProps {
   contractId: string;
   trackingCode: string;
   steps: { id: string; label: string }[];
+  requiresNotary?: boolean;
+  signatureType?: SignatureType;
 }
 
 interface Signer {
@@ -40,10 +44,19 @@ interface ContractStatus {
   signers: Signer[];
 }
 
-export function SignatureStep({ contractId, trackingCode, steps }: SignatureStepProps) {
+export function SignatureStep({ 
+  contractId, 
+  trackingCode, 
+  steps,
+  requiresNotary = false,
+  signatureType = 'simple'
+}: SignatureStepProps) {
   const [contractStatus, setContractStatus] = useState<ContractStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Obtener el estado de espera basado en la configuración
+  const waitingState = getWaitingState(signatureType, requiresNotary);
 
   useEffect(() => {
     loadContractStatus();
@@ -70,15 +83,66 @@ export function SignatureStep({ contractId, trackingCode, steps }: SignatureStep
     navigator.clipboard.writeText(trackingCode);
   };
 
-  // Status helpers from TrackingPage
+  // Detectar si solo hay notario
+  const hasOnlyNotary = contractStatus?.signers?.length === 1 && 
+                        contractStatus?.signers[0]?.role === 'notary';
+
+  // Status helpers - usar waitingState para mostrar mensaje apropiado
   const getStatusDescription = (status: string) => {
+    if (status === 'waiting_signatures') {
+      // Usar el estado de espera calculado
+      return waitingState.description;
+    }
+    
+    if (status === 'waiting_notary') {
+      return 'Todas las firmas han sido completadas. Esperando validación del notario.';
+    }
+    
     const map: Record<string, string> = {
-     waiting_signatures: 'Esperando que todas las partes firmen el documento.',
-     signed: 'Documento firmado. Finalizando proceso...',
-     rejected: 'Firma rechazada por una de las partes.',
-     expired: 'El plazo para firmar el documento ha expirado.',
-   };
-   return map[status] || 'Estado actual del documento.';
+      signed: 'Documento firmado. Finalizando proceso...',
+      completed: '¡Documento completado exitosamente!',
+      rejected: 'Firma rechazada por una de las partes.',
+      expired: 'El plazo para firmar el documento ha expirado.',
+    };
+    return map[status] || 'Estado actual del documento.';
+  };
+
+  const getStatusBadge = () => {
+    const status = contractStatus?.status;
+    
+    if (status === 'waiting_signatures') {
+      return {
+        text: waitingState.title,
+        bgColor: 'bg-blue-50',
+        textColor: 'text-blue-700',
+        icon: Clock
+      };
+    }
+    
+    if (status === 'waiting_notary') {
+      return {
+        text: 'Esperando Notario',
+        bgColor: 'bg-amber-50',
+        textColor: 'text-amber-700',
+        icon: Gavel
+      };
+    }
+    
+    if (status === 'signed' || status === 'completed') {
+      return {
+        text: 'Completado',
+        bgColor: 'bg-green-50',
+        textColor: 'text-green-700',
+        icon: CheckCircle2
+      };
+    }
+    
+    return {
+      text: 'En proceso',
+      bgColor: 'bg-blue-50',
+      textColor: 'text-blue-700',
+      icon: Clock
+    };
   };
 
   if (loading) {
@@ -158,14 +222,33 @@ export function SignatureStep({ contractId, trackingCode, steps }: SignatureStep
                 </div>
                 
                 {/* Status Badge */}
-                <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    {contractStatus.status === 'signed' ? 'Firmado' : 'En proceso de firma'}
-                </div>
+                {(() => {
+                  const badge = getStatusBadge();
+                  const BadgeIcon = badge.icon;
+                  return (
+                    <div className={`px-4 py-2 ${badge.bgColor} ${badge.textColor} rounded-full text-sm font-medium flex items-center gap-2`}>
+                      <BadgeIcon className="w-4 h-4" />
+                      {badge.text}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Content Section */}
               <div className="p-8">
+                  {/* Notary indicator if applicable */}
+                  {requiresNotary && (
+                    <div className="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-3">
+                      <Gavel className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-amber-900 text-sm">Este contrato requiere notario</h4>
+                        <p className="text-amber-700 text-xs mt-1">
+                          Una vez completadas las firmas, el documento será enviado al notario para su validación oficial.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mb-8">
                      <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-2">Estado del proceso</h4>
                      <p className="text-slate-500">
@@ -194,7 +277,7 @@ export function SignatureStep({ contractId, trackingCode, steps }: SignatureStep
                   <div>
                     <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <FileSignature className="w-4 h-4" />
-                        Firmantes ({contractStatus.signers.length})
+                        {hasOnlyNotary ? 'Notario' : `Firmantes (${contractStatus.signers.filter(s => s.role !== 'notary').length})`}
                     </h4>
 
                     <div className="space-y-3">
@@ -215,7 +298,10 @@ export function SignatureStep({ contractId, trackingCode, steps }: SignatureStep
                                 <div>
                                     <div className="font-semibold text-slate-900">{signer.full_name}</div>
                                     <div className="text-sm text-slate-500 flex items-center gap-2">
-                                        <span>{signer.role === 'buyer' ? 'Comprador' : 'Vendedor'}</span>
+                                        <span>
+                                          {signer.role === 'notary' ? 'Notario' : 
+                                           signer.role === 'buyer' ? 'Comprador' : 'Vendedor'}
+                                        </span>
                                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                         <span>{signer.email}</span>
                                     </div>

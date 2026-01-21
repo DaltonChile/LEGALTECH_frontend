@@ -18,6 +18,12 @@ export interface Template {
   slug: string;
   base_price: number;
   description: string;
+  capsules?: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    price: number;
+  }>;
 }
 
 export interface TemplateDetail extends Template {
@@ -87,7 +93,28 @@ export const assignCapsulesToVersion = async (
 };
 
 export const getTemplateVersionDownloadUrl = async (versionId: string) => {
-  const response = await api.get(`/admin/versions/${versionId}/download`);
+  const response = await api.get(`/admin/versions/${versionId}/download`, {
+    responseType: 'blob'
+  });
+  
+  // Si la respuesta es un blob (archivo binario), crear URL para descarga
+  if (response.data instanceof Blob) {
+    const blob = response.data;
+    const url = window.URL.createObjectURL(blob);
+    const filename = response.headers['content-disposition']
+      ?.split('filename=')[1]
+      ?.replace(/"/g, '')
+      ?.replace(/UTF-8''/, '') || 'template.docx';
+    
+    return {
+      success: true,
+      download_url: url,
+      filename: decodeURIComponent(filename),
+      isBlob: true
+    };
+  }
+  
+  // Si es JSON (S3), devolver como está
   return response.data;
 };
 
@@ -290,13 +317,30 @@ export interface NotaryContract {
 }
 
 export const notaryApi = {
-  getContracts: async (): Promise<NotaryContract[]> => {
-    const response = await api.get<{ success: boolean; data: NotaryContract[] }>('/notary/contracts');
+  getPendingContracts: async (startDate?: string, endDate?: string): Promise<NotaryContract[]> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const queryString = params.toString();
+    const url = `/notary/contracts/pending${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get<{ success: boolean; data: NotaryContract[] }>(url);
+    return response.data.data || [];
+  },
+
+  getSignedContracts: async (startDate?: string, endDate?: string): Promise<NotaryContract[]> => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const queryString = params.toString();
+    const url = `/notary/contracts/signed${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get<{ success: boolean; data: NotaryContract[] }>(url);
     return response.data.data || [];
   },
 
   downloadContract: async (contractId: string) => {
-    const response = await api.get<{ success: boolean; download_url: string; filename: string }>(`/notary/contracts/${contractId}/download`);
+    const response = await api.get(`/notary/contracts/${contractId}/download`, {
+      responseType: 'blob'
+    });
     return response.data;
   },
 

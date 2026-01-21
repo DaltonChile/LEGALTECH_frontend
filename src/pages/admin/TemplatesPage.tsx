@@ -73,17 +73,23 @@ export const TemplatesPage: React.FC = () => {
       const result = await getTemplateVersionDownloadUrl(versionId);
       
       if (result.success) {
-        const downloadUrl = result.download_url.startsWith('http') 
-          ? result.download_url 
-          : `${window.location.origin}${result.download_url}`;
-        
         const link = document.createElement('a');
-        link.href = downloadUrl;
+        link.href = result.download_url;
         link.download = result.filename || 'template.docx';
-        link.target = '_blank';
+        
+        // No abrir en nueva pestaña para blobs
+        if (!result.isBlob) {
+          link.target = '_blank';
+        }
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        // Liberar memoria del blob URL
+        if (result.isBlob) {
+          setTimeout(() => window.URL.revokeObjectURL(result.download_url), 100);
+        }
       }
     } catch (error) {
       console.error('Error downloading version:', error);
