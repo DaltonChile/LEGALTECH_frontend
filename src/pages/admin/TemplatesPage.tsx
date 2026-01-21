@@ -1,5 +1,5 @@
 // LEGALTECH_frontend/src/pages/admin/TemplatesPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   getAdminTemplates, 
@@ -16,31 +16,22 @@ import {
 } from '../../components/admin/templates';
 import type { Template, FilterType } from '../../types/templates';
 import { downloadFromUrl } from '../../utils/fileDownload';
+import { useAsyncData } from '../../hooks/useAsyncData';
 
 export const TemplatesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showNewTemplateForm, setShowNewTemplateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterType>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
-  useEffect(() => {
-    loadTemplates();
-  }, []);
-
-  const loadTemplates = async () => {
-    try {
-      setLoading(true);
+  const { data: templates = [], loading, refetch: loadTemplates } = useAsyncData(
+    async () => {
       const response = await getAdminTemplates();
-      setTemplates(response.data.data);
-    } catch (error) {
-      console.error('Error loading templates:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data.data;
+    },
+    []
+  );
 
   const handlePublishVersion = async (versionId: string) => {
     try {

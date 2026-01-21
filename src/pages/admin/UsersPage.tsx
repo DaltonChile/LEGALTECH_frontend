@@ -1,7 +1,8 @@
 // LEGALTECH_frontend/src/pages/admin/UsersPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Search, Edit, Eye, EyeOff, UserPlus, X } from 'lucide-react';
 import { getAdminUsers, createUser, updateUser, deleteUser, reactivateUser } from '../../services/api';
+import { useAsyncData } from '../../hooks/useAsyncData';
 
 interface User {
   id: string;
@@ -18,29 +19,19 @@ type FilterRole = 'all' | 'admin' | 'notario';
 type FilterStatus = 'all' | 'active' | 'inactive';
 
 export function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<FilterRole>('all');
   const [filterStatus] = useState<FilterStatus>('all');
   const [showNewUserModal, setShowNewUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
+  const { data: users = [], loading, refetch: loadUsers } = useAsyncData(
+    async () => {
       const response = await getAdminUsers();
-      setUsers(response.data.data || []);
-    } catch (error) {
-      console.error('Error loading users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
+      return response.data.data || [];
+    },
+    []
+  );
 
 
 

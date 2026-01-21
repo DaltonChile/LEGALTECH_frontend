@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Download, Upload, Clock, CheckCircle, FileText, Mail, Search } from 'lucide-react';
 import { notaryApi, type NotaryContract } from '../../services/api';
 import { downloadBlob } from '../../utils/fileDownload';
+import { useAsyncData } from '../../hooks/useAsyncData';
 
 type ContractRequest = NotaryContract;
 
 export const NotaryInboxPage: React.FC = () => {
-  const [pendingContracts, setPendingContracts] = useState<ContractRequest[]>([]);
-  const [signedContracts, setSignedContracts] = useState<ContractRequest[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'pending' | 'signed' | 'all'>('pending');
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState<string>('');
@@ -16,29 +14,26 @@ export const NotaryInboxPage: React.FC = () => {
   const [_selectedContract, setSelectedContract] = useState<ContractRequest | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    loadContracts();
-  }, []);
-
-  useEffect(() => {
-    loadContracts();
-  }, [startDate, endDate]);
-
-  const loadContracts = async () => {
-    try {
-      setLoading(true);
+  const { 
+    data: contractsData, 
+    loading, 
+    refetch: loadContracts 
+  } = useAsyncData(
+    async () => {
       const [pending, signed] = await Promise.all([
         notaryApi.getPendingContracts(startDate, endDate),
         notaryApi.getSignedContracts(startDate, endDate)
       ]);
-      setPendingContracts(pending || []);
-      setSignedContracts(signed || []);
-    } catch (error) {
-      console.error('Error loading contracts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        pending: pending || [],
+        signed: signed || []
+      };
+    },
+    [startDate, endDate]
+  );
+
+  const pendingContracts = contractsData?.pending || [];
+  const signedContracts = contractsData?.signed || [];
 
   const handleDownloadContract = async (contractId: string, trackingCode: string) => {
     try {
