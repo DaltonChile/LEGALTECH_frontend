@@ -11,12 +11,19 @@ interface LoginResponse {
   success: boolean;
   data: User;
   message: string;
+  token?: string;
 }
 
 export const authService = {
   // Login - el backend setea la cookie httpOnly "token"
   login: async (credentials: { email: string; password: string }): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/auth/login', credentials);
+    
+    // En desarrollo, guardar el token en localStorage como fallback
+    if (response.data.token) {
+      localStorage.setItem('auth_token', response.data.token);
+    }
+    
     return response.data;
   },
 
@@ -29,5 +36,6 @@ export const authService = {
   // Logout - pedir al backend borrar la cookie
   logout: async () => {
     await api.post('/auth/logout');
+    localStorage.removeItem('auth_token');
   },
 };
