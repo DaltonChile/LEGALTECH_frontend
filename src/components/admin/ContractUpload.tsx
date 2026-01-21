@@ -340,56 +340,11 @@ export const ContractUploader: React.FC<ContractUploaderProps> = ({
               Asigna un precio a cada una:
             </p>
 
-            {capsulesWithPrices.map((capsule, index) => (
-              <div key={capsule.slug} style={{
-                padding: '15px',
-                marginBottom: '15px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                backgroundColor: '#fafafa'
-              }}>
-                <div style={{ marginBottom: '10px' }}>
-                  <strong style={{ fontSize: '16px', color: '#1976d2' }}>
-                    {index + 1}. {capsule.title}
-                  </strong>
-                  <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                    📝 {capsule.variables_count} variable(s) | Orden: {capsule.display_order}
-                  </div>
-                </div>
-                
-                <div style={{ 
-                  fontSize: '13px', 
-                  color: '#555', 
-                  marginBottom: '10px',
-                  maxHeight: '60px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {capsule.legal_text.substring(0, 150)}...
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>
-                    Precio (CLP):
-                  </label>
-                  <input
-                    type="number"
-                    value={capsule.price || ''}
-                    onChange={(e) => handlePriceChange(capsule.slug, e.target.value)}
-                    placeholder="Ej: 10000"
-                    min="0"
-                    step="1000"
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      fontSize: '16px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px'
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+            <CapsulePricingForm
+              capsules={capsulesWithPrices}
+              onPriceChange={handlePriceChange}
+              error={error}
+            />
 
             <div style={{ 
               marginTop: '25px', 

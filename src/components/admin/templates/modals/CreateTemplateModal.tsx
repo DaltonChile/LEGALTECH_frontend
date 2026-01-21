@@ -4,6 +4,7 @@ import { Upload } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import { createTemplate, uploadTemplateVersion, setCapsulePrices } from '../../../../services/api';
 import type { CapsulePending } from '../../../../types/templates';
+import { CapsulePricingForm } from '../shared/CapsulePricingForm';
 
 interface CreateTemplateModalProps {
   onClose: () => void;
@@ -294,28 +295,12 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
 
       {step === 'pricing' && (
         <div className="space-y-5">
-          <div className="space-y-3 max-h-[400px] overflow-y-auto">
-            {capsulesPending.map((capsule) => (
-              <div key={capsule.slug} className="border-2 border-slate-200 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h4 className="font-medium text-slate-900">{capsule.title}</h4>
-                    <p className="text-xs text-slate-500">{capsule.variables_count} variables detectadas</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-500">$</span>
-                    <input
-                      type="number"
-                      value={capsule.price || ''}
-                      onChange={(e) => handlePriceChange(capsule.slug, e.target.value)}
-                      placeholder="10000"
-                      min="0"
-                      className="w-28 px-3 py-2 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-cyan-400 transition-colors text-right"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="max-h-[400px] overflow-y-auto">
+            <CapsulePricingForm 
+              capsules={capsulesPending}
+              onPriceChange={handlePriceChange}
+              error={null}
+            />
           </div>
           
           <div className="flex gap-3 pt-4">
