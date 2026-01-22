@@ -34,6 +34,9 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   const [saving, setSaving] = useState(false);
 
   const publishedVersion = template.versions?.find(v => v.is_published);
+  // Usar la versión publicada, o si no hay, la última versión (para editar cápsulas)
+  const latestVersion = template.versions?.[0];
+  const activeVersion = publishedVersion || latestVersion;
 
   const handleDeleteVersion = async (versionId: string, versionNumber: number) => {
     if (onDelete) {
@@ -51,8 +54,8 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   };
 
   const handleStartEditPrice = () => {
-    const currentPrice = publishedVersion?.base_price?.toString() || '0';
-    console.log('Starting edit price:', currentPrice, 'from:', publishedVersion?.base_price);
+    const currentPrice = activeVersion?.base_price?.toString() || '0';
+    console.log('Starting edit price:', currentPrice, 'from:', activeVersion?.base_price);
     setEditPrice(currentPrice);
     setEditingField('price');
   };
@@ -92,7 +95,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   };
 
   const handleSavePrice = async () => {
-    if (saving || !publishedVersion) return;
+    if (saving || !activeVersion) return;
     
     const newPrice = parseFloat(editPrice);
     if (isNaN(newPrice) || newPrice < 0) {
@@ -102,7 +105,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 
     setSaving(true);
     try {
-      await api.put(`/admin/templates/${template.id}/versions/${publishedVersion.id}/price`, {
+      await api.put(`/admin/templates/${template.id}/versions/${activeVersion.id}/price`, {
         base_price: newPrice
       });
       setEditingField(null);
@@ -117,7 +120,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   };
 
   const handleSaveCapsulePrice = async (capsuleIndex: number) => {
-    if (saving || !publishedVersion?.capsules?.[capsuleIndex]) return;
+    if (saving || !activeVersion?.capsules?.[capsuleIndex]) return;
     
     const newPrice = parseFloat(editCapsulePrice);
     if (isNaN(newPrice) || newPrice < 0) {
@@ -127,8 +130,8 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 
     setSaving(true);
     try {
-      const capsule = publishedVersion.capsules[capsuleIndex];
-      await api.put(`/admin/templates/${template.id}/versions/${publishedVersion.id}/capsule-price`, {
+      const capsule = activeVersion.capsules[capsuleIndex];
+      await api.put(`/admin/templates/${template.id}/versions/${activeVersion.id}/capsule-price`, {
         capsule_slug: capsule.slug,
         price: newPrice
       });
@@ -334,10 +337,12 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
         {!showVersions && !showUploader && (
           <>
         {/* Titulo */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            {editingField === 'title' ? (
-              <input
+        <div>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Título</label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              {editingField === 'title' ? (
+                <input
                 type="text"
                 value={editData.title}
                 onChange={(e) => setEditData({ ...editData, title: e.target.value })}
@@ -372,20 +377,23 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => handleStartEdit('title')}
-              className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
-            >
-              editar
-            </button>
-          )}
+              <button
+                onClick={() => handleStartEdit('title')}
+                className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
+              >
+                editar
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Descripcion */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            {editingField === 'description' ? (
-              <textarea
+        <div>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Descripción</label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              {editingField === 'description' ? (
+                <textarea
                 value={editData.description}
                 onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                 className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 resize-none"
@@ -419,20 +427,23 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => handleStartEdit('description')}
-              className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
-            >
-              editar
-            </button>
-          )}
+              <button
+                onClick={() => handleStartEdit('description')}
+                className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
+              >
+                editar
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Precio */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            {editingField === 'price' ? (
-              <input
+        <div>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Precio Base (CLP)</label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              {editingField === 'price' ? (
+                <input
                 type="number"
                 value={editPrice}
                 onChange={(e) => setEditPrice(e.target.value)}
@@ -449,7 +460,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
             ) : (
               <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
                 <p className="text-lg font-semibold text-slate-900">
-                  ${publishedVersion?.base_price?.toLocaleString() || '0'}
+                  ${activeVersion?.base_price?.toLocaleString() || '0'}
                 </p>
               </div>
             )}
@@ -474,28 +485,30 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
           ) : (
             <button
               onClick={handleStartEditPrice}
-              disabled={!publishedVersion}
+              disabled={!activeVersion}
               className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               editar
             </button>
           )}
+          </div>
         </div>
 
-        {/* Version Publicada */}
-        {publishedVersion && (
+        {/* Version Activa */}
+        {activeVersion && (
           <div className="space-y-3">
             <p className="text-slate-900 font-semibold">
-              Version Publicada: <span className="text-cyan-600">version {publishedVersion.version_number}</span>
+              {publishedVersion ? 'Versión Publicada' : 'Última Versión (Borrador)'}: <span className="text-cyan-600">v{activeVersion.version_number}</span>
             </p>
 
             {/* Capsulas */}
-            {publishedVersion.capsules && publishedVersion.capsules.length > 0 && (
-              <div className="space-y-2">
-                {publishedVersion.capsules.map((capsule: any, index: number) => (
+            {activeVersion.capsules && activeVersion.capsules.length > 0 && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-slate-600">Cápsulas Opcionales</label>
+                {activeVersion.capsules.map((capsule: any, index: number) => (
                   <div key={index} className="flex items-center gap-3">
                     <div className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl bg-white">
-                      <p className="text-slate-900 font-medium">Capsula {index + 1}: {capsule.title}</p>
+                      <p className="text-slate-900 font-medium">{capsule.title}</p>
                     </div>
                     {editingField === `capsule-${index}` ? (
                       <>

@@ -67,9 +67,29 @@ export const NotaryInboxPage: React.FC = () => {
       alert('Documento firmado subido exitosamente');
       loadContracts();
       setSelectedContract(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error uploading signed contract:', error);
-      alert('Error al subir el documento firmado');
+      
+      // Extraer mensaje específico del error de validación BR-23
+      let errorMessage = 'Error al subir el documento firmado';
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
+        const data = axiosError.response?.data;
+        
+        if (data?.message) {
+          errorMessage = data.message;
+        } else if (data?.error) {
+          // Traducir códigos de error a mensajes amigables
+          const errorMessages: Record<string, string> = {
+            'MISSING_METADATA': 'Este documento no fue descargado desde el sistema. Por favor, descargue nuevamente el contrato y fírmelo sin usar "Imprimir como PDF".',
+            'CONTRACT_MISMATCH': 'Este documento pertenece a otro contrato. Por favor, verifique que está subiendo el documento correcto.'
+          };
+          errorMessage = errorMessages[data.error] || data.error;
+        }
+      }
+      
+      alert(errorMessage);
     } finally {
       setUploading(false);
     }
