@@ -8,10 +8,7 @@ export function Hero() {
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8 lg:space-y-10">
-            <div className="inline-flex items-center gap-2 bg-white border border-cyan-200 rounded-full px-4 py-2 shadow-sm">
-              <Sparkles className="w-4 h-4 text-blue-600" />
-              <span className="text-sm text-slate-700">Firma electrónica avanzada incluida</span>
-            </div>
+
             
             <div className="space-y-6">
               <h1 className="text-slate-900 max-w-xl text-5xl font-bold">

@@ -104,22 +104,7 @@ export function DocumentPreview({
     <>
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="text-white/80 text-xs">Vista previa</div>
-                <div className="text-white font-semibold">Documento</div>
-              </div>
-            </div>
-            <div className="text-xs px-3 py-1 rounded-full font-medium bg-lime-400/90 text-slate-900">
-              {completionPercentage}% completado
-            </div>
-          </div>
-        </div>
+
         
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 relative">
