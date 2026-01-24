@@ -1,5 +1,5 @@
 import { ContractMockup } from '../public/contracts/ContractMockup';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export function Hero() {
   return (

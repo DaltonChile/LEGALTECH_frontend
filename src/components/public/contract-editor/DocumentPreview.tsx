@@ -23,7 +23,6 @@ interface DocumentPreviewProps {
 export function DocumentPreview({ 
   templateText, 
   renderedContract, 
-  completionPercentage,
   activeField,
   variablesMetadata = [],
   onHtmlReady,
