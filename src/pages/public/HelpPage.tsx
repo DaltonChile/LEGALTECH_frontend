@@ -14,13 +14,12 @@ export function HelpPage() {
       {/* Gradient Overlay */}
       <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"></div>
 
-      <div className="relative z-10 font-sans max-w-6xl mx-auto px-6 py-12">
+      <div className="relative z-10 font-sans max-w-3xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-slate-900 to-slate-700 rounded-2xl mb-6 shadow-xl shadow-slate-200">
-            <HelpCircle className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+            
+
+          <h1 className="text-4xl  font-bold text-slate-900 mb-2 tracking-tight">
             Ayuda y Centro de Políticas
           </h1>
           <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
@@ -159,7 +158,19 @@ export function HelpPage() {
             </div>
 
           </div>
+          
         </div>
+                  <div className="mt-8 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+             <div>
+               <h3 className="font-bold text-slate-900 mb-1">¿Necesitas ayuda con tu contrato?</h3>
+               <p className="text-slate-500 text-sm">Nuestro equipo de soporte está disponible 24/7</p>
+             </div>
+             <div className="flex gap-3">
+                <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                  Contactar soporte
+                </button>
+             </div>
+          </div>
       </div>
     </div>
   );

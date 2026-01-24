@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Search, AlertCircle } from 'lucide-react';
 import { formatVariableName } from './utils/templateParser';
 
@@ -22,6 +23,31 @@ export function FieldsForm({
   onFieldFocus,
   onFieldBlur,
 }: FieldsFormProps) {
+  // Referencias para los campos de input
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Función para mover al siguiente campo al presionar Enter
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentVariable: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const currentIndex = variables.indexOf(currentVariable);
+      const nextIndex = currentIndex + 1;
+      
+      if (nextIndex < variables.length) {
+        const nextVariable = variables[nextIndex];
+        // Usar setTimeout para asegurar que el DOM esté listo
+        setTimeout(() => {
+          const nextInput = inputRefs.current[nextVariable];
+          if (nextInput) {
+            nextInput.focus();
+          }
+        }, 0);
+      }
+    }
+  };
+
   const isFieldEmpty = (variable: string): boolean => {
     return !formData[variable] || formData[variable].trim() === '';
   };
@@ -146,11 +172,13 @@ export function FieldsForm({
                   {isFieldEmpty(variable) && <span className="text-red-500 ml-1">*</span>}
                 </label>
                 <input
+                  ref={(el) => { inputRefs.current[variable] = el; }}
                   type="text"
                   value={formData[variable] || ''}
                   onChange={(e) => onFormChange({ ...formData, [variable]: e.target.value })}
                   onFocus={() => onFieldFocus(variable)}
                   onBlur={onFieldBlur}
+                  onKeyDown={(e) => handleKeyDown(e, variable)}
                   placeholder={`Ingresa ${formatVariableName(variable).toLowerCase()}`}
                   className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all bg-white ${
                     hasError

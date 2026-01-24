@@ -120,7 +120,7 @@ export function ContractCatalog() {
             Elige tu contrato
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto text-lg">
-            Selecciona el tipo de contrato que necesitas, personalízalo con tu información y recibe tu documento listo para firmar
+            Selecciona el tipo de contrato que necesitas, personalízalo con tu información y recibe tu documento con validez legal
           </p>
           
           {/* Barra de búsqueda integrada */}

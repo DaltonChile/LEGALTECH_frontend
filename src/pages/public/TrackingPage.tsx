@@ -180,7 +180,7 @@ export function TrackingPage() {
       <div className="relative z-10 font-sans">
         <Navbar />
 
-        <main className="max-w-3xl mx-auto px-6 py-12">
+        <main className="max-w-3xl min-h-full mx-auto px-6 py-12">
           
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold text-slate-900 mb-2">Rastrear Contrato</h1>
@@ -188,7 +188,7 @@ export function TrackingPage() {
           </div>
 
           {/* Search Box */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-2 mb-8 mx-auto max-w-xl">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-2 mb-8 mx-auto">
              <form onSubmit={handleSearch} className="flex items-center">
                 <div className="pl-4 text-slate-400">
                   <Search className="w-5 h-5" />
