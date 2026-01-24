@@ -15,7 +15,7 @@ interface Template {
   slug: string;
   title: string;
   description: string;
-  category: string;
+  category: string | null;
   base_price: number;
   published_version: {
     id: number;
@@ -30,16 +30,18 @@ export function ContractCatalogPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [categories, setCategories] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadTemplates();
+    loadCategories();
   }, []);
 
   const loadTemplates = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/templates`);
-      setTemplates(response.data);
+      setTemplates(response.data.data || response.data);
     } catch (error) {
       console.error('Error al cargar templates:', error);
     } finally {
@@ -47,15 +49,48 @@ export function ContractCatalogPage() {
     }
   };
 
-  const categories = ['all', 'laboral', 'arrendamiento', 'compraventa', 'servicios', 'otros'];
+  const loadCategories = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/config/template-categories`);
+      setCategories(response.data.data || []);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+      // Fallback to default categories
+      setCategories(['laboral', 'arrendamiento', 'compraventa', 'servicios', 'otros']);
+    }
+  };
 
   const filteredTemplates = templates.filter((template) => {
     const matchesSearch =
       template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      template.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (template.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // Agrupar templates por categoría
+  const groupedTemplates = filteredTemplates.reduce((acc, template) => {
+    const category = template.category || 'otros';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(template);
+    return acc;
+  }, {} as Record<string, Template[]>);
+
+  // Ordenar categorías (las definidas primero, luego las demás)
+  const sortedCategories = Object.keys(groupedTemplates).sort((a, b) => {
+    const indexA = categories.indexOf(a);
+    const indexB = categories.indexOf(b);
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+
+  const formatCategoryTitle = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
 
   const handleSelectTemplate = (templateSlug: string) => {
     navigate(`/${templateSlug}`);
@@ -120,7 +155,7 @@ export function ContractCatalogPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">Todas las categorías</option>
-                {categories.slice(1).map((cat) => (
+                {categories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat.charAt(0).toUpperCase() + cat.slice(1)}
                   </option>
@@ -131,15 +166,24 @@ export function ContractCatalogPage() {
         </div>
       </div>
 
-      {/* Template Grid */}
+      {/* Template Grid - Grouped by Category */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {filteredTemplates.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">No se encontraron contratos</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => (
+          <div className="space-y-10">
+            {sortedCategories.map((category) => (
+              <div key={category}>
+                {/* Category Title */}
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  {formatCategoryTitle(category)}
+                </h2>
+                
+                {/* Templates Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {groupedTemplates[category].map((template) => (
               <div
                 key={template.id}
                 className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer border border-gray-200"
@@ -147,9 +191,15 @@ export function ContractCatalogPage() {
               >
                 {/* Category badge */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
-                    {template.category}
-                  </span>
+                  {template.category ? (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                      {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs font-semibold rounded-full">
+                      General
+                    </span>
+                  )}
                   <span className="text-lg font-bold text-gray-900">
                     {formatPrice(template.base_price)}
                   </span>
@@ -205,6 +255,9 @@ export function ContractCatalogPage() {
                 <button className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
                   Crear contrato
                 </button>
+              </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
-import { createTemplate, uploadTemplateVersion, setCapsulePrices } from '../../../../services/api';
+import { createTemplate, uploadTemplateVersion, setCapsulePrices, getTemplateCategories } from '../../../../services/api';
 import type { CapsulePending } from '../../../../types/templates';
 
 interface CreateTemplateModalProps {
@@ -13,12 +13,29 @@ interface CreateTemplateModalProps {
 
 const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSuccess, existingSlugs }) => {
   const [showPricing, setShowPricing] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
   const [templateData, setTemplateData] = useState({
     title: '',
     slug: '',
     description: '',
-    requires_notary: false
+    requires_notary: false,
+    category: ''
   });
+
+  // Load categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const cats = await getTemplateCategories();
+        setCategories(cats);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        // Fallback categories
+        setCategories(['laboral', 'arrendamiento', 'compraventa', 'servicios', 'otros']);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const generateSlug = (title: string): string => {
     let baseSlug = title
@@ -254,6 +271,23 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
             min="0"
             className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-cyan-400 transition-colors"
           />
+        </div>
+
+        {/* Categoría */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Categoría</label>
+          <select
+            value={templateData.category}
+            onChange={(e) => setTemplateData({ ...templateData, category: e.target.value })}
+            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-cyan-400 transition-colors bg-white"
+          >
+            <option value="">Sin categoría</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Documento */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Settings as SettingsIcon, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import { Save, Settings as SettingsIcon, DollarSign, AlertCircle, CheckCircle, Tag, Plus, X } from 'lucide-react';
 import { getPlatformConfig, updatePlatformConfig } from '../../services/api';
 import type { PlatformConfig } from '../../services/api';
 
@@ -78,7 +78,54 @@ export const SettingsPage = () => {
 
   const getIcon = (key: string) => {
     if (key.includes('price')) return DollarSign;
+    if (key.includes('categor')) return Tag;
     return SettingsIcon;
+  };
+
+  // Parse JSON values for display
+  const parseValue = (config: PlatformConfig): string[] | null => {
+    if (config.value_type === 'json') {
+      try {
+        return JSON.parse(config.value);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Handle adding a new category
+  const handleAddCategory = (key: string) => {
+    const newCategory = prompt('Ingresa el nombre de la nueva categoría:');
+    if (newCategory && newCategory.trim()) {
+      const normalizedCategory = newCategory.trim().toLowerCase();
+      const currentValue = editedValues[key];
+      try {
+        const categories = JSON.parse(currentValue) as string[];
+        if (!categories.includes(normalizedCategory)) {
+          categories.push(normalizedCategory);
+          handleChange(key, JSON.stringify(categories));
+        } else {
+          alert('Esta categoría ya existe');
+        }
+      } catch {
+        alert('Error al agregar categoría');
+      }
+    }
+  };
+
+  // Handle removing a category
+  const handleRemoveCategory = (key: string, categoryToRemove: string) => {
+    if (confirm(`¿Estás seguro de eliminar la categoría "${categoryToRemove}"?`)) {
+      const currentValue = editedValues[key];
+      try {
+        const categories = JSON.parse(currentValue) as string[];
+        const filtered = categories.filter(cat => cat !== categoryToRemove);
+        handleChange(key, JSON.stringify(filtered));
+      } catch {
+        alert('Error al eliminar categoría');
+      }
+    }
   };
 
   if (loading) {
@@ -139,30 +186,84 @@ export const SettingsPage = () => {
                   </h3>
                   <p className="text-sm text-slate-600 mb-4">{config.description}</p>
 
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <input
-                        type={config.value_type === 'integer' || config.value_type === 'float' ? 'number' : 'text'}
-                        value={editedValues[config.key] || ''}
-                        onChange={(e) => handleChange(config.key, e.target.value)}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
-                        placeholder={`Ingrese ${config.value_type === 'integer' ? 'número entero' : 'valor'}`}
-                      />
-                    </div>
+                  {/* Special rendering for JSON array (categories) */}
+                  {config.value_type === 'json' ? (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {(() => {
+                          try {
+                            const categories = JSON.parse(editedValues[config.key] || '[]') as string[];
+                            return categories.map((cat) => (
+                              <span
+                                key={cat}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-200"
+                              >
+                                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                <button
+                                  onClick={() => handleRemoveCategory(config.key, cat)}
+                                  className="hover:text-red-600 transition-colors"
+                                  title="Eliminar categoría"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </span>
+                            ));
+                          } catch {
+                            return <span className="text-red-500 text-sm">Error al cargar categorías</span>;
+                          }
+                        })()}
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleAddCategory(config.key)}
+                          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-all flex items-center gap-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Agregar Categoría
+                        </button>
 
-                    <button
-                      onClick={() => handleSave(config.key)}
-                      disabled={saving || !changed}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                        changed
-                          ? 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm'
-                          : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                      }`}
-                    >
-                      <Save className="w-4 h-4" />
-                      Guardar
-                    </button>
-                  </div>
+                        <button
+                          onClick={() => handleSave(config.key)}
+                          disabled={saving || !changed}
+                          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                            changed
+                              ? 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm'
+                              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          }`}
+                        >
+                          <Save className="w-4 h-4" />
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Regular input for non-JSON types */
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <input
+                          type={config.value_type === 'integer' || config.value_type === 'float' ? 'number' : 'text'}
+                          value={editedValues[config.key] || ''}
+                          onChange={(e) => handleChange(config.key, e.target.value)}
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                          placeholder={`Ingrese ${config.value_type === 'integer' ? 'número entero' : 'valor'}`}
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => handleSave(config.key)}
+                        disabled={saving || !changed}
+                        className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                          changed
+                            ? 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm'
+                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        <Save className="w-4 h-4" />
+                        Guardar
+                      </button>
+                    </div>
+                  )}
 
                   {changed && (
                     <p className="text-xs text-amber-600 mt-2">

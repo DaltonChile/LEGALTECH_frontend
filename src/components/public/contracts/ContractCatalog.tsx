@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ContractCard } from './ContractCard';
 import { Home, Briefcase, FileText, ShieldCheck, Users, HandshakeIcon, Loader2, Search } from 'lucide-react';
-import { templatesApi, type Template } from '../../../services/api';
+import { templatesApi, getTemplateCategories, type Template } from '../../../services/api';
 
 // Mapeo de iconos según el slug o título
 const getIconForTemplate = (slug: string): any => {
@@ -28,16 +28,21 @@ const getIconForTemplate = (slug: string): any => {
 export function ContractCatalog() {
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const fetchTemplates = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await templatesApi.getAll();
-        setTemplates(data || []);
+        const [templatesData, categoriesData] = await Promise.all([
+          templatesApi.getAll(),
+          getTemplateCategories()
+        ]);
+        setTemplates(templatesData || []);
+        setCategories(categoriesData || []);
         setError(null);
       } catch (err) {
         console.error('Error al cargar templates:', err);
@@ -48,7 +53,7 @@ export function ContractCatalog() {
       }
     };
 
-    fetchTemplates();
+    fetchData();
   }, []);
 
   const handlePersonalize = (templateSlug: string) => {
@@ -61,9 +66,34 @@ export function ContractCatalog() {
     return (
       template.title.toLowerCase().includes(query) ||
       template.description?.toLowerCase().includes(query) ||
-      template.slug.toLowerCase().includes(query)
+      template.slug.toLowerCase().includes(query) ||
+      (template.category || '').toLowerCase().includes(query)
     );
   });
+
+  // Agrupar templates por categoría
+  const groupedTemplates = filteredTemplates.reduce((acc, template) => {
+    const category = template.category || 'otros';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(template);
+    return acc;
+  }, {} as Record<string, Template[]>);
+
+  // Ordenar categorías (las definidas primero, luego las demás)
+  const sortedCategories = Object.keys(groupedTemplates).sort((a, b) => {
+    const indexA = categories.indexOf(a);
+    const indexB = categories.indexOf(b);
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+
+  const formatCategoryTitle = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
 
   if (loading) {
     return (
@@ -151,7 +181,7 @@ export function ContractCatalog() {
           </div>
         </div>
 
-        {/* Grid de contratos */}
+        {/* Grid de contratos agrupados por categoría */}
         {filteredTemplates.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Search className="w-16 h-16 text-slate-300 mb-4" />
@@ -165,19 +195,31 @@ export function ContractCatalog() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredTemplates.map((template) => (
-              <ContractCard
-                key={template.id}
-                title={template.title}
-                description={template.description || 'Personaliza este contrato con tu información'}
-                price={template.base_price}
-                icon={getIconForTemplate(template.slug)}
-                onPersonalize={() => handlePersonalize(template.slug)}
-                capsules={template.capsules}
-                requiresNotary={template.requires_notary}
-                hasSigners={template.has_signers}
-              />
+          <div className="space-y-12">
+            {sortedCategories.map((category) => (
+              <div key={category}>
+                {/* Título de categoría */}
+                <h3 className="text-2xl font-bold text-slate-900 mb-6">
+                  {formatCategoryTitle(category)}
+                </h3>
+                
+                {/* Grid de contratos de esta categoría */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {groupedTemplates[category].map((template) => (
+                    <ContractCard
+                      key={template.id}
+                      title={template.title}
+                      description={template.description || 'Personaliza este contrato con tu información'}
+                      price={template.base_price}
+                      icon={getIconForTemplate(template.slug)}
+                      onPersonalize={() => handlePersonalize(template.slug)}
+                      capsules={template.capsules}
+                      requiresNotary={template.requires_notary}
+                      hasSigners={template.has_signers}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}

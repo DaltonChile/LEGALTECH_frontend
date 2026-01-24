@@ -5,6 +5,7 @@ export interface Template {
   description: string;
   is_active: boolean;
   requires_notary: boolean;
+  category: string | null;
   versions: Version[];
 }
 
