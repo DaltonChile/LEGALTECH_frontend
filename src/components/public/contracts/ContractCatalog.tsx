@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ContractCard } from './ContractCard';
-import { Home, Briefcase, FileText, ShieldCheck, Users, HandshakeIcon, Loader2, Search } from 'lucide-react';
+import { Home, Briefcase, FileText, ShieldCheck, Users, HandshakeIcon, Loader2, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { templatesApi, getTemplateCategories, type Template } from '../../../services/api';
 
 // Mapeo de iconos según el slug o título
@@ -32,6 +32,19 @@ export function ContractCatalog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (category: string) => {
+    setCollapsedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -195,30 +208,45 @@ export function ContractCatalog() {
             </button>
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-8">
             {sortedCategories.map((category) => (
               <div key={category}>
-                {/* Título de categoría */}
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">
-                  {formatCategoryTitle(category)}
-                </h3>
+                {/* Título de categoría con toggle */}
+                <button
+                  onClick={() => toggleCategory(category)}
+                  className="flex items-center gap-2 mb-6 group cursor-pointer"
+                >
+                  {collapsedCategories.has(category) ? (
+                    <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  ) : (
+                    <ChevronDown className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  )}
+                  <h3 className="text-2xl font-bold text-slate-900 group-hover:text-slate-700 transition-colors">
+                    {formatCategoryTitle(category)}
+                  </h3>
+                  <span className="text-sm text-slate-400 font-normal">
+                    ({groupedTemplates[category].length})
+                  </span>
+                </button>
                 
                 {/* Grid de contratos de esta categoría */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {groupedTemplates[category].map((template) => (
-                    <ContractCard
-                      key={template.id}
-                      title={template.title}
-                      description={template.description || 'Personaliza este contrato con tu información'}
-                      price={template.base_price}
-                      icon={getIconForTemplate(template.slug)}
-                      onPersonalize={() => handlePersonalize(template.slug)}
-                      capsules={template.capsules}
-                      requiresNotary={template.requires_notary}
-                      hasSigners={template.has_signers}
-                    />
-                  ))}
-                </div>
+                {!collapsedCategories.has(category) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {groupedTemplates[category].map((template) => (
+                      <ContractCard
+                        key={template.id}
+                        title={template.title}
+                        description={template.description || 'Personaliza este contrato con tu información'}
+                        price={template.base_price}
+                        icon={getIconForTemplate(template.slug)}
+                        onPersonalize={() => handlePersonalize(template.slug)}
+                        capsules={template.capsules}
+                        requiresNotary={template.requires_notary}
+                        hasSigners={template.has_signers}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
