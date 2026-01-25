@@ -14,7 +14,8 @@ import {
   Building2,
   Gavel,
   FileSignature,
-  X
+  X,
+  Info
 } from 'lucide-react';
 import { templatesApi, getTemplateCategories, type Template } from '../../../services/api';
 
@@ -57,6 +58,7 @@ export function ContractCatalog() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [infoModalTemplate, setInfoModalTemplate] = useState<Template | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -291,10 +293,22 @@ export function ContractCatalog() {
                       <div className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center shrink-0`}>
                         <Icon className={`w-5 h-5 ${config.color}`} />
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="font-serif font-bold text-navy-900 group-hover:text-legal-emerald-700 transition-colors">
-                          {template.title}
-                        </h3>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-serif font-bold text-navy-900 group-hover:text-legal-emerald-700 transition-colors">
+                            {template.title}
+                          </h3>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInfoModalTemplate(template);
+                            }}
+                            className="text-slate-400 hover:text-navy-900 transition-colors p-1 hover:bg-slate-100 rounded shrink-0"
+                            title="Ver información completa"
+                          >
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </div>
                         <p className="text-sm text-slate-500 font-sans line-clamp-2 mt-0.5">
                           {template.description || 'Personaliza este documento con tu información'}
                         </p>
@@ -367,6 +381,65 @@ export function ContractCatalog() {
         </p>
 
       </div>
+
+      {/* Info Modal */}
+      {infoModalTemplate && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in"
+          onClick={() => setInfoModalTemplate(null)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-document max-w-lg w-full p-6 animate-fade-in-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-navy-900 rounded-lg flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-serif font-bold text-navy-900">
+                  {infoModalTemplate.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setInfoModalTemplate(null)}
+                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center justify-center"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold text-navy-900 mb-2 font-sans">Descripción</h4>
+                <p className="text-sm text-slate-700 font-sans leading-relaxed">
+                  {infoModalTemplate.description || 'Sin descripción disponible'}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                <div className="text-sm text-slate-500 font-sans">
+                  Precio desde
+                </div>
+                <div className="text-xl font-bold text-navy-900 font-sans">
+                  {formatPrice(infoModalTemplate.base_price)}
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setInfoModalTemplate(null);
+                  handlePersonalize(infoModalTemplate.slug);
+                }}
+                className="w-full bg-navy-900 hover:bg-navy-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 font-sans"
+              >
+                Crear este documento
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
