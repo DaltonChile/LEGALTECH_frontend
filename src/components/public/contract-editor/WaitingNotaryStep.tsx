@@ -52,7 +52,7 @@ export function WaitingNotaryStep({
                   <Gavel className="w-6 h-6 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg">LegalTech Notaría</h3>
+                  <h3 className="font-bold text-slate-900 text-lg">Contrato Seguro Notaría</h3>
                   <div className="flex items-center gap-2 text-sm text-slate-500">
                     <span>Ref: {trackingCode}</span>
                     <button 

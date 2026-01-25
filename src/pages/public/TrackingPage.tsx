@@ -224,7 +224,7 @@ export function TrackingPage() {
                     <Scale className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">LegalTech Signature</h3>
+                    <h3 className="font-bold text-slate-900">Contrato Seguro Signature</h3>
                     <div className="flex items-center gap-2 text-sm text-slate-500">
                       <span>Ref: {contractData.tracking_code}</span>
                       <button onClick={copyToClipboard} className="hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-slate-50">

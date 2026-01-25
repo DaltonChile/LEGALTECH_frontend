@@ -24,7 +24,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
           <div className="w-8 h-8 bg-gradient-to-br from-blue-600 via-cyan-500 to-lime-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
             <Scale className="w-5 h-5 text-white" />
           </div>
-          <span className="text-lg font-bold text-slate-900 tracking-tight">LegalTech</span>
+          <span className="text-lg font-bold text-slate-900 tracking-tight">Contrato Seguro</span>
         </div>
         {/* Close button only visible on mobile context (handled by parent logic typically, but added here for safety) */}
         <button onClick={onClose} className="md:hidden p-1 hover:bg-slate-100 rounded-md">

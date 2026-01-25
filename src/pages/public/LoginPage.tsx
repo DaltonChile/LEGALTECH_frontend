@@ -122,7 +122,7 @@ export function LoginPage() {
           </div>
           
            <p className="mt-8 text-center text-sm text-slate-400">
-            © 2025 legaltech. Plataforma segura.
+            © 2025 Contrato Seguro. Plataforma segura.
           </p>
         </div>
       </div>
