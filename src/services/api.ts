@@ -190,24 +190,46 @@ export const getAdminContractById = async (contractId: string) => {
 // APIs para Dashboard
 // ============================================
 
-export const getDashboardStats = async () => {
-  return await api.get('/admin/dashboard/stats');
+export interface DateRangeParams {
+  startDate?: string;
+  endDate?: string;
+}
+
+export const getDashboardStats = async (dateRange?: DateRangeParams) => {
+  const params: Record<string, string> = {};
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/stats', { params });
 };
 
-export const getDashboardWeeklyActivity = async () => {
-  return await api.get('/admin/dashboard/weekly-activity');
+export const getDashboardWeeklyActivity = async (dateRange?: DateRangeParams) => {
+  const params: Record<string, string> = {};
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/weekly-activity', { params });
 };
 
-export const getDashboardMonthlyActivity = async () => {
-  return await api.get('/admin/dashboard/monthly-activity');
+export const getDashboardMonthlyActivity = async (dateRange?: DateRangeParams) => {
+  const params: Record<string, string> = {};
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/monthly-activity', { params });
 };
 
-export const getDashboardRecentContracts = async (limit?: number) => {
-  return await api.get('/admin/dashboard/recent-contracts', { params: { limit } });
+export const getDashboardRecentContracts = async (limit?: number, dateRange?: DateRangeParams) => {
+  const params: Record<string, string | number> = {};
+  if (limit) params.limit = limit;
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/recent-contracts', { params });
 };
 
-export const getDashboardPopularTemplates = async (limit?: number) => {
-  return await api.get('/admin/dashboard/popular-templates', { params: { limit } });
+export const getDashboardPopularTemplates = async (limit?: number, dateRange?: DateRangeParams) => {
+  const params: Record<string, string | number> = {};
+  if (limit) params.limit = limit;
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/popular-templates', { params });
 };
 
 // ============================================
@@ -315,7 +337,7 @@ export interface NotaryContract {
   tracking_code: string;
   buyer_email: string;
   buyer_rut: string;
-  status: 'waiting_notary' | 'signed';
+  status: 'waiting_notary' | 'completed';
   total_amount: number;
   requires_notary: boolean;
   draft_pdf_path: string | null;

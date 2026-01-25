@@ -1,9 +1,10 @@
 // LEGALTECH_frontend/src/pages/admin/AdminDashboard.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   FileText, Clock, CheckCircle, XCircle, AlertCircle, 
   X, Eye, TrendingUp, TrendingDown, DollarSign, 
-  FileSignature, BarChart3, PieChart as PieChartIcon, Loader2
+  FileSignature, BarChart3, PieChart as PieChartIcon, Loader2,
+  Calendar, Filter, RefreshCw
 } from 'lucide-react';
 import { 
   getDashboardStats, 
@@ -12,6 +13,7 @@ import {
   getDashboardRecentContracts,
   getDashboardPopularTemplates
 } from '../../services/api';
+import type { DateRangeParams } from '../../services/api';
 import {
   XAxis,
   YAxis,
@@ -29,6 +31,12 @@ import {
 // ============================================
 // Types
 // ============================================
+interface SalesByCategory {
+  category: string;
+  count: number;
+  revenue: number;
+}
+
 interface DashboardStats {
   totalRevenue: number;
   revenueChange: number;
@@ -43,15 +51,17 @@ interface DashboardStats {
     none: number;
   };
   contractsByStatus: {
-    draft: number;
     pending_payment: number;
-    paid: number;
-    waiting_notary: number;
+    draft: number;
     waiting_signatures: number;
-    signed: number;
+    waiting_notary: number;
     completed: number;
     failed: number;
   };
+  // Nuevas métricas de ventas
+  totalSales: number;
+  totalSalesRevenue: number;
+  salesByCategory: SalesByCategory[];
 }
 
 interface WeeklyData {
@@ -82,7 +92,7 @@ interface Contract {
   buyer_rut: string;
   buyer_email: string;
   total_amount: number;
-  status: 'draft' | 'pending_payment' | 'paid' | 'waiting_notary' | 'waiting_signatures' | 'signed' | 'failed';
+  status: 'draft' | 'pending_payment' | 'waiting_signatures' | 'waiting_notary' | 'completed' | 'failed';
   requires_notary: boolean;
   created_at: string;
   updated_at: string;
@@ -95,18 +105,208 @@ interface Contract {
   };
 }
 
+// Estados reales del flujo:
+// pending_payment → draft → waiting_signatures → waiting_notary → completed
 const STATUS_CONFIG = {
-  draft: { label: 'Borrador', color: 'bg-slate-100 text-slate-600', dotColor: 'bg-slate-400', chartColor: '#94a3b8' },
   pending_payment: { label: 'Pend. Pago', color: 'bg-amber-100 text-amber-700', dotColor: 'bg-amber-500', chartColor: '#f59e0b' },
-  paid: { label: 'Pagado', color: 'bg-blue-100 text-blue-700', dotColor: 'bg-blue-500', chartColor: '#3b82f6' },
-  waiting_notary: { label: 'Esp. Notario', color: 'bg-purple-100 text-purple-700', dotColor: 'bg-purple-500', chartColor: '#8b5cf6' },
+  draft: { label: 'Completando', color: 'bg-blue-100 text-blue-700', dotColor: 'bg-blue-500', chartColor: '#3b82f6' },
   waiting_signatures: { label: 'Esp. Firmas', color: 'bg-cyan-100 text-cyan-700', dotColor: 'bg-cyan-500', chartColor: '#06b6d4' },
-  signed: { label: 'Firmado', color: 'bg-green-100 text-green-700', dotColor: 'bg-green-500', chartColor: '#10b981' },
+  waiting_notary: { label: 'Esp. Notario', color: 'bg-purple-100 text-purple-700', dotColor: 'bg-purple-500', chartColor: '#8b5cf6' },
   completed: { label: 'Completado', color: 'bg-emerald-100 text-emerald-700', dotColor: 'bg-emerald-500', chartColor: '#059669' },
   failed: { label: 'Fallido', color: 'bg-red-100 text-red-700', dotColor: 'bg-red-500', chartColor: '#ef4444' }
 };
 
 const CHART_COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#94a3b8'];
+
+// ============================================
+// Date Range Filter Types & Constants
+// ============================================
+type DatePreset = 'all' | 'today' | 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'custom';
+
+interface DateRangeState {
+  preset: DatePreset;
+  startDate: string;
+  endDate: string;
+}
+
+const DATE_PRESETS: { value: DatePreset; label: string }[] = [
+  { value: 'all', label: 'Todo el período' },
+  { value: 'today', label: 'Hoy' },
+  { value: 'last7days', label: 'Últimos 7 días' },
+  { value: 'thisMonth', label: 'Este mes' },
+  { value: 'lastMonth', label: 'Último mes' },
+  { value: 'thisYear', label: 'Este año' },
+  { value: 'custom', label: 'Personalizado' },
+];
+
+const STORAGE_KEY = 'admin_dashboard_date_range';
+
+const getPresetDates = (preset: DatePreset): { startDate: string; endDate: string } => {
+  const today = new Date();
+  const formatDate = (d: Date) => d.toISOString().split('T')[0];
+  
+  switch (preset) {
+    case 'today':
+      return { startDate: formatDate(today), endDate: formatDate(today) };
+    case 'last7days': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 6);
+      return { startDate: formatDate(start), endDate: formatDate(today) };
+    }
+    case 'thisMonth': {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      return { startDate: formatDate(start), endDate: formatDate(today) };
+    }
+    case 'lastMonth': {
+      const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const end = new Date(today.getFullYear(), today.getMonth(), 0);
+      return { startDate: formatDate(start), endDate: formatDate(end) };
+    }
+    case 'thisYear': {
+      const start = new Date(today.getFullYear(), 0, 1);
+      return { startDate: formatDate(start), endDate: formatDate(today) };
+    }
+    case 'all':
+    default:
+      return { startDate: '', endDate: '' };
+  }
+};
+
+const loadStoredDateRange = (): DateRangeState => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Si es un preset dinámico (no 'custom' ni 'all'), recalcular fechas
+      if (parsed.preset && parsed.preset !== 'custom' && parsed.preset !== 'all') {
+        const dates = getPresetDates(parsed.preset);
+        return { preset: parsed.preset, ...dates };
+      }
+      return parsed;
+    }
+  } catch (e) {
+    console.warn('Error loading date range from localStorage', e);
+  }
+  return { preset: 'all', startDate: '', endDate: '' };
+};
+
+const saveDateRange = (dateRange: DateRangeState) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dateRange));
+  } catch (e) {
+    console.warn('Error saving date range to localStorage', e);
+  }
+};
+
+// ============================================
+// DateRangeFilter Component
+// ============================================
+interface DateRangeFilterProps {
+  dateRange: DateRangeState;
+  onDateRangeChange: (dateRange: DateRangeState) => void;
+  onRefresh: () => void;
+  isLoading: boolean;
+}
+
+const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ 
+  dateRange, 
+  onDateRangeChange, 
+  onRefresh,
+  isLoading 
+}) => {
+  const handlePresetChange = (preset: DatePreset) => {
+    if (preset === 'custom') {
+      onDateRangeChange({ preset, startDate: dateRange.startDate, endDate: dateRange.endDate });
+    } else {
+      const dates = getPresetDates(preset);
+      onDateRangeChange({ preset, ...dates });
+    }
+  };
+
+  const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
+    onDateRangeChange({ ...dateRange, preset: 'custom', [field]: value });
+  };
+
+  const isFiltered = dateRange.preset !== 'all';
+  const currentPresetLabel = DATE_PRESETS.find(p => p.value === dateRange.preset)?.label || 'Todo el período';
+
+  // Format dates for display
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+        {/* Filter Icon & Label */}
+        <div className="flex items-center gap-2">
+          <div className={`p-2 rounded-lg ${isFiltered ? 'bg-cyan-100' : 'bg-slate-100'}`}>
+            <Calendar className={`w-5 h-5 ${isFiltered ? 'text-cyan-600' : 'text-slate-500'}`} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-700">Período de datos</p>
+            {isFiltered && (
+              <p className="text-xs text-cyan-600 font-medium flex items-center gap-1">
+                <Filter className="w-3 h-3" />
+                Filtro activo: {dateRange.preset === 'custom' 
+                  ? `${formatDisplayDate(dateRange.startDate)} - ${formatDisplayDate(dateRange.endDate)}`
+                  : currentPresetLabel}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Preset Buttons */}
+        <div className="flex flex-wrap gap-2 flex-1">
+          {DATE_PRESETS.filter(p => p.value !== 'custom').map((preset) => (
+            <button
+              key={preset.value}
+              onClick={() => handlePresetChange(preset.value)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                dateRange.preset === preset.value
+                  ? 'bg-cyan-500 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Custom Date Inputs */}
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={dateRange.startDate}
+            onChange={(e) => handleDateChange('startDate', e.target.value)}
+            className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            placeholder="Desde"
+          />
+          <span className="text-slate-400">—</span>
+          <input
+            type="date"
+            value={dateRange.endDate}
+            onChange={(e) => handleDateChange('endDate', e.target.value)}
+            className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            placeholder="Hasta"
+          />
+        </div>
+
+        {/* Refresh Button */}
+        <button
+          onClick={onRefresh}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <span className="text-sm font-medium">Actualizar</span>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // ============================================
 // Helper Functions
@@ -142,56 +342,112 @@ export function AdminDashboard() {
   const [recentContracts, setRecentContracts] = useState<Contract[]>([]);
   const [popularTemplates, setPopularTemplates] = useState<PopularTemplate[]>([]);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-  const [viewPeriod, setViewPeriod] = useState<'weekly' | 'monthly'>('weekly');
+  
+  // Date Range Filter State
+  const [dateRange, setDateRange] = useState<DateRangeState>(() => loadStoredDateRange());
+
+  // Memoized date range params for API calls
+  const dateRangeParams: DateRangeParams | undefined = useMemo(() => {
+    if (dateRange.preset === 'all' || (!dateRange.startDate && !dateRange.endDate)) {
+      return undefined;
+    }
+    return {
+      startDate: dateRange.startDate || undefined,
+      endDate: dateRange.endDate || undefined
+    };
+  }, [dateRange]);
+
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      
+      const [statsRes, weeklyRes, monthlyRes, contractsRes, templatesRes] = await Promise.all([
+        getDashboardStats(dateRangeParams),
+        getDashboardWeeklyActivity(dateRangeParams),
+        getDashboardMonthlyActivity(dateRangeParams),
+        getDashboardRecentContracts(5, dateRangeParams),
+        getDashboardPopularTemplates(5, dateRangeParams)
+      ]);
+
+      setStats(statsRes.data.data);
+      setWeeklyData(weeklyRes.data.data);
+      setMonthlyData(monthlyRes.data.data);
+      setRecentContracts(contractsRes.data.data);
+      setPopularTemplates(templatesRes.data.data);
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle date range changes
+  const handleDateRangeChange = (newDateRange: DateRangeState) => {
+    setDateRange(newDateRange);
+    saveDateRange(newDateRange);
+  };
 
   useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        setLoading(true);
-        
-        const [statsRes, weeklyRes, monthlyRes, contractsRes, templatesRes] = await Promise.all([
-          getDashboardStats(),
-          getDashboardWeeklyActivity(),
-          getDashboardMonthlyActivity(),
-          getDashboardRecentContracts(5),
-          getDashboardPopularTemplates(5)
-        ]);
-
-        setStats(statsRes.data.data);
-        setWeeklyData(weeklyRes.data.data);
-        setMonthlyData(monthlyRes.data.data);
-        setRecentContracts(contractsRes.data.data);
-        setPopularTemplates(templatesRes.data.data);
-      } catch (error) {
-        console.error('Error loading dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadDashboard();
-  }, []);
+  }, [dateRangeParams]);
 
-  // Datos para el gráfico de estados
-  const statusChartData = stats ? Object.entries(stats.contractsByStatus)
-    .filter(([_, count]) => count > 0)
-    .map(([status, count]) => ({
-      name: STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.label || status,
-      value: count,
-      color: STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.chartColor || '#94a3b8'
+  // Datos para el gráfico de estados - mostrar todos los estados
+  const statusChartData = stats ? Object.entries(STATUS_CONFIG).map(([status, config]) => ({
+      name: config.label,
+      value: stats.contractsByStatus[status as keyof typeof stats.contractsByStatus] || 0,
+      color: config.chartColor
     })) : [];
 
-  // Datos para el gráfico de actividad
-  const activityData = viewPeriod === 'weekly' ? weeklyData : monthlyData.map(m => ({
-    day: m.month,
-    contratos: m.contratos,
-    ingresos: m.ingresos
-  }));
+  // Formateador de fecha para el eje X del gráfico
+  const formatDateLabel = (dateStr: string, showYear: boolean = false) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr + 'T00:00:00');
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    if (showYear) {
+      return `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
+    }
+    return `${date.getDate()} ${monthNames[date.getMonth()]}`;
+  };
 
-  // Calcular tasa de conversión (pagados + firmados / total)
-  const conversionRate = stats && stats.totalContracts > 0
-    ? ((stats.contractsByStatus.paid + stats.contractsByStatus.signed + (stats.contractsByStatus.completed || 0) + stats.contractsByStatus.waiting_notary + (stats.contractsByStatus.waiting_signatures || 0)) / stats.totalContracts * 100).toFixed(1)
-    : '0';
+  // Datos para el gráfico de actividad - se adapta automáticamente al rango de fechas
+  // Si el rango es menor a 45 días, muestra datos diarios; si no, muestra mensuales
+  const activityData = useMemo(() => {
+    if (!dateRange.startDate || !dateRange.endDate) {
+      // Sin filtro: mostrar últimos 6 meses
+      return monthlyData.map(m => ({
+        day: `${m.month} ${m.year.toString().slice(-2)}`,
+        contratos: m.contratos,
+        ingresos: m.ingresos
+      }));
+    }
+    
+    const start = new Date(dateRange.startDate);
+    const end = new Date(dateRange.endDate);
+    const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Si el rango es menor a 8 días, usar nombre de día (Lun, Mar, etc.)
+    if (diffDays <= 7) {
+      return weeklyData;
+    }
+    
+    // Si el rango es menor a 45 días, usar datos diarios con fecha formateada
+    if (diffDays <= 45) {
+      return weeklyData.map(d => ({
+        ...d,
+        day: formatDateLabel(d.date)
+      }));
+    }
+    
+    // Si el rango cruza años, incluir el año
+    const crossesYears = start.getFullYear() !== end.getFullYear();
+    
+    // Si no, usar datos mensuales
+    return monthlyData.map(m => ({
+      day: crossesYears ? `${m.month} ${m.year.toString().slice(-2)}` : m.month,
+      contratos: m.contratos,
+      ingresos: m.ingresos
+    }));
+  }, [weeklyData, monthlyData, dateRange]);
 
   if (loading) {
     return (
@@ -233,76 +489,96 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* ================= KPI CARDS ================= */}
+          {/* Date Range Filter */}
+          <DateRangeFilter
+            dateRange={dateRange}
+            onDateRangeChange={handleDateRangeChange}
+            onRefresh={loadDashboard}
+            isLoading={loading}
+          />
+
+          {/* ================= KPI CARDS - VENTAS ================= */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Ingresos */}
+            {/* Ventas Completadas (contratos con status completed) */}
             <StatCard 
-              icon={<DollarSign className="w-5 h-5" />}
+              icon={<CheckCircle className="w-5 h-5" />}
               iconBg="bg-emerald-100"
               iconColor="text-emerald-600"
-              title="Ingresos Totales" 
-              value={formatCurrency(stats?.totalRevenue || 0)} 
-              change={stats?.revenueChange || 0}
-              subtitle="vs mes anterior"
+              title="Ventas Completadas" 
+              value={formatNumber(stats?.totalSales || 0)} 
+              subtitle="contratos finalizados"
             />
 
-            {/* Contratos */}
+            {/* Ingresos de Ventas */}
+            <StatCard 
+              icon={<DollarSign className="w-5 h-5" />}
+              iconBg="bg-cyan-100"
+              iconColor="text-cyan-600"
+              title="Ingresos por Ventas" 
+              value={formatCurrency(stats?.totalSalesRevenue || 0)} 
+              subtitle="de contratos completados"
+            />
+
+            {/* Total Solicitudes */}
             <StatCard 
               icon={<FileText className="w-5 h-5" />}
               iconBg="bg-blue-100"
               iconColor="text-blue-600"
-              title="Total Contratos" 
+              title="Total Solicitudes" 
               value={formatNumber(stats?.totalContracts || 0)} 
-              change={stats?.contractsChange || 0}
-              subtitle="vs mes anterior"
+              subtitle="todos los estados"
             />
 
-            {/* Firma Simple vs FEA */}
-            <SignatureComparisonCard 
-              simple={stats?.signatureStats?.simple || 0}
-              fea={stats?.signatureStats?.fea || 0}
-            />
-
-            {/* Conversión */}
+            {/* Tasa de Completación */}
             <StatCard 
               icon={<TrendingUp className="w-5 h-5" />}
               iconBg="bg-purple-100"
               iconColor="text-purple-600"
-              title="Tasa de Conversión" 
-              value={`${conversionRate}%`} 
-              change={parseFloat(conversionRate) > 50 ? 10 : -5}
-              subtitle="pagados / total"
+              title="Tasa de Completación" 
+              value={`${stats && stats.totalContracts > 0 ? ((stats.totalSales / stats.totalContracts) * 100).toFixed(1) : 0}%`} 
+              subtitle="completados / total"
             />
           </div>
+
+          {/* ================= VENTAS POR CATEGORÍA ================= */}
+          {stats?.salesByCategory && stats.salesByCategory.length > 0 && (
+            <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+              <div className="mb-4">
+                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                  <PieChartIcon className="w-5 h-5 text-emerald-500" />
+                  Ventas por Categoría
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">Contratos completados agrupados por categoría</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {stats.salesByCategory.map((cat, index) => (
+                  <div key={cat.category} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                      />
+                      <span className="text-sm font-medium text-slate-700 truncate">{cat.category}</span>
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900">{cat.count}</p>
+                    <p className="text-xs text-slate-500">{formatCurrency(cat.revenue)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ================= CHARTS ROW ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
             {/* Chart: Actividad (8 cols) */}
             <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-cyan-500" />
-                    Actividad
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">Contratos e ingresos por período</p>
-                </div>
-                <div className="flex bg-slate-100 rounded-lg p-1">
-                  {(['weekly', 'monthly'] as const).map((period) => (
-                    <button
-                      key={period}
-                      onClick={() => setViewPeriod(period)}
-                      className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
-                        viewPeriod === period 
-                          ? 'bg-white text-slate-900 shadow-sm' 
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      {period === 'weekly' ? 'Semanal' : 'Mensual'}
-                    </button>
-                  ))}
-                </div>
+              <div className="mb-6">
+                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-cyan-500" />
+                  Actividad
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">Contratos e ingresos por período seleccionado</p>
               </div>
               
               <div className="h-72">
@@ -534,22 +810,6 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* ================= STATS BY STATUS CARDS ================= */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-            {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-              const count = stats?.contractsByStatus[status as keyof typeof stats.contractsByStatus] || 0;
-              return (
-                <div 
-                  key={status}
-                  className={`${config.color} rounded-xl p-4 text-center transition-transform hover:scale-105`}
-                >
-                  <p className="text-2xl font-bold">{count}</p>
-                  <p className="text-xs font-medium mt-1">{config.label}</p>
-                </div>
-              );
-            })}
-          </div>
-
         </div>
       </div>
 
@@ -574,15 +834,15 @@ interface StatCardProps {
   iconColor: string;
   title: string;
   value: string;
-  change: number;
+  change?: number;
   subtitle: string;
-  showChangeAsPercent?: boolean;
+  showChange?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({ 
-  icon, iconBg, iconColor, title, value, change, subtitle, showChangeAsPercent = true 
+  icon, iconBg, iconColor, title, value, change, subtitle, showChange = false 
 }) => {
-  const isPositive = change >= 0;
+  const isPositive = change !== undefined && change >= 0;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all">
@@ -590,7 +850,7 @@ const StatCard: React.FC<StatCardProps> = ({
         <div className={`p-2.5 rounded-xl ${iconBg}`}>
           <span className={iconColor}>{icon}</span>
         </div>
-        {showChangeAsPercent && (
+        {showChange && change !== undefined && (
           <span className={`text-xs font-bold flex items-center gap-0.5 px-2 py-1 rounded-full ${
             isPositive ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'
           }`}>

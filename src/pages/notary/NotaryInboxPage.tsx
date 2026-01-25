@@ -6,9 +6,9 @@ type ContractRequest = NotaryContract;
 
 export const NotaryInboxPage: React.FC = () => {
   const [pendingContracts, setPendingContracts] = useState<ContractRequest[]>([]);
-  const [signedContracts, setSignedContracts] = useState<ContractRequest[]>([]);
+  const [completedContracts, setCompletedContracts] = useState<ContractRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'pending' | 'signed' | 'all'>('pending');
+  const [filter, setFilter] = useState<'pending' | 'completed' | 'all'>('pending');
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -26,12 +26,12 @@ export const NotaryInboxPage: React.FC = () => {
   const loadContracts = async () => {
     try {
       setLoading(true);
-      const [pending, signed] = await Promise.all([
+      const [pending, completed] = await Promise.all([
         notaryApi.getPendingContracts(startDate, endDate),
         notaryApi.getSignedContracts(startDate, endDate)
       ]);
       setPendingContracts(pending || []);
-      setSignedContracts(signed || []);
+      setCompletedContracts(completed || []);
     } catch (error) {
       console.error('Error loading contracts:', error);
     } finally {
@@ -99,11 +99,11 @@ export const NotaryInboxPage: React.FC = () => {
     contract.signers.find(s => s.role === 'notary');
 
   // Combinar contratos según el filtro
-  const allContracts = [...pendingContracts, ...signedContracts];
+  const allContracts = [...pendingContracts, ...completedContracts];
   const contractsToShow = filter === 'pending' 
     ? pendingContracts 
-    : filter === 'signed' 
-    ? signedContracts 
+    : filter === 'completed' 
+    ? completedContracts 
     : allContracts;
 
   const filteredContracts = contractsToShow.filter(contract => {
@@ -119,7 +119,7 @@ export const NotaryInboxPage: React.FC = () => {
   });
 
   const pendingCount = pendingContracts.length;
-  const signedCount = signedContracts.length;
+  const completedCount = completedContracts.length;
 
   if (loading) {
     return (
@@ -157,7 +157,7 @@ export const NotaryInboxPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Firmados</p>
-              <p className="text-2xl font-bold text-green-600">{signedCount}</p>
+              <p className="text-2xl font-bold text-green-600">{completedCount}</p>
             </div>
             <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center border border-green-100">
               <CheckCircle className="w-5 h-5 text-green-600" />
@@ -169,7 +169,7 @@ export const NotaryInboxPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Total</p>
-              <p className="text-2xl font-bold text-slate-900">{pendingCount + signedCount}</p>
+              <p className="text-2xl font-bold text-slate-900">{pendingCount + completedCount}</p>
             </div>
             <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100">
               <FileText className="w-5 h-5 text-slate-600" />
@@ -193,7 +193,7 @@ export const NotaryInboxPage: React.FC = () => {
           </div>
 
           <div className="flex bg-slate-100 p-1 rounded-lg">
-            {(['pending', 'signed', 'all'] as const).map((status) => (
+            {(['pending', 'completed', 'all'] as const).map((status) => (
               <button 
                 key={status}
                 onClick={() => setFilter(status)}
@@ -204,7 +204,7 @@ export const NotaryInboxPage: React.FC = () => {
                 }`}
               >
                 {status === 'pending' && 'Pendientes'}
-                {status === 'signed' && 'Firmados'}
+                {status === 'completed' && 'Firmados'}
                 {status === 'all' && 'Todos'}
               </button>
             ))}

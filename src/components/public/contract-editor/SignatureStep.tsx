@@ -128,7 +128,7 @@ export function SignatureStep({
       };
     }
     
-    if (status === 'signed' || status === 'completed') {
+    if (status === 'completed') {
       return {
         text: 'Completado',
         bgColor: 'bg-green-50',

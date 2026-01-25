@@ -32,11 +32,9 @@ const getStepStatus = (stepId: string, currentStatus: string) => {
   // Define the logical progression of statuses
   const statusProgression: Record<string, number> = {
     'pending_payment': 0,
-    'paid': 1,
     'draft': 1,
     'waiting_signatures': 2,
     'waiting_notary': 2,
-    'signed': 2,
     'completed': 3
   };
 
@@ -60,11 +58,9 @@ const getStepStatus = (stepId: string, currentStatus: string) => {
 const getStatusDescription = (status: string) => {
   const map: Record<string, string> = {
    pending_payment: 'Esperando confirmación del pago para proceder.',
-   paid: 'Pago recibido. Puedes continuar con la edición del borrador.',
    draft: 'El documento está en borrador. Completa los datos para proceder a las firmas.',
    waiting_signatures: 'Esperando que todas las partes firmen el documento.',
    waiting_notary: 'El notario está revisando y firmando el documento.',
-   signed: 'Documento firmado. Finalizando proceso...',
    completed: 'El proceso ha finalizado con éxito. Documento legalmente válido.',
    failed: 'El proceso ha fallado o ha sido cancelado.',
    cancelled: 'El proceso ha sido anulado.'
@@ -237,7 +233,7 @@ export function TrackingPage() {
                     </div>
                   </div>
                 </div>
-                {(contractData.status === 'draft' || contractData.status === 'paid') && (
+                {(contractData.status === 'draft') && (
                   <button 
                     onClick={() => setShowRutForm(true)}
                     className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors flex items-center gap-2"

@@ -64,7 +64,6 @@ export function ResumeContractPage() {
             
           case 'waiting_signatures':
           case 'waiting_notary':
-          case 'signed':
           case 'completed':
             // Contratos en proceso de firma o completados - ir a seguimiento
             navigate(`/seguimiento?code=${contract.tracking_code}&rut=${encodeURIComponent(rut)}`);
