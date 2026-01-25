@@ -1,4 +1,4 @@
-import { Navbar, Hero } from '../../components/landing';
+import { Navbar, Hero, HowItWorks } from '../../components/landing';
 import { ContractCatalog } from '../../components/public/contracts';
 
 export function HomePage() {
@@ -13,19 +13,24 @@ export function HomePage() {
       <div className="relative z-10">
         <Navbar />
         <Hero />
+        <HowItWorks />
         <ContractCatalog />
         
-        <footer className="bg-slate-900 py-12 px-6 lg:px-8">
+        <footer className="bg-navy-900 py-12 px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">L</span>
+                <div className="w-8 h-8 bg-legal-emerald-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm font-serif font-bold">CS</span>
                 </div>
-                <span className="text-white text-xl">Contrato Seguro</span>
+                <span className="text-white text-xl font-serif">Contrato Seguro</span>
               </div>
-              <p className="text-slate-400 text-sm">
-                © 2025 Contrato Seguro. Contratos legales al instante.
+              <div className="flex items-center gap-6 text-slate-400 text-sm font-sans">
+                <a href="/ayuda" className="hover:text-white transition-colors">Ayuda</a>
+                <a href="/seguimiento" className="hover:text-white transition-colors">Rastrear documento</a>
+              </div>
+              <p className="text-slate-400 text-sm font-sans">
+                © 2025 Contrato Seguro. Tu notaría digital.
               </p>
             </div>
           </div>

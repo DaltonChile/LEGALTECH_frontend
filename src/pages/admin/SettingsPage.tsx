@@ -164,8 +164,8 @@ export const SettingsPage = () => {
               className="bg-white border border-slate-200 rounded-lg p-6 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-cyan-50 rounded-lg">
-                  <Icon className="w-6 h-6 text-cyan-600" />
+                <div className="p-3 bg-navy-50 rounded-lg">
+                  <Icon className="w-6 h-6 text-navy-700" />
                 </div>
                 
                 <div className="flex-1">
@@ -216,7 +216,7 @@ export const SettingsPage = () => {
                           disabled={saving || !changed}
                           className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                             changed
-                              ? 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm'
+                              ? 'bg-navy-900 hover:bg-navy-800 text-white shadow-sm'
                               : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                           }`}
                         >
@@ -233,7 +233,7 @@ export const SettingsPage = () => {
                           type={config.value_type === 'integer' || config.value_type === 'float' ? 'number' : 'text'}
                           value={editedValues[config.key] || ''}
                           onChange={(e) => handleChange(config.key, e.target.value)}
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-navy-900 focus:border-navy-900 transition-colors"
                           placeholder={`Ingrese ${config.value_type === 'integer' ? 'número entero' : 'valor'}`}
                         />
                       </div>
@@ -243,7 +243,7 @@ export const SettingsPage = () => {
                         disabled={saving || !changed}
                         className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                           changed
-                            ? 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm'
+                            ? 'bg-navy-900 hover:bg-navy-800 text-white shadow-sm'
                             : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                         }`}
                       >

@@ -295,9 +295,9 @@ export function ContractEditorPage() {
   // Esperar a que se cargue el template Y la información de firma
   if (loading || !signatureInfoLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-900 mx-auto"></div>
           <p className="mt-4 text-gray-600">Cargando contrato...</p>
         </div>
       </div>
@@ -307,12 +307,12 @@ export function ContractEditorPage() {
   if (!template) {
     console.log('Template is null, not rendering main content');
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Contrato no encontrado</p>
+          <p className="text-slate-600 font-sans">Contrato no encontrado</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-4 text-blue-600 hover:text-blue-700"
+            className="mt-4 text-navy-900 hover:text-navy-700 font-sans font-medium"
           >
             Volver al catálogo
           </button>

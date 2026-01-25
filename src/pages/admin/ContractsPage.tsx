@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FileText, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAdminContracts } from '../../hooks/admin/useAdminContracts';
 import { ContractsTable } from '../../components/admin/contracts/ContractsTable';
+import { Box } from '../../components/ui/primitives/Box';
+import { Text } from '../../components/ui/primitives/Text';
+import { Button } from '../../components/ui/primitives/Button';
 
 export function ContractsPage() {
-  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 20;
 
-  const { contracts, isLoading, error, refetch, pagination } = useAdminContracts(
+  const { contracts, isLoading, error, pagination } = useAdminContracts(
     statusFilter || undefined,
     currentPage,
     limit
@@ -34,18 +35,20 @@ export function ContractsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      
-
-      {/* Stats Cards */}
-      
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <Text variant="h2" className="text-navy-900">Contratos</Text>
+          <Text variant="body-sm" color="muted">Gestiona todos los contratos del sistema</Text>
+        </div>
+      </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
+      <Box variant="document" padding="md">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-slate-600" />
-            <span className="text-sm font-medium text-slate-700">Filtros:</span>
+            <Text variant="body-sm" weight="medium">Filtros:</Text>
           </div>
           
           <select
@@ -54,7 +57,7 @@ export function ContractsPage() {
               setStatusFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-900 bg-white"
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -63,13 +66,13 @@ export function ContractsPage() {
             ))}
           </select>
         </div>
-      </div>
+      </Box>
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
+        <Box className="bg-red-50 border-red-200">
+          <Text variant="body-sm" className="text-red-800">{error}</Text>
+        </Box>
       )}
 
       {/* Contracts Table */}
@@ -81,21 +84,22 @@ export function ContractsPage() {
 
       {/* Pagination */}
       {pagination && pagination.pages > 1 && (
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <Box variant="document" padding="md">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-slate-600">
+            <Text variant="body-sm" color="muted">
               Mostrando {contracts.length} de {pagination.total} contratos
-            </div>
+            </Text>
             
             <div className="flex items-center gap-2">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Anterior
-              </button>
+              </Button>
               
               <div className="flex items-center gap-1">
                 {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
@@ -111,32 +115,30 @@ export function ContractsPage() {
                   }
                   
                   return (
-                    <button
+                    <Button
                       key={pageNum}
+                      variant={currentPage === pageNum ? 'primary' : 'ghost'}
+                      size="sm"
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        currentPage === pageNum
-                          ? 'bg-blue-600 text-white'
-                          : 'text-slate-700 hover:bg-slate-100'
-                      }`}
                     >
                       {pageNum}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
               
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setCurrentPage(Math.min(pagination.pages, currentPage + 1))}
                 disabled={currentPage === pagination.pages}
-                className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Siguiente
                 <ChevronRight className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </Box>
       )}
     </div>
   );

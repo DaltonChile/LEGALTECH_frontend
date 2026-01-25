@@ -25,11 +25,11 @@ export function ProgressStepper({ currentStep }: ProgressStepperProps) {
               <div className="flex items-center gap-3">
                 {/* Circle */}
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all ${
+                  className={`w-1/2 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all font-sans ${
                     isCompleted
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-navy-900 text-white'
                       : isActive
-                      ? 'border-2 border-blue-600 text-blue-600 bg-white'
+                      ? 'border-2 border-navy-900 text-navy-900 bg-white'
                       : 'bg-slate-100 text-slate-400'
                   }`}
                 >
@@ -38,9 +38,9 @@ export function ProgressStepper({ currentStep }: ProgressStepperProps) {
 
                 {/* Label */}
                 <span
-                  className={`text-sm font-medium whitespace-nowrap ${
+                  className={`text-sm font-medium whitespace-nowrap font-sans ${
                     isActive
-                      ? 'text-blue-600'
+                      ? 'text-navy-900'
                       : isCompleted
                       ? 'text-slate-700'
                       : 'text-slate-400'
@@ -55,7 +55,7 @@ export function ProgressStepper({ currentStep }: ProgressStepperProps) {
                 <div className="flex-1 mx-4">
                   <div className="h-0.5 bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full bg-blue-600 transition-all duration-300 ${
+                      className={`h-full bg-navy-900 transition-all duration-300 ${
                         isCompleted ? 'w-full' : 'w-0'
                       }`}
                     />

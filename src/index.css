@@ -1,1 +1,121 @@
 @import "tailwindcss";
+
+/* Custom Color Palette */
+@theme {
+  /* Professional Navy Blue palette */
+  --color-navy-50: #f0f4f8;
+  --color-navy-100: #d9e2ec;
+  --color-navy-200: #bcccdc;
+  --color-navy-300: #9fb3c8;
+  --color-navy-400: #829ab1;
+  --color-navy-500: #627d98;
+  --color-navy-600: #486581;
+  --color-navy-700: #334e68;
+  --color-navy-800: #243b53;
+  --color-navy-900: #102a43;
+  --color-navy-950: #0a1929;
+  
+  /* Sophisticated Emerald Green palette */
+  --color-legal-emerald-50: #ecfdf5;
+  --color-legal-emerald-100: #d1fae5;
+  --color-legal-emerald-200: #a7f3d0;
+  --color-legal-emerald-300: #6ee7b7;
+  --color-legal-emerald-400: #34d399;
+  --color-legal-emerald-500: #10b981;
+  --color-legal-emerald-600: #059669;
+  --color-legal-emerald-700: #047857;
+  --color-legal-emerald-800: #065f46;
+  --color-legal-emerald-900: #064e3b;
+  --color-legal-emerald-950: #022c22;
+
+  /* Custom shadows */
+  --shadow-document: 0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-document-hover: 0 4px 16px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.08);
+
+  /* Custom border radius */
+  --radius-card: 0.5rem;
+
+  /* Font families */
+  --font-serif: 'Merriweather', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  /* Set default font */
+  body {
+    @apply font-sans text-slate-700 antialiased;
+  }
+
+  /* Headings use serif */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif text-navy-900;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Better focus outline */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-navy-900;
+  }
+}
+
+@layer components {
+  /* Document-style container */
+  .container-document {
+    @apply bg-white border border-slate-200 rounded-card shadow-document;
+  }
+
+  /* Professional button base - shared styles */
+  .btn-professional,
+  .btn-primary,
+  .btn-secondary,
+  .btn-success,
+  .btn-ghost {
+    @apply px-4 py-2.5 text-sm font-medium rounded-md transition-all duration-200;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    @apply bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply bg-white text-navy-900 border border-slate-300 hover:bg-slate-50 active:bg-slate-100;
+  }
+
+  /* Success button */
+  .btn-success {
+    @apply bg-legal-emerald-700 text-white hover:bg-legal-emerald-800 active:bg-legal-emerald-900;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply text-slate-700 hover:bg-slate-100 active:bg-slate-200;
+  }
+
+  /* Document card with navy accent */
+  .card-document {
+    @apply bg-white border border-slate-200 rounded-card shadow-document border-t-4 border-t-navy-900;
+  }
+
+  /* Status badge base */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-md text-sm font-medium font-sans;
+  }
+}
+
+@layer utilities {
+  /* Text balance for headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Custom text selection color */
+  ::selection {
+    @apply bg-navy-900/20 text-navy-900;
+  }
+}

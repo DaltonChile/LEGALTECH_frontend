@@ -246,6 +246,17 @@ export const getContract = async (
   });
 };
 
+// Obtener detalles completos del contrato para la página de pago
+export const getContractDetails = async (
+  contractId: string,
+  trackingCode: string,
+  rut: string
+) => {
+  return await api.get(`/contracts/resume`, {
+    params: { id: contractId, rut }
+  });
+};
+
 export const updateContractForm = async (
   contractId: string,
   trackingCode: string,

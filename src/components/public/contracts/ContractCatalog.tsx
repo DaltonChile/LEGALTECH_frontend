@@ -1,7 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ContractCard } from './ContractCard';
-import { Home, Briefcase, FileText, ShieldCheck, Users, HandshakeIcon, Loader2, Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { 
+  Home, 
+  Briefcase, 
+  FileText, 
+  ShieldCheck, 
+  Users, 
+  HandshakeIcon, 
+  Loader2, 
+  Search, 
+  ArrowRight,
+  Scale,
+  Building2,
+  Gavel,
+  FileSignature,
+  X
+} from 'lucide-react';
 import { templatesApi, getTemplateCategories, type Template } from '../../../services/api';
 
 // Mapeo de iconos según el slug o título
@@ -13,16 +27,26 @@ const getIconForTemplate = (slug: string): any => {
     'confidencialidad': ShieldCheck,
     'sociedad': Users,
     'trabajo': FileText,
+    'poder': Gavel,
+    'finiquito': FileSignature,
   };
   
-  // Buscar coincidencia parcial en el slug
   for (const [key, icon] of Object.entries(iconMap)) {
     if (slug.toLowerCase().includes(key)) {
       return icon;
     }
   }
   
-  return FileText; // Ícono por defecto
+  return FileText;
+};
+
+// Iconos y colores para categorías
+const categoryConfig: Record<string, { icon: any; color: string; bgColor: string }> = {
+  'laboral': { icon: Briefcase, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+  'arrendamiento': { icon: Home, color: 'text-amber-600', bgColor: 'bg-amber-50' },
+  'compraventa': { icon: HandshakeIcon, color: 'text-legal-emerald-600', bgColor: 'bg-legal-emerald-50' },
+  'servicios': { icon: Building2, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+  'otros': { icon: FileText, color: 'text-slate-600', bgColor: 'bg-slate-100' },
 };
 
 export function ContractCatalog() {
@@ -32,19 +56,7 @@ export function ContractCatalog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
-
-  const toggleCategory = (category: string) => {
-    setCollapsedCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(category)) {
-        newSet.delete(category);
-      } else {
-        newSet.add(category);
-      }
-      return newSet;
-    });
-  };
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,7 +71,7 @@ export function ContractCatalog() {
         setError(null);
       } catch (err) {
         console.error('Error al cargar templates:', err);
-        setError('No se pudieron cargar los contratos. Por favor, intenta de nuevo.');
+        setError('No se pudieron cargar los documentos. Por favor, intenta de nuevo.');
         setTemplates([]);
       } finally {
         setLoading(false);
@@ -73,48 +85,45 @@ export function ContractCatalog() {
     navigate(`/${templateSlug}`);
   };
 
-  // Filtrar templates según la búsqueda
+  // Filtrar templates
   const filteredTemplates = (templates || []).filter(template => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = 
       template.title.toLowerCase().includes(query) ||
       template.description?.toLowerCase().includes(query) ||
       template.slug.toLowerCase().includes(query) ||
-      (template.category || '').toLowerCase().includes(query)
-    );
+      (template.category || '').toLowerCase().includes(query);
+    
+    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
   });
 
-  // Agrupar templates por categoría
-  const groupedTemplates = filteredTemplates.reduce((acc, template) => {
-    const category = template.category || 'otros';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(template);
-    return acc;
-  }, {} as Record<string, Template[]>);
-
-  // Ordenar categorías (las definidas primero, luego las demás)
-  const sortedCategories = Object.keys(groupedTemplates).sort((a, b) => {
-    const indexA = categories.indexOf(a);
-    const indexB = categories.indexOf(b);
-    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-    if (indexA === -1) return 1;
-    if (indexB === -1) return -1;
-    return indexA - indexB;
-  });
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
 
   const formatCategoryTitle = (category: string) => {
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
+  // Contar documentos por categoría
+  const getCategoryCount = (category: string) => {
+    if (category === 'all') return templates.length;
+    return templates.filter(t => t.category === category).length;
+  };
+
   if (loading) {
     return (
-      <section className="py-24 px-6 lg:px-8 bg-transparent">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-20 px-6 lg:px-8 bg-white" id="documentos">
+        <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-            <p className="text-slate-600">Cargando contratos disponibles...</p>
+            <Loader2 className="w-10 h-10 text-navy-900 animate-spin mb-4" />
+            <p className="text-slate-600 font-sans">Cargando documentos disponibles...</p>
           </div>
         </div>
       </section>
@@ -123,15 +132,17 @@ export function ContractCatalog() {
 
   if (error) {
     return (
-      <section className="py-24 px-6 lg:px-8 bg-transparent">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-20 px-6 lg:px-8 bg-white" id="documentos">
+        <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="text-red-600 mb-4 text-5xl">⚠️</div>
-            <p className="text-slate-900 text-xl font-semibold mb-2">Error al cargar contratos</p>
-            <p className="text-slate-600 text-center max-w-md">{error}</p>
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+              <X className="w-8 h-8 text-red-500" />
+            </div>
+            <p className="text-navy-900 text-xl font-serif font-bold mb-2">Error al cargar documentos</p>
+            <p className="text-slate-600 text-center max-w-md font-sans">{error}</p>
             <button 
               onClick={() => window.location.reload()}
-              className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="mt-6 px-6 py-3 bg-navy-900 text-white rounded-md hover:bg-navy-800 transition-colors font-sans font-medium"
             >
               Reintentar
             </button>
@@ -143,12 +154,14 @@ export function ContractCatalog() {
 
   if (templates.length === 0) {
     return (
-      <section className="py-24 px-6 lg:px-8 bg-transparent">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-20 px-6 lg:px-8 bg-white" id="documentos">
+        <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center justify-center py-20">
-            <FileText className="w-16 h-16 text-slate-300 mb-4" />
-            <p className="text-slate-900 text-xl font-semibold mb-2">No hay contratos disponibles</p>
-            <p className="text-slate-600">Pronto agregaremos más opciones.</p>
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+              <FileText className="w-8 h-8 text-slate-400" />
+            </div>
+            <p className="text-navy-900 text-xl font-serif font-bold mb-2">No hay documentos disponibles</p>
+            <p className="text-slate-600 font-sans">Pronto agregaremos más opciones.</p>
           </div>
         </div>
       </section>
@@ -156,101 +169,203 @@ export function ContractCatalog() {
   }
 
   return (
-    <section className="py-24 px-6 lg:px-8 bg-transparent" id="productos">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center space-y-6 mb-16">
-          <h2 className="text-5xl text-slate-900 font-bold">
-            Elige tu contrato
+    <section className="py-20 px-6 lg:px-8 bg-white" id="documentos">
+      <div className="max-w-6xl mx-auto">
+        
+        {/* Section Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-serif font-bold text-navy-900 mb-3">
+            Documentos Disponibles
           </h2>
-          <p className="text-slate-600 max-w-2xl mx-auto text-lg">
-            Selecciona el tipo de contrato que necesitas, personalízalo con tu información y recibe tu documento con validez legal
+          <p className="text-slate-600 font-sans text-lg max-w-2xl mx-auto">
+            Selecciona el documento que necesitas, complétalo con tus datos y obtén un documento con validez legal
           </p>
-          
-          {/* Barra de búsqueda integrada */}
-          <div className="max-w-lg mx-auto pt-4">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-cyan-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="Buscar contratos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-lg transition-colors"
-                >
-                  ✕
-                </button>
-              )}
+        </div>
+
+        {/* Filters Bar */}
+        <div className="bg-slate-50 rounded-lg p-4 mb-8 border border-slate-200">
+          <div className="flex flex-col lg:flex-row gap-4">
+            
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar documentos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-md text-sm text-navy-900 placeholder-slate-400 focus:outline-none focus:border-navy-900 focus:ring-1 focus:ring-navy-900 font-sans transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
-            {searchQuery && (
-              <p className="mt-2 text-xs text-slate-500 text-center">
-                {filteredTemplates.length} resultado{filteredTemplates.length !== 1 ? 's' : ''}
-              </p>
-            )}
+
+            {/* Category Tabs */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className={`px-4 py-2 rounded-md text-sm font-medium font-sans transition-colors ${
+                  selectedCategory === 'all'
+                    ? 'bg-navy-900 text-white'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-navy-200 hover:text-navy-900'
+                }`}
+              >
+                Todos ({getCategoryCount('all')})
+              </button>
+              {categories.map((category) => {
+                const config = categoryConfig[category] || categoryConfig['otros'];
+                const count = getCategoryCount(category);
+                if (count === 0) return null;
+                
+                return (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-4 py-2 rounded-md text-sm font-medium font-sans transition-colors flex items-center gap-2 ${
+                      selectedCategory === category
+                        ? 'bg-navy-900 text-white'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:border-navy-200 hover:text-navy-900'
+                    }`}
+                  >
+                    <config.icon className="w-4 h-4" />
+                    {formatCategoryTitle(category)} ({count})
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Grid de contratos agrupados por categoría */}
+        {/* Results count */}
+        {(searchQuery || selectedCategory !== 'all') && (
+          <p className="text-sm text-slate-500 mb-4 font-sans">
+            {filteredTemplates.length} documento{filteredTemplates.length !== 1 ? 's' : ''} encontrado{filteredTemplates.length !== 1 ? 's' : ''}
+          </p>
+        )}
+
+        {/* Documents Table */}
         {filteredTemplates.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Search className="w-16 h-16 text-slate-300 mb-4" />
-            <p className="text-slate-900 text-xl font-semibold mb-2">No se encontraron contratos</p>
-            <p className="text-slate-600">Intenta con otros términos de búsqueda</p>
+          <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
+            <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <p className="text-navy-900 font-serif font-bold mb-2">No se encontraron documentos</p>
+            <p className="text-slate-500 font-sans text-sm mb-4">Intenta con otros términos de búsqueda</p>
             <button
-              onClick={() => setSearchQuery('')}
-              className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+              className="text-navy-900 font-medium text-sm hover:underline font-sans"
             >
-              Limpiar búsqueda
+              Limpiar filtros
             </button>
           </div>
         ) : (
-          <div className="space-y-8">
-            {sortedCategories.map((category) => (
-              <div key={category}>
-                {/* Título de categoría con toggle */}
-                <button
-                  onClick={() => toggleCategory(category)}
-                  className="flex items-center gap-2 mb-6 group cursor-pointer"
-                >
-                  {collapsedCategories.has(category) ? (
-                    <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                  ) : (
-                    <ChevronDown className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                  )}
-                  <h3 className="text-2xl font-bold text-slate-900 group-hover:text-slate-700 transition-colors">
-                    {formatCategoryTitle(category)}
-                  </h3>
-                  <span className="text-sm text-slate-400 font-normal">
-                    ({groupedTemplates[category].length})
-                  </span>
-                </button>
+          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-document">
+            {/* Table Header */}
+            <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider font-sans">
+              <div className="col-span-5">Documento</div>
+              <div className="col-span-2">Categoría</div>
+              <div className="col-span-2 text-center">Características</div>
+              <div className="col-span-1 text-right">Precio</div>
+              <div className="col-span-2"></div>
+            </div>
+
+            {/* Table Body */}
+            <div className="divide-y divide-slate-100">
+              {filteredTemplates.map((template) => {
+                const Icon = getIconForTemplate(template.slug);
+                const config = categoryConfig[template.category || 'otros'] || categoryConfig['otros'];
                 
-                {/* Grid de contratos de esta categoría */}
-                {!collapsedCategories.has(category) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {groupedTemplates[category].map((template) => (
-                      <ContractCard
-                        key={template.id}
-                        title={template.title}
-                        description={template.description || 'Personaliza este contrato con tu información'}
-                        price={template.base_price}
-                        icon={getIconForTemplate(template.slug)}
-                        onPersonalize={() => handlePersonalize(template.slug)}
-                        capsules={template.capsules}
-                        requiresNotary={template.requires_notary}
-                        hasSigners={template.has_signers}
-                      />
-                    ))}
+                return (
+                  <div 
+                    key={template.id}
+                    className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 hover:bg-slate-50 transition-colors group"
+                  >
+                    {/* Document Info */}
+                    <div className="md:col-span-5 flex items-start gap-4">
+                      <div className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center shrink-0`}>
+                        <Icon className={`w-5 h-5 ${config.color}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-serif font-bold text-navy-900 group-hover:text-legal-emerald-700 transition-colors">
+                          {template.title}
+                        </h3>
+                        <p className="text-sm text-slate-500 font-sans line-clamp-2 mt-0.5">
+                          {template.description || 'Personaliza este documento con tu información'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Category - Desktop */}
+                    <div className="hidden md:flex md:col-span-2 items-center">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bgColor} ${config.color}`}>
+                        {formatCategoryTitle(template.category || 'otros')}
+                      </span>
+                    </div>
+
+                    {/* Features */}
+                    <div className="hidden md:flex md:col-span-2 items-center justify-center gap-3">
+                      {template.has_signers && (
+                        <div className="flex items-center gap-1 text-xs text-slate-500" title="Requiere firmas">
+                          <Users className="w-3.5 h-3.5" />
+                          <span>Firmas</span>
+                        </div>
+                      )}
+                      {template.requires_notary && (
+                        <div className="flex items-center gap-1 text-xs text-slate-500" title="Validación notarial">
+                          <Scale className="w-3.5 h-3.5" />
+                          <span>Notario</span>
+                        </div>
+                      )}
+                      {!template.has_signers && !template.requires_notary && (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </div>
+
+                    {/* Price */}
+                    <div className="hidden md:flex md:col-span-1 items-center justify-end">
+                      <span className="font-semibold text-navy-900 font-sans">
+                        {formatPrice(template.base_price)}
+                      </span>
+                    </div>
+
+                    {/* Mobile: Category + Price row */}
+                    <div className="flex md:hidden items-center justify-between">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bgColor} ${config.color}`}>
+                        {formatCategoryTitle(template.category || 'otros')}
+                      </span>
+                      <span className="font-semibold text-navy-900 font-sans">
+                        {formatPrice(template.base_price)}
+                      </span>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="md:col-span-2 flex items-center justify-end">
+                      <button
+                        onClick={() => handlePersonalize(template.slug)}
+                        className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-navy-900 text-white text-sm font-medium rounded-md hover:bg-navy-800 transition-colors font-sans group-hover:bg-legal-emerald-600"
+                      >
+                        Crear
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
         )}
+
+        {/* Help text */}
+        <p className="text-center text-sm text-slate-500 mt-6 font-sans">
+          ¿No encuentras lo que buscas? <a href="mailto:soporte@contratoseguro.cl" className="text-navy-900 hover:underline">Contáctanos</a> para solicitar un documento personalizado
+        </p>
+
       </div>
     </section>
   );

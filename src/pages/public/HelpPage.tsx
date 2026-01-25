@@ -1,177 +1,479 @@
 import { useState } from 'react';
-import { HelpCircle, FileText, Shield, BookOpen, ChevronRight, Scale, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../../components/landing/Navbar';
+import { 
+  HelpCircle, 
+  FileText, 
+  Shield, 
+  Scale, 
+  ChevronDown, 
+  ChevronUp, 
+  CreditCard, 
+  PenTool, 
+  Clock, 
+  Mail, 
+  CheckCircle2,
+  Users,
+  ArrowRight,
+  BookOpen,
+  Lock,
+  ExternalLink
+} from 'lucide-react';
+
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+const faqs: FaqItem[] = [
+  {
+    question: '¿Qué es Contrato Seguro?',
+    answer: 'Contrato Seguro es una notaría digital que permite crear, firmar y validar documentos legales de manera segura y completamente en línea. Ofrecemos una amplia variedad de plantillas: contratos de arriendo, compraventas, poderes, finiquitos, acuerdos comerciales y más. Todos nuestros documentos cumplen con la Ley N° 19.799 de Firma Electrónica de Chile.'
+  },
+  {
+    question: '¿Tienen validez legal los documentos?',
+    answer: 'Sí. Todos nuestros documentos tienen plena validez legal en Chile. Utilizamos firma electrónica avanzada que cumple con la Ley N° 19.799 y está respaldada por certificados digitales emitidos por prestadores acreditados. Además, ofrecemos validación notarial digital opcional.'
+  },
+  {
+    question: '¿Qué tipos de documentos puedo crear?',
+    answer: 'Ofrecemos plantillas para múltiples necesidades: contratos de arriendo, compraventas (vehículos, propiedades, bienes), poderes simples y notariales, finiquitos laborales, acuerdos de confidencialidad, contratos de servicios, y muchos más. También puedes solicitar plantillas personalizadas.'
+  },
+  {
+    question: '¿Cuánto demora el proceso completo?',
+    answer: 'El proceso típico toma entre 10 a 30 minutos dependiendo del documento. Esto incluye: seleccionar plantilla y completar datos (5-10 min), firma de las partes (5-10 min cada una), y validación notarial opcional (5-10 min).'
+  },
+  {
+    question: '¿Qué necesito para crear un documento?',
+    answer: 'Solo necesitas los datos de las partes involucradas (nombre, RUT, dirección, email) y la información específica del documento. Todo el proceso es 100% digital, no requieres documentos físicos ni ir a ninguna oficina.'
+  },
+  {
+    question: '¿Cómo funciona el pago?',
+    answer: 'Aceptamos pagos con tarjeta de crédito y débito a través de MercadoPago, una plataforma segura y certificada. El precio varía según el tipo de documento y si incluye validación notarial. El pago se procesa una sola vez.'
+  },
+  {
+    question: '¿Qué pasa si hay un error en el documento?',
+    answer: 'Antes de las firmas, puedes editar cualquier dato del documento sin costo adicional. Si detectas un error después de firmar, contacta a nuestro soporte para evaluar las opciones disponibles según el tipo de documento.'
+  },
+  {
+    question: '¿Necesito ir a una notaría física?',
+    answer: 'No. Somos una notaría 100% digital. Ofrecemos validación notarial en línea donde un notario certificado revisa y firma el documento electrónicamente, con la misma validez legal que una firma notarial presencial.'
+  },
+  {
+    question: '¿Puedo usar la plataforma desde mi celular?',
+    answer: 'Sí. Nuestra plataforma está optimizada para dispositivos móviles. Puedes crear, firmar y descargar documentos desde cualquier smartphone o tablet con conexión a internet.'
+  },
+  {
+    question: '¿Cómo reciben los firmantes el documento?',
+    answer: 'Cada firmante recibe un enlace único por correo electrónico para revisar y firmar el documento. El proceso es simple y guiado, no requiere crear cuenta ni instalar aplicaciones.'
+  }
+];
+
+const howItWorks = [
+  {
+    icon: FileText,
+    title: 'Elige tu documento',
+    description: 'Selecciona entre nuestras plantillas: arriendos, compraventas, poderes, finiquitos, acuerdos y más. Cada plantilla está diseñada por abogados.',
+    time: '2 min'
+  },
+  {
+    icon: PenTool,
+    title: 'Completa los datos',
+    description: 'Ingresa la información de las partes y los detalles del documento. Nuestro sistema te guía paso a paso y valida automáticamente.',
+    time: '5-10 min'
+  },
+  {
+    icon: CreditCard,
+    title: 'Realiza el pago',
+    description: 'Paga de forma segura con tarjeta de crédito o débito. El precio incluye el documento y las firmas electrónicas.',
+    time: '2 min'
+  },
+  {
+    icon: Users,
+    title: 'Firmas electrónicas',
+    description: 'Cada parte recibe un enlace por email para revisar y firmar. Las firmas quedan registradas con certificado y marca de tiempo.',
+    time: '5-10 min'
+  },
+  {
+    icon: Scale,
+    title: 'Validación notarial',
+    description: 'Opcionalmente, un notario certificado revisa y valida el documento digitalmente, otorgándole fe pública.',
+    time: '5-10 min'
+  },
+  {
+    icon: CheckCircle2,
+    title: 'Documento listo',
+    description: 'Recibe tu documento firmado y validado por email. Descárgalo en PDF cuando lo necesites, con toda su validez legal.',
+    time: 'Inmediato'
+  }
+];
+
+const policies = [
+  {
+    id: 'terminos',
+    title: 'Términos y Condiciones',
+    icon: BookOpen,
+    description: 'Condiciones de uso de la plataforma',
+    content: `
+## Términos y Condiciones de Uso
+
+**Última actualización:** Diciembre 2024
+
+### 1. Aceptación de los Términos
+Al acceder y utilizar Contrato Seguro, usted acepta estar vinculado por estos términos y condiciones, así como por todas las leyes y regulaciones aplicables.
+
+### 2. Descripción del Servicio
+Contrato Seguro es una notaría digital que proporciona servicios de creación, firma electrónica y validación notarial de documentos legales en Chile, incluyendo contratos, poderes, finiquitos, acuerdos y otros instrumentos.
+
+### 3. Requisitos de Uso
+- Debe ser mayor de 18 años
+- Debe proporcionar información veraz y actualizada
+- Debe tener capacidad legal para contratar
+- Debe cumplir con todas las leyes aplicables
+
+### 4. Firma Electrónica y Validez Legal
+Los documentos firmados a través de nuestra plataforma tienen validez legal según la Ley N° 19.799 de Chile sobre Firma Electrónica. La validación notarial digital otorga fe pública conforme a la normativa vigente.
+
+### 5. Pagos y Facturación
+- Los precios varían según el tipo de documento
+- Los precios incluyen IVA
+- Los pagos son procesados por MercadoPago
+- Se emite boleta o factura electrónica según corresponda
+
+### 6. Limitación de Responsabilidad
+Contrato Seguro facilita la creación y firma de documentos legales. No somos responsables del contenido específico ingresado por los usuarios ni del cumplimiento de las obligaciones pactadas entre las partes.
+
+### 7. Propiedad Intelectual
+Todo el contenido de la plataforma, incluyendo plantillas y diseño, está protegido por derechos de autor y otras leyes de propiedad intelectual.
+    `
+  },
+  {
+    id: 'privacidad',
+    title: 'Política de Privacidad',
+    icon: Lock,
+    description: 'Cómo protegemos tus datos',
+    content: `
+## Política de Privacidad
+
+**Última actualización:** Diciembre 2024
+
+### 1. Información que Recopilamos
+- **Datos personales:** Nombre, RUT, dirección, correo electrónico, teléfono
+- **Datos de documentos:** Información contenida en los documentos que usted crea
+- **Datos de transacción:** Información de pago (procesada por MercadoPago)
+
+### 2. Uso de la Información
+Utilizamos su información para:
+- Generar y procesar documentos legales
+- Verificar la identidad de las partes firmantes
+- Procesar pagos y emitir documentos tributarios
+- Enviar notificaciones sobre el estado de sus documentos
+- Facilitar la validación notarial
+- Cumplir con obligaciones legales
+
+### 3. Protección de Datos
+- Encriptación SSL/TLS en todas las comunicaciones
+- Almacenamiento seguro en servidores certificados
+- Acceso restringido solo a personal autorizado
+- Cumplimiento con la Ley N° 19.628 de Protección de Datos Personales
+
+### 4. Compartir Información
+No vendemos ni compartimos su información personal, excepto:
+- Con notarios para validación de documentos
+- Con autoridades cuando sea legalmente requerido
+- Con procesadores de pago para completar transacciones
+
+### 5. Retención de Datos
+Conservamos sus datos y documentos por el tiempo necesario para cumplir con obligaciones legales, mínimo 5 años según normativa tributaria y notarial.
+
+### 6. Sus Derechos
+Puede solicitar acceso, rectificación o eliminación de sus datos contactando a soporte@contratoseguro.cl
+    `
+  },
+  {
+    id: 'reembolsos',
+    title: 'Política de Reembolsos',
+    icon: CreditCard,
+    description: 'Condiciones de devolución',
+    content: `
+## Política de Reembolsos
+
+**Última actualización:** Diciembre 2024
+
+### 1. Reembolsos Automáticos
+Se realizará reembolso completo automático cuando:
+- El pago fue procesado pero no se generó el documento por error técnico
+- Se realizó un cobro duplicado
+
+### 2. Reembolsos Solicitables
+Puede solicitar reembolso dentro de las primeras **24 horas** si:
+- No ha iniciado el proceso de firma
+- No ha compartido el enlace del documento
+- No ha descargado ningún documento
+
+### 3. No Aplica Reembolso
+No se realizarán reembolsos cuando:
+- Alguna de las partes ya firmó el documento
+- Han pasado más de 24 horas desde el pago
+- El documento fue descargado o compartido
+- El error en los datos fue ingresado por el usuario
+- Ya se realizó la validación notarial
+
+### 4. Proceso de Reembolso
+1. Envíe su solicitud a soporte@contratoseguro.cl
+2. Incluya: código de seguimiento, motivo, comprobante de pago
+3. Recibirá respuesta en máximo 48 horas hábiles
+4. Si procede, el reembolso se realiza en 5-10 días hábiles
+
+### 5. Método de Reembolso
+Los reembolsos se procesan al mismo método de pago original. Los tiempos pueden variar según su banco o emisor de tarjeta.
+    `
+  }
+];
 
 export function HelpPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const navigate = useNavigate();
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [selectedPolicy, setSelectedPolicy] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'faq' | 'how' | 'policies'>('faq');
+
   return (
-    <div className="min-h-screen relative bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       <Navbar />
 
-      {/* Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-      
-      {/* Gradient Overlay */}
-      <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"></div>
-
-      <div className="relative z-10 font-sans max-w-3xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="text-center mb-16">
-            
-
-          <h1 className="text-4xl  font-bold text-slate-900 mb-2 tracking-tight">
-            Ayuda y Centro de Políticas
+      <main className="max-w-5xl mx-auto px-6 py-12">
+        
+        {/* Page Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-serif font-bold text-navy-900 mb-3">
+            Centro de Ayuda
           </h1>
-          <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
-            Encuentra respuestas rápidas, guías detalladas e información legal sobre nuestra plataforma de gestión contractual.
+          <p className="text-slate-600 text-lg font-sans max-w-xl mx-auto">
+            Encuentra respuestas a tus preguntas y conoce nuestras políticas
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8 mb-16">
-          {/* Cómo funciona - Main Column */}
-          <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-               <div className="p-8 border-b border-slate-50">
-                  <div className="flex items-center gap-4 mb-2">
-                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-slate-900">¿Cómo funciona?</h2>
-                  </div>
-                  <p className="text-slate-500">El proceso de creación de contratos simplificado en 5 pasos.</p>
-               </div>
-               
-               <div className="p-8">
-                  <div className="space-y-8">
-                    {[
-                      { title: "1. Configuración Inicial", desc: "Elige tu contrato y completa los datos clave para generar tu cotización inicial." },
-                      { title: "2. Pago Seguro", desc: "Realiza el pago del servicio para habilitar la redacción completa y desbloquear el documento." },
-                      { title: "3. Redacción Detallada", desc: "Completa el resto de la información en tu borrador habilitado. Tus respuestas redactan el contrato." },
-                      { title: "4. Revisión Legal", desc: "Verifica el documento generado automáticamente. Si todo está correcto, apruébalo para firmas." },
-                      { title: "5. Firma y Notaría", desc: "Se inicia el proceso de firma digital avanzado y gestión notarial si el documento lo requiere." }
-                    ].map((step, index) => (
-                      <div key={index} className="flex gap-4 group">
-                         <div className="flex flex-col items-center">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                              {index + 1}
-                            </div>
-                            {index < 4 && <div className="w-0.5 flex-1 bg-slate-100 my-2 group-hover:bg-slate-200 transition-colors"></div>}
-                         </div>
-                         <div className="pb-8">
-                            <h3 className="font-semibold text-slate-900 text-lg mb-1">{step.title}</h3>
-                            <p className="text-slate-500 leading-relaxed">{step.desc}</p>
-                         </div>
-                      </div>
-                    ))}
-                  </div>
-               </div>
-            </div>
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex bg-white rounded-lg p-1 shadow-document border border-slate-200">
+            <button
+              onClick={() => setActiveTab('faq')}
+              className={`px-5 py-2.5 rounded-md text-sm font-medium font-sans transition-colors ${
+                activeTab === 'faq' 
+                  ? 'bg-navy-900 text-white' 
+                  : 'text-slate-600 hover:text-navy-900 hover:bg-slate-50'
+              }`}
+            >
+              <HelpCircle className="w-4 h-4 inline-block mr-2 -mt-0.5" />
+              Preguntas Frecuentes
+            </button>
+            <button
+              onClick={() => setActiveTab('how')}
+              className={`px-5 py-2.5 rounded-md text-sm font-medium font-sans transition-colors ${
+                activeTab === 'how' 
+                  ? 'bg-navy-900 text-white' 
+                  : 'text-slate-600 hover:text-navy-900 hover:bg-slate-50'
+              }`}
+            >
+              <Clock className="w-4 h-4 inline-block mr-2 -mt-0.5" />
+              Cómo Funciona
+            </button>
+            <button
+              onClick={() => setActiveTab('policies')}
+              className={`px-5 py-2.5 rounded-md text-sm font-medium font-sans transition-colors ${
+                activeTab === 'policies' 
+                  ? 'bg-navy-900 text-white' 
+                  : 'text-slate-600 hover:text-navy-900 hover:bg-slate-50'
+              }`}
+            >
+              <Shield className="w-4 h-4 inline-block mr-2 -mt-0.5" />
+              Políticas
+            </button>
+          </div>
+        </div>
 
-            {/* FAQ */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
-                  <HelpCircle className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Preguntas Frecuentes</h2>
-                  <p className="text-slate-500 text-sm">Respuestas a las dudas más comunes de nuestros usuarios.</p>
-                </div>
+        {/* FAQ Tab */}
+        {activeTab === 'faq' && (
+          <div className="space-y-3">
+            {faqs.map((faq, idx) => (
+              <div 
+                key={idx}
+                className="bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden"
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50 transition-colors"
+                >
+                  <span className="font-medium text-navy-900 pr-4 font-sans">{faq.question}</span>
+                  {openFaq === idx ? (
+                    <ChevronUp className="w-5 h-5 text-slate-400 shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />
+                  )}
+                </button>
+                {openFaq === idx && (
+                  <div className="px-5 pb-5 border-t border-slate-100">
+                    <p className="text-slate-600 leading-relaxed pt-4 font-sans text-sm">
+                      {faq.answer}
+                    </p>
+                  </div>
+                )}
               </div>
-              
-              <div className="grid gap-4">
-                {[
-                  { q: "¿Cuánto tiempo tarda el proceso?", a: "El tiempo depende de cuándo todas las partes firmen el contrato. El proceso de creación automatizada y pago toma solo unos minutos." },
-                  { q: "¿Puedo modificar el contrato después de pagar?", a: "Una vez pagado, tu contrato pasa a estado de borrador final. Puedes editar los datos antes de enviarlo a firmas, pero la estructura legal base se mantiene." },
-                  { q: "¿Qué pasa si necesito ayuda de un notario?", a: "Algunos documentos requieren protocolización. Nuestra plataforma coordina automáticamente con notarios asociados si el trámite lo exige." },
-                  { q: "¿Cómo hago seguimiento?", a: "Utiliza la sección 'Seguimiento' en el menú principal e ingresa el código único de 6 caracteres que recibiste tras la compra." },
-                  { q: "¿Tienen validez legal?", a: "Absolutamente. Todos nuestros modelos son redactados por abogados expertos y las firmas electrónicas cumplen con la legislación chilena vigente." }
-                ].map((faq, i) => (
-                  <div key={i} className="bg-slate-50 rounded-xl overflow-hidden transition-colors hover:bg-slate-100">
-                    <button 
-                      onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                      className="w-full text-left p-5 flex items-start gap-3 focus:outline-none"
-                    >
-                      <span className={`text-emerald-500 mt-1 transition-transform duration-200 ${openFaq === i ? 'rotate-90' : ''}`}>
-                        <ChevronRight className="w-4 h-4" />
-                      </span>
-                      <span className="font-semibold text-slate-900">{faq.q}</span>
-                    </button>
-                    
-                    <div 
-                      className={`grid transition-all duration-200 ease-in-out ${
-                        openFaq === i ? 'grid-rows-[1fr] opacity-100 mb-5' : 'grid-rows-[0fr] opacity-0'
-                      }`}
-                    >
-                      <div className="overflow-hidden">
-                        <p className="text-slate-600 text-sm pl-12 pr-5 leading-relaxed">
-                          {faq.a}
+            ))}
+          </div>
+        )}
+
+        {/* How It Works Tab */}
+        {activeTab === 'how' && (
+          <div className="bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden">
+            <div className="border-t-4 border-t-navy-900 p-8">
+              <h2 className="text-2xl font-serif font-bold text-navy-900 mb-2 text-center">
+                Proceso Paso a Paso
+              </h2>
+              <p className="text-slate-500 text-center mb-10 font-sans">
+                Crea tu documento legal en minutos
+              </p>
+
+              <div className="relative">
+                {/* Vertical Line */}
+                <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-200 hidden md:block" />
+
+                <div className="space-y-8">
+                  {howItWorks.map((step, idx) => (
+                    <div key={idx} className="flex items-start gap-6 relative">
+                      {/* Step Number Circle */}
+                      <div className="shrink-0 relative z-10">
+                        <div className="w-16 h-16 rounded-full bg-navy-900 flex items-center justify-center shadow-md">
+                          <step.icon className="w-7 h-7 text-white" />
+                        </div>
+                      </div>
+
+                      {/* Step Content */}
+                      <div className="flex-1 pb-8 pt-2">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-serif font-bold text-navy-900 text-lg">{step.title}</h3>
+                          <span className="text-xs font-medium text-legal-emerald-700 bg-legal-emerald-50 px-2.5 py-1 rounded-full font-sans">
+                            {step.time}
+                          </span>
+                        </div>
+                        <p className="text-slate-600 font-sans text-sm leading-relaxed">
+                          {step.description}
                         </p>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar Column - Policies & Contact */}
-          <div className="space-y-8">
-            
-            {/* Policies Card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sticky top-24">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-50">
-                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                  <Scale className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">Políticas y Legal</h2>
-                  <p className="text-xs text-slate-400">Términos de uso de la plataforma</p>
+                  ))}
                 </div>
               </div>
 
-              <div className="space-y-6">
-                {[
-                  { title: "Privacidad de Datos", icon: Shield, desc: "Encriptación de grado militar para proteger tu información personal y sensible." },
-                  { title: "Seguridad Bancaria", icon: Shield, desc: "Protocolos seguros para todas las transacciones financieras." },
-                  { title: "Validez Jurídica", icon: FileText, desc: "Cumplimiento estricto con la legislación chilena vigente." },
-                  { title: "Firma Electrónica", icon: CheckCircle2, desc: "Certificada bajo la Ley 19.799 de documentos electrónicos." }
-                ].map((policy, i) => (
-                  <div key={i} className="flex gap-4 items-start">
-                    <div className="mt-1">
-                      <policy.icon className="w-5 h-5 text-slate-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 text-sm">{policy.title}</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed mt-1">{policy.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-slate-50">
-                <button className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Ver Términos de Servicio Completos
+              <div className="mt-10 pt-8 border-t border-slate-100 text-center">
+                <p className="text-slate-500 mb-4 font-sans">¿Listo para comenzar?</p>
+                <button
+                  onClick={() => navigate('/')}
+                  className="bg-navy-900 text-white px-6 py-3 rounded-md font-medium font-sans hover:bg-navy-800 transition-colors inline-flex items-center gap-2"
+                >
+                  Crear mi documento
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
-
           </div>
-          
+        )}
+
+        {/* Policies Tab */}
+        {activeTab === 'policies' && (
+          <div className="grid md:grid-cols-3 gap-4">
+            {policies.map((policy) => (
+              <button
+                key={policy.id}
+                onClick={() => setSelectedPolicy(policy.id)}
+                className="bg-white rounded-lg shadow-document border border-slate-200 p-6 text-left hover:shadow-document-hover hover:border-navy-200 transition-all group"
+              >
+                <div className="w-12 h-12 rounded-lg bg-navy-50 flex items-center justify-center mb-4 group-hover:bg-navy-100 transition-colors">
+                  <policy.icon className="w-6 h-6 text-navy-900" />
+                </div>
+                <h3 className="font-serif font-bold text-navy-900 mb-1">{policy.title}</h3>
+                <p className="text-slate-500 text-sm font-sans">{policy.description}</p>
+                <span className="inline-flex items-center gap-1 text-sm text-navy-600 mt-3 font-medium font-sans group-hover:text-navy-800">
+                  Leer más <ExternalLink className="w-3 h-3" />
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Contact Section */}
+        <div className="mt-12 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden">
+          <div className="border-t-4 border-t-legal-emerald-500 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-legal-emerald-50 rounded-lg flex items-center justify-center">
+                <Mail className="w-7 h-7 text-legal-emerald-600" />
+              </div>
+              <div>
+                <h3 className="font-serif font-bold text-navy-900 text-lg">¿No encontraste lo que buscabas?</h3>
+                <p className="text-slate-500 font-sans">Nuestro equipo de soporte está listo para ayudarte</p>
+              </div>
+            </div>
+            <a 
+              href="mailto:soporte@contratoseguro.cl"
+              className="bg-legal-emerald-600 text-white px-6 py-3 rounded-md font-medium font-sans hover:bg-legal-emerald-700 transition-colors inline-flex items-center gap-2"
+            >
+              <Mail className="w-4 h-4" />
+              Contactar soporte
+            </a>
+          </div>
         </div>
-                  <div className="mt-8 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-             <div>
-               <h3 className="font-bold text-slate-900 mb-1">¿Necesitas ayuda con tu contrato?</h3>
-               <p className="text-slate-500 text-sm">Nuestro equipo de soporte está disponible 24/7</p>
-             </div>
-             <div className="flex gap-3">
-                <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                  Contactar soporte
-                </button>
-             </div>
+
+        {/* Quick Links */}
+        <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <button
+            onClick={() => navigate('/seguimiento')}
+            className="text-sm text-slate-600 hover:text-navy-900 font-sans flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Rastrear mi documento
+          </button>
+          <span className="text-slate-300">|</span>
+          <button
+            onClick={() => navigate('/')}
+            className="text-sm text-slate-600 hover:text-navy-900 font-sans flex items-center gap-2"
+          >
+            <PenTool className="w-4 h-4" />
+            Crear nuevo documento
+          </button>
+        </div>
+
+      </main>
+
+      {/* Policy Modal */}
+      {selectedPolicy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-document-hover max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-xl font-serif font-bold text-navy-900">
+                {policies.find(p => p.id === selectedPolicy)?.title}
+              </h2>
+              <button
+                onClick={() => setSelectedPolicy(null)}
+                className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 prose prose-slate prose-sm max-w-none">
+              <div className="whitespace-pre-wrap text-slate-700 font-sans text-sm leading-relaxed">
+                {policies.find(p => p.id === selectedPolicy)?.content}
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 bg-slate-50">
+              <button
+                onClick={() => setSelectedPolicy(null)}
+                className="w-full py-3 bg-navy-900 text-white rounded-md font-medium font-sans hover:bg-navy-800 transition-colors"
+              >
+                Entendido
+              </button>
+            </div>
           </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

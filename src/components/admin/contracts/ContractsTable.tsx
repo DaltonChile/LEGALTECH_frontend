@@ -1,7 +1,11 @@
-import { useState } from 'react';
-import { Eye, Download, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { EmptyState } from '../../shared/EmptyState';
+import { Box } from '../../ui/primitives/Box';
+import { Text } from '../../ui/primitives/Text';
+import { Button } from '../../ui/primitives/Button';
+import { StatusBadge } from '../../ui/composed/StatusBadge';
+import { AlertCircle } from 'lucide-react';
 
 interface Contract {
   id: string;
@@ -33,71 +37,11 @@ interface ContractsTableProps {
 }
 
 export function ContractsTable({ contracts, isLoading, onViewDetails }: ContractsTableProps) {
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; icon: any; className: string }> = {
-      draft: {
-        label: 'Borrador',
-        icon: Clock,
-        className: 'bg-gray-100 text-gray-700 border-gray-300'
-      },
-      pending_payment: {
-        label: 'Pago Pendiente',
-        icon: AlertCircle,
-        className: 'bg-yellow-100 text-yellow-700 border-yellow-300'
-      },
-      paid: {
-        label: 'Pagado',
-        icon: CheckCircle,
-        className: 'bg-blue-100 text-blue-700 border-blue-300'
-      },
-      waiting_signatures: {
-        label: 'Esperando Firmas',
-        icon: Clock,
-        className: 'bg-orange-100 text-orange-700 border-orange-300'
-      },
-      waiting_notary: {
-        label: 'Esperando Notario',
-        icon: Clock,
-        className: 'bg-purple-100 text-purple-700 border-purple-300'
-      },
-      completed: {
-        label: 'Completado',
-        icon: CheckCircle,
-        className: 'bg-green-100 text-green-700 border-green-300'
-      },
-      rejected: {
-        label: 'Rechazado',
-        icon: XCircle,
-        className: 'bg-red-100 text-red-700 border-red-300'
-      }
-    };
-
-    const config = statusConfig[status] || statusConfig.draft;
-    const Icon = config.icon;
-
-    return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.className}`}>
-        <Icon className="w-3.5 h-3.5" />
-        {config.label}
-      </span>
-    );
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP'
     }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   if (isLoading) {
@@ -119,34 +63,34 @@ export function ContractsTable({ contracts, isLoading, onViewDetails }: Contract
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <Box variant="document" padding="none" className="overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full table-fixed">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[12%]">
-                Código
+              <th className="px-3 py-3 text-left w-[12%]">
+                <Text variant="caption" weight="semibold" className="uppercase tracking-wider">Código</Text>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[18%] hidden lg:table-cell">
-                Plantilla
+              <th className="px-3 py-3 text-left w-[18%] hidden lg:table-cell">
+                <Text variant="caption" weight="semibold" className="uppercase tracking-wider">Plantilla</Text>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[20%]">
-                Cliente
+              <th className="px-3 py-3 text-left w-[20%]">
+                <Text variant="caption" weight="semibold" className="uppercase tracking-wider">Cliente</Text>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[14%]">
-                Estado
+              <th className="px-3 py-3 text-left w-[14%]">
+                <Text variant="caption" weight="semibold" className="uppercase tracking-wider">Estado</Text>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[12%] hidden md:table-cell">
-                Monto
+              <th className="px-3 py-3 text-left w-[12%] hidden md:table-cell">
+                <Text variant="caption" weight="semibold" className="uppercase tracking-wider">Monto</Text>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[12%] hidden xl:table-cell">
-                Fecha
+              <th className="px-3 py-3 text-left w-[12%] hidden xl:table-cell">
+                <Text variant="caption" weight="semibold" className="uppercase tracking-wider">Fecha</Text>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-[6%] hidden md:table-cell">
-                Firmas
+              <th className="px-3 py-3 text-left w-[6%] hidden md:table-cell">
+                <Text variant="caption" weight="semibold" className="uppercase tracking-wider">Firmas</Text>
               </th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-[6%]">
-                Acciones
+              <th className="px-3 py-3 text-center w-[6%]">
+                <Text variant="caption" weight="semibold" className="uppercase tracking-wider">Acciones</Text>
               </th>
             </tr>
           </thead>
@@ -158,49 +102,51 @@ export function ContractsTable({ contracts, isLoading, onViewDetails }: Contract
               return (
                 <tr key={contract.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-3 py-3 w-[12%]">
-                    <div className="text-xs font-mono font-medium text-slate-900 truncate" title={contract.tracking_code}>
+                    <Text variant="body-sm" weight="medium" className="font-mono truncate" title={contract.tracking_code}>
                       {contract.tracking_code.substring(0, 12)}...
-                    </div>
+                    </Text>
                   </td>
                   <td className="px-3 py-3 w-[18%] hidden lg:table-cell">
-                    <div className="text-sm text-slate-900 truncate" title={contract.templateVersion?.template?.title}>
+                    <Text variant="body-sm" className="truncate" title={contract.templateVersion?.template?.title}>
                       {contract.templateVersion?.template?.title || 'Sin plantilla'}
-                    </div>
+                    </Text>
                   </td>
                   <td className="px-3 py-3 w-[20%]">
-                    <div className="text-sm text-slate-900 truncate" title={contract.buyer_email}>{contract.buyer_email}</div>
-                    <div className="text-xs text-slate-500">{contract.buyer_rut}</div>
+                    <Text variant="body-sm" className="truncate" title={contract.buyer_email}>{contract.buyer_email}</Text>
+                    <Text variant="caption" color="muted">{contract.buyer_rut}</Text>
                   </td>
                   <td className="px-3 py-3 w-[14%]">
-                    {getStatusBadge(contract.status)}
+                    <StatusBadge status={contract.status as any} size="sm" />
                   </td>
                   <td className="px-3 py-3 w-[12%] hidden md:table-cell">
-                    <div className="text-sm font-medium text-slate-900 truncate">
+                    <Text variant="body-sm" weight="medium" className="truncate">
                       {formatCurrency(contract.total_amount)}
-                    </div>
+                    </Text>
                   </td>
                   <td className="px-3 py-3 w-[12%] hidden xl:table-cell">
-                    <div className="text-xs text-slate-900">
+                    <Text variant="caption">
                       {new Date(contract.created_at).toLocaleDateString('es-CL', {
                         day: '2-digit',
                         month: '2-digit',
                         year: '2-digit'
                       })}
-                    </div>
+                    </Text>
                   </td>
                   <td className="px-3 py-3 w-[6%] text-center hidden md:table-cell">
-                    <div className="text-sm text-slate-900">
+                    <Text variant="body-sm">
                       {signedCount}/{totalSigners}
-                    </div>
+                    </Text>
                   </td>
                   <td className="px-3 py-3 w-[6%] text-center">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => onViewDetails(contract.id)}
-                      className="inline-flex items-center justify-center p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
                       title="Ver detalles"
+                      className="p-1.5"
                     >
                       <Eye className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               );
@@ -208,6 +154,6 @@ export function ContractsTable({ contracts, isLoading, onViewDetails }: Contract
           </tbody>
         </table>
       </div>
-    </div>
+    </Box>
   );
 }

@@ -176,26 +176,13 @@ export function CompletarFormularioStep({
   };
 
   return (
-    <div className="h-full bg-slate-50 flex flex-col">
-       {/* Background Grid */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-
+    <div className="h-full bg-slate-100 flex flex-col">
       {/* Header */}
       <EditorHeader
          steps={steps}
          currentStep="completar"
-         onBack={_onBack}
          rightAction={
             <div className="flex items-center gap-6">
-                 {/* Payment Info Badge */}
-                 <div className="hidden lg:flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    <div>
-                      <div className="text-xs font-bold text-green-800 leading-none">Pago OK</div>
-                      <div className="text-[10px] text-green-600 font-mono leading-none mt-0.5">{contractData.tracking_code}</div>
-                    </div>
-                </div>
-
                  <button
                     onClick={handleContinueToReview}
                     disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting}

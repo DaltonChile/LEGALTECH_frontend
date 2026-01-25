@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Search, AlertCircle } from 'lucide-react';
 import { formatVariableName } from './utils/templateParser';
 
@@ -25,6 +25,8 @@ export function FieldsForm({
 }: FieldsFormProps) {
   // Referencias para los campos de input
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  // Track which fields have been touched (interacted with)
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
 
   // Función para mover al siguiente campo al presionar Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentVariable: string) => {
@@ -125,6 +127,11 @@ export function FieldsForm({
   const getFieldError = (variable: string): string | null => {
     const value = formData[variable] || '';
     
+    // Solo mostrar errores si el campo ha sido tocado
+    if (!touchedFields.has(variable)) {
+      return null;
+    }
+    
     if (isNameField(variable)) {
       return validateName(value);
     }
@@ -144,17 +151,23 @@ export function FieldsForm({
     return null;
   };
 
+  // Handler para cuando el campo pierde el foco
+  const handleFieldBlur = (variable: string) => {
+    setTouchedFields(prev => new Set(prev).add(variable));
+    onFieldBlur();
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Search */}
       <div className="mb-4 relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 " />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Buscar campo..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-slate-400"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-100 focus:border-navy-500 transition-colors placeholder-slate-400"
           />
       </div>
 
@@ -167,7 +180,7 @@ export function FieldsForm({
           
           return (
             <div key={variable} className={`transition-all ${isActive ? 'scale-[1.01]' : ''}`}>
-                <label className={`block text-xs font-medium mb-1.5 ml-1 transition-colors ${isActive ? 'text-blue-600' : 'text-slate-700'}`}>
+                <label className={`block text-xs font-medium font-sans mb-1.5 ml-1 transition-colors ${isActive ? 'text-navy-900' : 'text-slate-600'}`}>
                   {formatVariableName(variable)}
                   {isFieldEmpty(variable) && <span className="text-red-500 ml-1">*</span>}
                 </label>
@@ -177,22 +190,22 @@ export function FieldsForm({
                   value={formData[variable] || ''}
                   onChange={(e) => onFormChange({ ...formData, [variable]: e.target.value })}
                   onFocus={() => onFieldFocus(variable)}
-                  onBlur={onFieldBlur}
+                  onBlur={() => handleFieldBlur(variable)}
                   onKeyDown={(e) => handleKeyDown(e, variable)}
                   placeholder={`Ingresa ${formatVariableName(variable).toLowerCase()}`}
-                  className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 transition-all bg-white ${
+                  className={`w-full px-3 py-2.5 text-sm font-sans border rounded-lg focus:outline-none focus:ring-2 transition-all bg-white ${
                     hasError
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
                       : isActive
-                        ? 'border-blue-500 ring-blue-100'
-                        : 'border-slate-300 focus:border-blue-500 focus:ring-blue-100'
+                        ? 'border-navy-500 ring-navy-100'
+                        : 'border-slate-200 focus:border-navy-500 focus:ring-navy-100'
                   }`}
                 />
                 
                 {hasError && (
                   <div className="flex items-start gap-1.5 mt-1.5 ml-1 animate-fade-in-down">
                     <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-red-600 font-medium">{fieldError}</p>
+                    <p className="text-xs text-red-600 font-medium font-sans">{fieldError}</p>
                   </div>
                 )}
             </div>

@@ -253,10 +253,7 @@ export function FormularioInicialStep({
   );
 
   return (
-    <div className="h-full bg-slate-50 flex flex-col">
-      {/* Grid Pattern */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-
+    <div className="h-full bg-slate-100 flex flex-col">
       {/* Header */}
       <EditorHeader 
          steps={steps}
@@ -296,15 +293,15 @@ export function FormularioInicialStep({
 
             {/* Capsules */}
             {template.capsules.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-shadow hover:shadow-md">
-                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                  <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
-                       <Plus className="w-4 h-4 text-violet-600" />
+              <div className="bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden transition-shadow hover:shadow-document-hover">
+                <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                  <h3 className="font-semibold text-navy-900 flex items-center gap-2 font-sans">
+                    <div className="w-8 h-8 rounded-lg bg-legal-emerald-50 flex items-center justify-center">
+                       <Plus className="w-4 h-4 text-legal-emerald-600" />
                     </div>
                     Cláusulas adicionales
                   </h3>
-                   <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">{selectedCapsules.length} seleccionadas</span>
+                   <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 font-sans">{selectedCapsules.length} seleccionadas</span>
                 </div>
                 <div className="divide-y divide-slate-100 overflow-y-auto">
                    {template.capsules.map((capsule) => {
@@ -313,16 +310,16 @@ export function FormularioInicialStep({
                       return (
                         <div 
                           key={capsule.id}
-                          className={`transition-colors flex flex-col group ${isSelected ? 'bg-violet-50/30' : 'hover:bg-slate-50'}`}
+                          className={`transition-colors flex flex-col group ${isSelected ? 'bg-legal-emerald-50/30' : 'hover:bg-slate-50'}`}
                         >
                            {/* Header */}
                            <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => toggleCapsule(capsule.id)}>
-                               <div className={`w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-violet-600 border-violet-600' : 'border-slate-300 bg-white group-hover:border-violet-400'}`}>
+                               <div className={`w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-legal-emerald-600 border-legal-emerald-600' : 'border-slate-300 bg-white group-hover:border-legal-emerald-400'}`}>
                                   {isSelected && <Check className="w-3 h-3 text-white" />}
                                </div>
                                <div className="flex-1 flex items-center justify-between gap-2">
-                                  <span className={`text-sm font-medium ${isSelected ? 'text-violet-900' : 'text-slate-900'}`}>{capsule.title}</span>
-                                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">+{formatPrice(capsule.price)}</span>
+                                  <span className={`text-sm font-medium font-sans ${isSelected ? 'text-navy-900' : 'text-slate-700'}`}>{capsule.title}</span>
+                                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-sans">+{formatPrice(capsule.price)}</span>
                                </div>
                                <button 
                                  onClick={(e) => {
@@ -338,7 +335,7 @@ export function FormularioInicialStep({
                            {/* Body (Accordion Content) */}
                            {isExpanded && (
                              <div className="px-4 pb-4 pl-12">
-                               <p className="text-xs text-slate-500 leading-relaxed">{capsule.description || capsule.legal_text}</p>
+                               <p className="text-xs text-slate-500 leading-relaxed font-sans">{capsule.description || capsule.legal_text}</p>
                              </div>
                            )}
                         </div>
@@ -350,8 +347,8 @@ export function FormularioInicialStep({
 
             {/* Signature Type */}
             {requiresSignature && signatureInfo && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
-                <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5 transition-shadow hover:shadow-document-hover">
+                <h3 className="font-semibold text-navy-900 mb-4 flex items-center gap-2 font-sans">
                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
                       <Shield className="w-4 h-4 text-amber-600" />
                    </div>
@@ -362,43 +359,43 @@ export function FormularioInicialStep({
                    {/* Simple */}
                    <button
                      onClick={() => setSignatureType('simple')}
-                     className={`w-full p-3 rounded-lg border text-left transition-all relative ${
+                     className={`w-full p-4 rounded-lg border text-left transition-all relative ${
                         signatureType === 'simple' 
-                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
+                        ? 'border-legal-emerald-500 bg-legal-emerald-50 ring-1 ring-legal-emerald-500' 
                         : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                      }`}
                    >
                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-sm font-semibold ${signatureType === 'simple' ? 'text-blue-900' : 'text-slate-900'}`}>Firma Simple (FES)</span>
-                        <span className="font-bold text-slate-900">{formatPrice(signatureInfo.pricing.fes.totalPrice)}</span>
+                        <span className={`text-sm font-semibold font-sans ${signatureType === 'simple' ? 'text-navy-900' : 'text-slate-700'}`}>Firma Simple (FES)</span>
+                        <span className={`font-bold font-sans ${signatureType === 'simple' ? 'text-legal-emerald-700' : 'text-slate-700'}`}>{formatPrice(signatureInfo.pricing.fes.totalPrice)}</span>
                      </div>
-                     <p className="text-xs text-slate-500">Rápida y estándar. Para la mayoría de los casos.</p>
+                     <p className="text-xs text-slate-500 font-sans">Rápida y estándar. Para la mayoría de los casos.</p>
                    </button>
 
                    {/* Advanced */}
                    <button
                      onClick={() => setSignatureType('fea')}
-                     className={`w-full p-3 rounded-lg border text-left transition-all ${
+                     className={`w-full p-4 rounded-lg border text-left transition-all ${
                         signatureType === 'fea' 
-                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' 
+                        ? 'border-legal-emerald-500 bg-legal-emerald-50 ring-1 ring-legal-emerald-500' 
                         : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                      }`}
                    >
                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-sm font-semibold ${signatureType === 'fea' ? 'text-blue-900' : 'text-slate-900'}`}>Firma Avanzada (FEA)</span>
-                        <span className="font-bold text-slate-900">{formatPrice(signatureInfo.pricing.fea.totalPrice)}</span>
+                        <span className={`text-sm font-semibold font-sans ${signatureType === 'fea' ? 'text-navy-900' : 'text-slate-700'}`}>Firma Avanzada (FEA)</span>
+                        <span className={`font-bold font-sans ${signatureType === 'fea' ? 'text-legal-emerald-700' : 'text-slate-700'}`}>{formatPrice(signatureInfo.pricing.fea.totalPrice)}</span>
                      </div>
-                     <p className="text-xs text-slate-500">Máxima seguridad legal. Verificación de identidad.</p>
+                     <p className="text-xs text-slate-500 font-sans">Máxima seguridad legal. Verificación de identidad.</p>
                    </button>
                 </div>
               </div>
             )}
 
            {/* Fields Form */}
-           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
-              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                   <Edit3 className="w-4 h-4 text-emerald-600" />
+           <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5 transition-shadow hover:shadow-document-hover">
+              <h3 className="font-semibold text-navy-900 mb-4 flex items-center gap-2 font-sans">
+                <div className="w-8 h-8 rounded-lg bg-legal-emerald-50 flex items-center justify-center">
+                   <Edit3 className="w-4 h-4 text-legal-emerald-600" />
                 </div>
                 Datos del documento
               </h3>
@@ -425,31 +422,31 @@ export function FormularioInicialStep({
       </div>
       {/* Contact Data Modal */}
       {showContactModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fade-in-up">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-lg shadow-document max-w-md w-full p-8 animate-fade-in-up border border-slate-200">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
+                <div className="w-12 h-12 rounded-lg bg-legal-emerald-600 flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">Datos de contacto</h3>
+                <h3 className="text-xl font-serif font-bold text-navy-900">Datos de contacto</h3>
               </div>
               <button 
                 onClick={() => setShowContactModal(false)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
+                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center justify-center"
                 disabled={isSubmitting}
               >
                 ✕
               </button>
             </div>
             
-            <p className="text-slate-600 mb-6 text-sm">
+            <p className="text-slate-600 mb-6 text-sm font-sans leading-relaxed">
               Ingresa tus datos para enviarte el código de seguimiento y el acceso a tu borrador.
             </p>
             
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-semibold text-navy-900 mb-2 font-sans">
                   Tu RUT <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -459,12 +456,12 @@ export function FormularioInicialStep({
                   placeholder="12.345.678-9"
                   maxLength={12}
                   disabled={isSubmitting}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all font-mono disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-legal-emerald-500 focus:border-legal-emerald-500 transition-all font-mono disabled:opacity-50 text-navy-900"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-semibold text-navy-900 mb-2 font-sans">
                   Tu Email <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -473,34 +470,32 @@ export function FormularioInicialStep({
                   onChange={(e) => setContactEmail(e.target.value)}
                   placeholder="nombre@ejemplo.com"
                   disabled={isSubmitting}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-legal-emerald-500 focus:border-legal-emerald-500 transition-all disabled:opacity-50 font-sans text-navy-900"
                 />
               </div>
               
               {/* Error Display inside Modal */}
               {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex items-start gap-2 animate-fade-in-up">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <p>{error}</p>
+                <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm border border-red-100 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <p className="font-sans">{error}</p>
                 </div>
               )}
 
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleGoToPayment}
-                  disabled={isSubmitting || !contactRut || !contactEmail}
-                  className="w-full px-4 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
-                      <span>Procesando...</span>
-                    </>
-                  ) : (
-                    <span>Continuar al pago</span>
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={handleGoToPayment}
+                disabled={isSubmitting || !contactRut || !contactEmail}
+                className="w-full px-4 py-3.5 bg-navy-900 text-white font-semibold rounded-lg hover:bg-navy-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-sans shadow-lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/20 border-t-white"></div>
+                    <span>Procesando...</span>
+                  </>
+                ) : (
+                  <span>Continuar al pago</span>
+                )}
+              </button>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Navbar } from '../../components/landing/Navbar';
 
 const PaymentFailurePage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -24,8 +25,10 @@ const PaymentFailurePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-md p-8 max-w-lg w-full text-center">
+    <div className="min-h-screen bg-slate-100 flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-document border border-slate-200 p-8 max-w-lg w-full text-center">
         {/* Icono de error */}
         <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,21 +36,21 @@ const PaymentFailurePage: React.FC = () => {
           </svg>
         </div>
 
-        <h1 className="text-3xl font-bold text-red-600 mb-4">
+        <h1 className="text-3xl font-serif font-bold text-red-600 mb-4">
           Pago Rechazado
         </h1>
         
-        <p className="text-lg text-gray-700 mb-6">
+        <p className="text-lg text-slate-700 mb-6 font-sans">
           No pudimos procesar tu pago. Por favor intenta nuevamente.
         </p>
 
         {/* Posibles causas */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-left">
-          <h3 className="font-semibold text-yellow-800 mb-3 flex items-center">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
+          <h3 className="font-semibold text-amber-800 mb-3 flex items-center font-sans">
             <span className="mr-2">💡</span>
             Posibles causas:
           </h3>
-          <ul className="text-sm text-yellow-700 space-y-2">
+          <ul className="text-sm text-amber-700 space-y-2 font-sans">
             <li className="flex items-start">
               <span className="mr-2">•</span>
               <span>Fondos insuficientes en la tarjeta</span>
@@ -69,8 +72,8 @@ const PaymentFailurePage: React.FC = () => {
 
         {/* Información del contrato */}
         {trackingCode && (
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-600">
+          <div className="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200">
+            <p className="text-sm text-slate-600 font-sans">
               Código de seguimiento: <span className="font-mono font-bold">{trackingCode}</span>
             </p>
           </div>
@@ -80,31 +83,32 @@ const PaymentFailurePage: React.FC = () => {
         <div className="space-y-3">
           <button
             onClick={handleRetry}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            className="w-full bg-navy-900 hover:bg-navy-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors font-sans"
           >
             Reintentar Pago
           </button>
           
           <button
             onClick={handleContactSupport}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors"
+            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-6 rounded-lg transition-colors font-sans"
           >
             Contactar Soporte
           </button>
 
           <button
             onClick={handleGoHome}
-            className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 transition-colors"
+            className="w-full text-slate-500 hover:text-slate-700 font-medium py-2 transition-colors font-sans"
           >
             Volver al inicio
           </button>
         </div>
 
         {/* Información de contacto */}
-        <div className="mt-6 pt-6 border-t text-sm text-gray-500">
+        <div className="mt-6 pt-6 border-t border-slate-200 text-sm text-slate-500 font-sans">
           <p>¿Necesitas ayuda?</p>
-          <p className="font-medium">soporte@dalton.cl</p>
+          <p className="font-medium text-navy-900">soporte@dalton.cl</p>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -89,10 +89,7 @@ export function ReviewStep({
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50">
-       {/* Background Grid */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-
+    <div className="h-full flex flex-col bg-slate-100">
       {/* Header */}
       <EditorHeader
          steps={steps}
@@ -121,27 +118,27 @@ export function ReviewStep({
 
       <div className="flex-1 flex gap-6 max-w-[1920px] mx-auto w-full p-6 relative z-10 overflow-hidden min-h-0">
         {/* PDF Preview */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-6 flex items-center justify-between">
+        <div className="flex-1 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden flex flex-col">
+          {/* Header simplificado */}
+          <div className="border-b border-slate-200 p-5 flex items-center justify-between bg-white">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-navy-900 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-white/80 text-xs">Vista previa del contrato</div>
-                <div className="text-white font-semibold">Revisa tu contrato antes de firmar</div>
+                <h2 className="text-lg font-serif font-semibold text-navy-900">Vista previa del contrato</h2>
+                <p className="text-sm text-slate-500 font-sans">Revisa cuidadosamente antes de aprobar</p>
               </div>
             </div>
             
-            {/* Botón recargar */}
+            {/* Botón recargar minimalista */}
             <button
               onClick={() => {
                 hasLoadedRef.current = false;
                 loadPdfPreview();
               }}
               disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors text-sm"
+              className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-navy-900 hover:bg-slate-50 rounded-lg transition-colors text-sm font-medium font-sans"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Recargar
@@ -149,13 +146,13 @@ export function ReviewStep({
           </div>
 
           {/* PDF Content */}
-          <div className="flex-1 overflow-hidden relative bg-slate-100">
+          <div className="flex-1 overflow-hidden relative bg-slate-50">
             {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/90 z-10">
+              <div className="absolute inset-0 flex items-center justify-center bg-white/95 z-10">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-slate-600 font-medium">Generando vista previa...</p>
-                  <p className="text-slate-500 text-sm mt-2">Esto puede tomar unos segundos</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-slate-200 border-t-navy-900 mx-auto mb-4"></div>
+                  <p className="text-navy-900 font-semibold font-sans">Generando vista previa...</p>
+                  <p className="text-slate-500 text-sm mt-1 font-sans">Esto puede tomar unos segundos</p>
                 </div>
               </div>
             )}
@@ -163,15 +160,17 @@ export function ReviewStep({
             {error && !loading && (
               <div className="absolute inset-0 flex items-center justify-center bg-white z-10 p-6">
                 <div className="text-center max-w-md">
-                  <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Error al cargar preview</h3>
-                  <p className="text-slate-600 mb-4">{error}</p>
+                  <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-serif font-semibold text-navy-900 mb-2">Error al cargar la vista previa</h3>
+                  <p className="text-slate-600 mb-6 font-sans">{error}</p>
                   <button
                     onClick={() => {
                       hasLoadedRef.current = false;
                       loadPdfPreview();
                     }}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-6 py-2.5 bg-navy-900 text-white rounded-lg hover:bg-navy-800 transition-colors font-medium font-sans"
                   >
                     Intentar nuevamente
                   </button>
@@ -193,25 +192,29 @@ export function ReviewStep({
         <div className="w-80 flex flex-col gap-4">
           {/* Info de firma seleccionada */}
           {signatureType !== 'none' && (
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-blue-600" />
-                Firma Electrónica
-              </h3>
+            <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-4 h-4 text-legal-emerald-600" />
+                <h3 className="text-sm font-semibold text-navy-900 font-sans">Firma Electrónica</h3>
+              </div>
               
-              <div className={`flex items-center gap-3 p-3 rounded-lg border-2 ${
-                signatureType === 'fea' ? 'border-blue-600 bg-blue-50' : 'border-green-600 bg-green-50'
+              <div className={`flex items-start gap-3 p-4 rounded-lg border ${
+                signatureType === 'fea' 
+                  ? 'border-legal-emerald-200 bg-legal-emerald-50' 
+                  : 'border-legal-emerald-200 bg-legal-emerald-50'
               }`}>
-                {signatureType === 'fea' ? (
-                  <Shield className="w-5 h-5 text-blue-600" />
-                ) : (
-                  <Zap className="w-5 h-5 text-green-600" />
-                )}
+                <div className="w-8 h-8 bg-legal-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  {signatureType === 'fea' ? (
+                    <Shield className="w-4 h-4 text-white" />
+                  ) : (
+                    <Zap className="w-4 h-4 text-white" />
+                  )}
+                </div>
                 <div>
-                  <span className="font-semibold text-sm">
+                  <div className="font-semibold text-navy-900 font-sans text-sm">
                     {signatureType === 'fea' ? 'FEA (Avanzada)' : 'FES (Simple)'}
-                  </span>
-                  <p className="text-xs text-gray-600">
+                  </div>
+                  <p className="text-xs text-slate-600 font-sans mt-0.5">
                     Incluida en tu pago
                   </p>
                 </div>
@@ -220,21 +223,23 @@ export function ReviewStep({
           )}
 
           {/* Precio Total */}
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6">
-            <h3 className="text-sm font-medium text-slate-500 mb-2">Total pagado</h3>
-            <div className="text-3xl font-bold text-slate-900">
+          <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 font-sans">Total pagado</div>
+            <div className="text-3xl font-bold text-navy-900 font-sans mb-1">
               {formatPrice(totalPrice)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">IVA incluido</p>
+            <p className="text-xs text-slate-500 font-sans">IVA incluido</p>
           </div>
 
           {/* Instrucciones */}
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-cyan-200 p-6">
+          <div className="bg-legal-emerald-50 rounded-lg border border-legal-emerald-100 p-5">
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+              <div className="w-8 h-8 bg-legal-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-4 h-4 text-white" />
+              </div>
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Próximo paso</h4>
-                <p className="text-sm text-slate-600">
+                <h4 className="font-semibold text-navy-900 mb-1.5 font-serif text-sm">Próximo paso</h4>
+                <p className="text-sm text-slate-700 font-sans leading-relaxed">
                   Al aprobar, todas las partes recibirán un enlace por correo electrónico para firmar el contrato.
                 </p>
               </div>

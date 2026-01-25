@@ -1,47 +1,49 @@
 import { ContractMockup } from '../public/contracts/ContractMockup';
 import { ArrowRight } from 'lucide-react';
+import { Text } from '../ui/primitives/Text';
+import { Box } from '../ui/primitives/Box';
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden bg-slate-50">
       
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8 lg:space-y-10">
 
-            
             <div className="space-y-6">
-              <h1 className="text-slate-900 max-w-xl text-5xl font-bold">
+              <Text as="h1" variant="h1" className="max-w-xl text-5xl md:text-6xl leading-tight text-balance">
                 Contratos legales{' '}
-                <span className="bg-gradient-to-r from-blue-600 via-cyan-500 to-lime-500 bg-clip-text text-transparent">
+                <span className="text-legal-emerald-700">
                   al instante
                 </span>
-              </h1>
-              <h2 className="text-slate-600 max-w-lg text-lg">
+              </Text>
+              <Text variant="body-lg" color="muted" className="max-w-lg leading-relaxed">
                 Sin abogados, sin esperas. Genera, personaliza y firma contratos legalmente válidos en minutos. Simple, rápido y seguro.
-              </h2>
+              </Text>
             </div>
 
-            <div className="flex items-center gap-4 pt-2">
+            {/* Stats */}
+            <Box className="flex items-center gap-4 pt-2 bg-transparent border-none shadow-none">
               <div className="text-center">
-                <div className="text-3xl text-slate-900 font-bold">5 min</div>
-                <div className="text-sm text-slate-600">Tiempo promedio</div>
+                <Text variant="h3" className="text-3xl font-sans">5 min</Text>
+                <Text variant="body-sm" color="muted">Tiempo promedio</Text>
               </div>
               <div className="w-px h-12 bg-slate-300"></div>
               <div className="text-center">
-                <div className="text-3xl text-slate-900 font-bold">2,847</div>
-                <div className="text-sm text-slate-600">Contratos generados</div>
+                <Text variant="h3" className="text-3xl font-sans">2,847</Text>
+                <Text variant="body-sm" color="muted">Contratos generados</Text>
               </div>
               <div className="w-px h-12 bg-slate-300"></div>
               <div className="text-center">
-                <div className="text-3xl text-slate-900 font-bold">100%</div>
-                <div className="text-sm text-slate-600">Validez legal</div>
+                <Text variant="h3" className="text-3xl font-sans">100%</Text>
+                <Text variant="body-sm" color="muted">Validez legal</Text>
               </div>
-            </div>
+            </Box>
 
             <div className="flex items-center gap-3 pt-4">
-              <ArrowRight className="w-5 h-5 text-blue-600" />
-              <span className="text-slate-700">Explora los contratos disponibles abajo</span>
+              <ArrowRight className="w-5 h-5 text-legal-emerald-700" />
+              <Text variant="body">Explora los contratos disponibles abajo</Text>
             </div>
           </div>
 

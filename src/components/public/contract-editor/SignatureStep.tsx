@@ -151,8 +151,8 @@ export function SignatureStep({
         <EditorHeader steps={steps} currentStep="signatures" />
         <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto"></div>
-            <p className="mt-4 text-slate-600">Cargando información del contrato...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-900 mx-auto"></div>
+            <p className="mt-4 text-slate-600 font-sans">Cargando información del contrato...</p>
             </div>
         </div>
       </div>
@@ -164,13 +164,13 @@ export function SignatureStep({
       <div className="h-full flex flex-col bg-slate-50 relative">
          <EditorHeader steps={steps} currentStep="signatures" />
          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-md w-full text-center">
+            <div className="bg-white rounded-lg shadow-document border border-slate-200 p-8 max-w-md w-full text-center">
                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertCircle className="w-8 h-8 text-red-500" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">Error al cargar</h3>
-                <p className="text-slate-600 mb-6">{error}</p>
-                <button onClick={loadContractStatus} className="text-blue-600 font-medium hover:underline">Reintentar</button>
+                <h3 className="text-lg font-serif font-bold text-navy-900 mb-2">Error al cargar</h3>
+                <p className="text-slate-600 mb-6 font-sans">{error}</p>
+                <button onClick={loadContractStatus} className="text-navy-900 font-medium hover:underline font-sans">Reintentar</button>
             </div>
          </div>
       </div>
@@ -182,10 +182,7 @@ export function SignatureStep({
   }
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 relative">
-       {/* Background Grid */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-
+    <div className="h-full flex flex-col bg-slate-100 relative">
       <EditorHeader 
         steps={steps} 
         currentStep="signatures"
