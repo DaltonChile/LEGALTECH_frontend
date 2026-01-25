@@ -1,23 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Upload, Clock, CheckCircle, FileText, Mail, Search } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { notaryApi, type NotaryContract } from '../../services/api';
+import { NotaryStatsCards, NotaryFilters, NotaryContractRow } from '../../components/notary';
 
-type ContractRequest = NotaryContract;
+type FilterType = 'pending' | 'completed' | 'all';
 
 export const NotaryInboxPage: React.FC = () => {
-  const [pendingContracts, setPendingContracts] = useState<ContractRequest[]>([]);
-  const [completedContracts, setCompletedContracts] = useState<ContractRequest[]>([]);
+  const [pendingContracts, setPendingContracts] = useState<NotaryContract[]>([]);
+  const [completedContracts, setCompletedContracts] = useState<NotaryContract[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'pending' | 'completed' | 'all'>('pending');
+  const [filter, setFilter] = useState<FilterType>('pending');
   const [searchQuery, setSearchQuery] = useState('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-  const [_selectedContract, setSelectedContract] = useState<ContractRequest | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [uploading, setUploading] = useState(false);
-
-  useEffect(() => {
-    loadContracts();
-  }, []);
 
   useEffect(() => {
     loadContracts();
@@ -42,8 +38,6 @@ export const NotaryInboxPage: React.FC = () => {
   const handleDownloadContract = async (contractId: string, trackingCode: string) => {
     try {
       const blob = await notaryApi.downloadContract(contractId);
-      
-      // Crear URL temporal del blob
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -51,8 +45,6 @@ export const NotaryInboxPage: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Liberar la URL del blob
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading contract:', error);
@@ -66,11 +58,9 @@ export const NotaryInboxPage: React.FC = () => {
       await notaryApi.uploadSignedContract(contractId, file);
       alert('Documento firmado subido exitosamente');
       loadContracts();
-      setSelectedContract(null);
     } catch (error: unknown) {
       console.error('Error uploading signed contract:', error);
       
-      // Extraer mensaje específico del error de validación BR-23
       let errorMessage = 'Error al subir el documento firmado';
       
       if (error && typeof error === 'object' && 'response' in error) {
@@ -80,7 +70,6 @@ export const NotaryInboxPage: React.FC = () => {
         if (data?.message) {
           errorMessage = data.message;
         } else if (data?.error) {
-          // Traducir códigos de error a mensajes amigables
           const errorMessages: Record<string, string> = {
             'MISSING_METADATA': 'Este documento no fue descargado desde el sistema. Por favor, descargue nuevamente el contrato y fírmelo sin usar "Imprimir como PDF".',
             'CONTRACT_MISMATCH': 'Este documento pertenece a otro contrato. Por favor, verifique que está subiendo el documento correcto.'
@@ -95,10 +84,7 @@ export const NotaryInboxPage: React.FC = () => {
     }
   };
 
-  const notarySigner = (contract: ContractRequest) => 
-    contract.signers.find(s => s.role === 'notary');
-
-  // Combinar contratos según el filtro
+  // Combine and filter contracts
   const allContracts = [...pendingContracts, ...completedContracts];
   const contractsToShow = filter === 'pending' 
     ? pendingContracts 
@@ -107,19 +93,14 @@ export const NotaryInboxPage: React.FC = () => {
     : allContracts;
 
   const filteredContracts = contractsToShow.filter(contract => {
-    // Search filter
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = 
+    return (
       contract.templateVersion.template.title.toLowerCase().includes(searchLower) ||
       contract.tracking_code.toLowerCase().includes(searchLower) ||
       contract.buyer_email.toLowerCase().includes(searchLower) ||
-      contract.buyer_rut.toLowerCase().includes(searchLower);
-
-    return matchesSearch;
+      contract.buyer_rut.toLowerCase().includes(searchLower)
+    );
   });
-
-  const pendingCount = pendingContracts.length;
-  const completedCount = completedContracts.length;
 
   if (loading) {
     return (
@@ -140,110 +121,24 @@ export const NotaryInboxPage: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Pendientes</p>
-              <p className="text-2xl font-bold text-amber-600">{pendingCount}</p>
-            </div>
-            <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center border border-amber-100">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-          </div>
-        </div>
+      <NotaryStatsCards 
+        pending={pendingContracts.length}
+        completed={completedContracts.length}
+        total={pendingContracts.length + completedContracts.length}
+      />
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Firmados</p>
-              <p className="text-2xl font-bold text-green-600">{completedCount}</p>
-            </div>
-            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center border border-green-100">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-1 uppercase tracking-wider">Total</p>
-              <p className="text-2xl font-bold text-slate-900">{pendingCount + completedCount}</p>
-            </div>
-            <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100">
-              <FileText className="w-5 h-5 text-slate-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Toolbar: Search & Filter */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 shadow-sm">
-        <div className="flex flex-wrap items-center gap-4 mb-3">
-          <div className="flex-1 min-w-[240px] relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por cliente, código o contrato..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-            />
-          </div>
-
-          <div className="flex bg-slate-100 p-1 rounded-lg">
-            {(['pending', 'completed', 'all'] as const).map((status) => (
-              <button 
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  filter === status 
-                    ? 'bg-white text-slate-900 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {status === 'pending' && 'Pendientes'}
-                {status === 'completed' && 'Firmados'}
-                {status === 'all' && 'Todos'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Date Range Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2">
-            <span className="text-xs text-slate-600 font-medium">Desde:</span>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            />
-          </label>
-          <label className="flex items-center gap-2">
-            <span className="text-xs text-slate-600 font-medium">Hasta:</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            />
-          </label>
-          {(startDate || endDate) && (
-            <button
-              onClick={() => {
-                setStartDate('');
-                setEndDate('');
-              }}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-            >
-              Limpiar fechas
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Filters */}
+      <NotaryFilters
+        filter={filter}
+        onFilterChange={setFilter}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onClearDates={() => { setStartDate(''); setEndDate(''); }}
+      />
 
       {/* Table Container */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -271,99 +166,15 @@ export const NotaryInboxPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredContracts.map((contract) => {
-                  const signer = notarySigner(contract);
-                  const isPending = contract.status === 'waiting_notary';
-                  
-                  return (
-                    <tr key={contract.id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${isPending ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
-                            <FileText className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-bold text-slate-900">{contract.templateVersion.template.title}</h3>
-                            <p className="text-xs text-slate-500 font-mono mt-0.5">{contract.tracking_code}</p>
-                          </div>
-                        </div>
-                      </td>
-                      
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-slate-900">{contract.buyer_rut}</span>
-                          <span className="text-xs text-slate-500">RUT Comprador</span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {isPending ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                            Pendiente
-                          </span>
-                        ) : (
-                          <div className="flex flex-col items-start gap-1">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                              Firmado
-                            </span>
-                            {signer?.signed_at && (
-                              <span className="text-[10px] text-slate-400">
-                                {new Date(signer.signed_at).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-700 font-medium">{contract.buyer_email}</div>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-slate-900">${contract.total_amount.toLocaleString()}</span>
-                          <span className="text-xs text-slate-400">Created: {new Date(contract.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                           {/* Download Button */}
-                           <button
-                            onClick={() => handleDownloadContract(contract.id, contract.tracking_code)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Descargar PDF"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-
-                          {/* Upload Signed Contract Button (Only if pending) */}
-                          {isPending && (
-                            <label className="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors cursor-pointer" title="Subir documento firmado">
-                              <Upload className="w-4 h-4" />
-                              <input
-                                type="file"
-                                accept=".pdf"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    if (confirm('¿Estás seguro de subir este documento firmado?')) {
-                                      handleUploadSigned(contract.id, file);
-                                    }
-                                  }
-                                }}
-                                disabled={uploading}
-                              />
-                            </label>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {filteredContracts.map((contract) => (
+                  <NotaryContractRow
+                    key={contract.id}
+                    contract={contract}
+                    onDownload={handleDownloadContract}
+                    onUpload={handleUploadSigned}
+                    uploading={uploading}
+                  />
+                ))}
               </tbody>
             </table>
           </div>
