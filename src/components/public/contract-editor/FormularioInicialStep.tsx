@@ -264,7 +264,7 @@ export function FormularioInicialStep({
             <button
               onClick={() => setShowContactModal(true)}
               disabled={isSubmitting}
-              className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10"
+              className="bg-slate-900 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 text-sm md:text-base"
             >
               <span>Continuar al pago</span>
               <ArrowRight className="w-4 h-4" />
@@ -273,10 +273,10 @@ export function FormularioInicialStep({
       />
 
       {/* Main Content */}
-      <div className="relative z-10 flex-1 w-full max-w-[1920px] mx-auto p-6 flex gap-6 overflow-hidden min-h-0">
+      <div className="relative z-10 flex-1 w-full max-w-[1920px] mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 overflow-hidden min-h-0">
         
         {/* Left: Document Preview */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0 min-h-[400px] lg:min-h-0">
           <DocumentPreview
             templateText={template.template_content}
             renderedContract={renderedContract}

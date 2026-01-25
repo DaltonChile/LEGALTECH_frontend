@@ -99,7 +99,7 @@ export function ReviewStep({
              <button
               onClick={handleApprove}
               disabled={loading || isProcessing || !pdfUrl}
-              className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap"
+              className="bg-slate-900 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap text-sm md:text-base"
             >
               {isProcessing ? (
                 <>
@@ -116,18 +116,18 @@ export function ReviewStep({
          }
       />
 
-      <div className="flex-1 flex gap-6 max-w-[1920px] mx-auto w-full p-6 relative z-10 overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 max-w-[1920px] mx-auto w-full p-3 md:p-6 relative z-10 overflow-hidden min-h-0">
         {/* PDF Preview */}
-        <div className="flex-1 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden flex flex-col">
+        <div className="flex-1 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden flex flex-col min-h-[500px] lg:min-h-0">
           {/* Header simplificado */}
-          <div className="border-b border-slate-200 p-5 flex items-center justify-between bg-white">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-navy-900 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-white" />
+          <div className="border-b border-slate-200 p-3 md:p-5 flex items-center justify-between bg-white">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-navy-900 rounded-lg flex items-center justify-center">
+                <FileText className="w-4 h-4 md:w-5 md:h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-serif font-semibold text-navy-900">Vista previa del contrato</h2>
-                <p className="text-sm text-slate-500 font-sans">Revisa cuidadosamente antes de aprobar</p>
+                <h2 className="text-base md:text-lg font-serif font-semibold text-navy-900">Vista previa del contrato</h2>
+                <p className="text-xs md:text-sm text-slate-500 font-sans hidden sm:block">Revisa cuidadosamente antes de aprobar</p>
               </div>
             </div>
             
@@ -138,10 +138,10 @@ export function ReviewStep({
                 loadPdfPreview();
               }}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-navy-900 hover:bg-slate-50 rounded-lg transition-colors text-sm font-medium font-sans"
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 text-slate-600 hover:text-navy-900 hover:bg-slate-50 rounded-lg transition-colors text-xs md:text-sm font-medium font-sans"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Recargar
+              <RefreshCw className={`w-3.5 h-3.5 md:w-4 md:h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Recargar</span>
             </button>
           </div>
 
@@ -189,16 +189,16 @@ export function ReviewStep({
         </div>
 
         {/* Sidebar - Resumen y Acciones */}
-        <div className="w-80 flex flex-col gap-4">
+        <div className="w-full lg:w-80 flex flex-col gap-3 md:gap-4 lg:order-last">
           {/* Info de firma seleccionada */}
           {signatureType !== 'none' && (
-            <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="bg-white rounded-lg shadow-document border border-slate-200 p-4 md:p-5">
+              <div className="flex items-center gap-2 mb-3 md:mb-4">
                 <Shield className="w-4 h-4 text-legal-emerald-600" />
                 <h3 className="text-sm font-semibold text-navy-900 font-sans">Firma Electrónica</h3>
               </div>
               
-              <div className={`flex items-start gap-3 p-4 rounded-lg border ${
+              <div className={`flex items-start gap-2 md:gap-3 p-3 md:p-4 rounded-lg border ${
                 signatureType === 'fea' 
                   ? 'border-legal-emerald-200 bg-legal-emerald-50' 
                   : 'border-legal-emerald-200 bg-legal-emerald-50'
@@ -223,17 +223,17 @@ export function ReviewStep({
           )}
 
           {/* Precio Total */}
-          <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5">
+          <div className="bg-white rounded-lg shadow-document border border-slate-200 p-4 md:p-5">
             <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 font-sans">Total pagado</div>
-            <div className="text-3xl font-bold text-navy-900 font-sans mb-1">
+            <div className="text-2xl md:text-3xl font-bold text-navy-900 font-sans mb-1">
               {formatPrice(totalPrice)}
             </div>
             <p className="text-xs text-slate-500 font-sans">IVA incluido</p>
           </div>
 
           {/* Instrucciones */}
-          <div className="bg-legal-emerald-50 rounded-lg border border-legal-emerald-100 p-5">
-            <div className="flex items-start gap-3">
+          <div className="bg-legal-emerald-50 rounded-lg border border-legal-emerald-100 p-4 md:p-5">
+            <div className="flex items-start gap-2 md:gap-3">
               <div className="w-8 h-8 bg-legal-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <CheckCircle className="w-4 h-4 text-white" />
               </div>

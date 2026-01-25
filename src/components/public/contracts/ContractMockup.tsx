@@ -60,7 +60,7 @@ export function ContractMockup() {
       <div className="absolute -top-4 -right-4 bg-white rounded-lg shadow-document-hover border border-slate-200 px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-legal-emerald-500 rounded-full animate-pulse"></div>
-          <span className="text-sm text-navy-900 font-medium font-sans">Listo en 5 min</span>
+          <span className="text-sm text-navy-900 font-medium font-sans">Listo en 10 min</span>
         </div>
       </div>
       

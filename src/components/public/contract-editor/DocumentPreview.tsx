@@ -32,8 +32,10 @@ export function DocumentPreview({
 }: DocumentPreviewProps) {
   const contractRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const contentWrapperRef = useRef<HTMLDivElement>(null);
   const [currentDescription, setCurrentDescription] = useState<string | null>(null);
   const [currentFieldName, setCurrentFieldName] = useState<string | null>(null);
+  const [contentHeight, setContentHeight] = useState<number>(0);
 
   useEffect(() => {
     if (contractRef.current) {
@@ -43,8 +45,16 @@ export function DocumentPreview({
       if (onHtmlReady && renderedContract) {
         onHtmlReady(renderedContract);
       }
+      
+      // Calcular altura del contenido para vista parcial
+      if (visiblePercentage !== undefined && contentWrapperRef.current) {
+        setTimeout(() => {
+          const height = contractRef.current?.scrollHeight || 0;
+          setContentHeight(height);
+        }, 100);
+      }
     }
-  }, [renderedContract, onHtmlReady]);
+  }, [renderedContract, onHtmlReady, visiblePercentage]);
 
   // Efecto para hacer scroll a la variable activa y mostrar descripción
   useEffect(() => {
@@ -99,6 +109,11 @@ export function DocumentPreview({
 
   // Determinar si mostrar el documento parcialmente (con gradiente)
   const isPartialView = visiblePercentage !== undefined && visiblePercentage < 100;
+  
+  // Calcular altura visible basada en el porcentaje del contenido real
+  const visibleHeight = isPartialView && contentHeight > 0 
+    ? (contentHeight * (visiblePercentage || 60) / 100) 
+    : undefined;
 
   return (
     <>
@@ -131,7 +146,13 @@ export function DocumentPreview({
             ) : (
               <div className="relative">
                 {/* Contenedor con altura limitada si es vista parcial */}
-                <div className={`${isPartialView ? 'relative' : ''}`} style={isPartialView ? { maxHeight: `${visiblePercentage}vh`, overflow: 'hidden' } : {}}>
+                <div 
+                  ref={contentWrapperRef}
+                  className={`relative ${isPartialView ? 'overflow-hidden' : ''}`} 
+                  style={isPartialView && visibleHeight ? { 
+                    maxHeight: `${visibleHeight}px`,
+                  } : {}}
+                >
                   <div
                     ref={contractRef}
                     className="contract-preview prose prose-sm max-w-none select-none font-serif"
@@ -139,10 +160,11 @@ export function DocumentPreview({
                   />
                 
                 {/* Gradiente con blur y transparencia si es vista parcial */}
-                {isPartialView && (
+                {isPartialView && visibleHeight && (
                   <div 
-                    className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
+                    className="absolute bottom-0 left-0 right-0 pointer-events-none"
                     style={{
+                      height: '120px',
                       background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.7) 40%, rgba(255,255,255,0.95) 100%)',
                       backdropFilter: 'blur(4px)',
                       WebkitBackdropFilter: 'blur(4px)'

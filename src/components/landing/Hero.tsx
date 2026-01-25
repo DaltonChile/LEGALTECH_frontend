@@ -19,20 +19,20 @@ export function Hero() {
                 </span>
               </Text>
               <Text variant="body-lg" color="muted" className="max-w-lg leading-relaxed">
-                Sin abogados, sin esperas. Genera, personaliza y firma contratos legalmente válidos en minutos. Simple, rápido y seguro.
+                Sin trámites burocráticos. Genera y personaliza tus contratos en minutos, con opción de Firma Electrónica Avanzada o Validación Notarial integrada. Todo en un solo lugar.
               </Text>
             </div>
 
             {/* Stats */}
             <Box className="flex items-center gap-4 pt-2 bg-transparent border-none shadow-none">
               <div className="text-center">
-                <Text variant="h3" className="text-3xl font-sans">5 min</Text>
+                <Text variant="h3" className="text-3xl font-sans">10 min</Text>
                 <Text variant="body-sm" color="muted">Tiempo promedio</Text>
               </div>
               <div className="w-px h-12 bg-slate-300"></div>
               <div className="text-center">
-                <Text variant="h3" className="text-3xl font-sans">2,847</Text>
-                <Text variant="body-sm" color="muted">Contratos generados</Text>
+                <Text variant="h3" className="text-3xl font-sans">138</Text>
+                <Text variant="body-sm" color="muted">Contratos disponibles</Text>
               </div>
               <div className="w-px h-12 bg-slate-300"></div>
               <div className="text-center">
