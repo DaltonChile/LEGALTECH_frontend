@@ -20,6 +20,7 @@ export interface Template {
   description: string;
   requires_notary?: boolean;
   has_signers?: boolean;
+  category?: string | null;
   capsules?: Array<{
     id: string;
     title: string;
@@ -79,6 +80,7 @@ export const createTemplate = async (data: {
   slug: string;
   description: string;
   requires_notary?: boolean;
+  category?: string;
 }) => {
   return await api.post('/admin/templates', data);
 };
@@ -188,24 +190,46 @@ export const getAdminContractById = async (contractId: string) => {
 // APIs para Dashboard
 // ============================================
 
-export const getDashboardStats = async () => {
-  return await api.get('/admin/dashboard/stats');
+export interface DateRangeParams {
+  startDate?: string;
+  endDate?: string;
+}
+
+export const getDashboardStats = async (dateRange?: DateRangeParams) => {
+  const params: Record<string, string> = {};
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/stats', { params });
 };
 
-export const getDashboardWeeklyActivity = async () => {
-  return await api.get('/admin/dashboard/weekly-activity');
+export const getDashboardWeeklyActivity = async (dateRange?: DateRangeParams) => {
+  const params: Record<string, string> = {};
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/weekly-activity', { params });
 };
 
-export const getDashboardMonthlyActivity = async () => {
-  return await api.get('/admin/dashboard/monthly-activity');
+export const getDashboardMonthlyActivity = async (dateRange?: DateRangeParams) => {
+  const params: Record<string, string> = {};
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/monthly-activity', { params });
 };
 
-export const getDashboardRecentContracts = async (limit?: number) => {
-  return await api.get('/admin/dashboard/recent-contracts', { params: { limit } });
+export const getDashboardRecentContracts = async (limit?: number, dateRange?: DateRangeParams) => {
+  const params: Record<string, string | number> = {};
+  if (limit) params.limit = limit;
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/recent-contracts', { params });
 };
 
-export const getDashboardPopularTemplates = async (limit?: number) => {
-  return await api.get('/admin/dashboard/popular-templates', { params: { limit } });
+export const getDashboardPopularTemplates = async (limit?: number, dateRange?: DateRangeParams) => {
+  const params: Record<string, string | number> = {};
+  if (limit) params.limit = limit;
+  if (dateRange?.startDate) params.startDate = dateRange.startDate;
+  if (dateRange?.endDate) params.endDate = dateRange.endDate;
+  return await api.get('/admin/dashboard/popular-templates', { params });
 };
 
 // ============================================
@@ -273,7 +297,7 @@ export interface PlatformConfig {
   id: string;
   key: string;
   value: string;
-  value_type: 'string' | 'integer' | 'float' | 'boolean';
+  value_type: 'string' | 'integer' | 'float' | 'boolean' | 'json';
   description: string;
   is_editable_by_admin: boolean;
 }
@@ -283,8 +307,25 @@ export const getPlatformConfig = async (): Promise<PlatformConfig[]> => {
   return response.data.data || [];
 };
 
-export const updatePlatformConfig = async (key: string, value: string | number): Promise<void> => {
+export const updatePlatformConfig = async (key: string, value: string | number | string[]): Promise<void> => {
   await api.put(`/admin/config/${key}`, { value });
+};
+
+// Get template categories (public endpoint)
+export const getTemplateCategories = async (): Promise<string[]> => {
+  const response = await api.get<{ success: boolean; data: string[] }>('/config/template-categories');
+  return response.data.data || [];
+};
+
+// Update template (including category)
+export const updateTemplate = async (templateId: string, data: {
+  title?: string;
+  description?: string;
+  slug?: string;
+  is_active?: boolean;
+  category?: string | null;
+}) => {
+  return await api.put(`/admin/templates/${templateId}`, data);
 };
 
 // ============================================
@@ -296,7 +337,7 @@ export interface NotaryContract {
   tracking_code: string;
   buyer_email: string;
   buyer_rut: string;
-  status: 'waiting_notary' | 'signed';
+  status: 'waiting_notary' | 'completed';
   total_amount: number;
   requires_notary: boolean;
   draft_pdf_path: string | null;

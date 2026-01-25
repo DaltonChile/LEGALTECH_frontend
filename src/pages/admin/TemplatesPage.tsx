@@ -7,7 +7,8 @@ import {
   getTemplateVersionDownloadUrl,
   deleteTemplateVersion,
   deleteTemplate,
-  updateTemplateStatus
+  updateTemplateStatus,
+  getTemplateCategories
 } from '../../services/api';
 import { Search, Plus, FileText, Edit, Eye, EyeOff, Download, Trash2 } from 'lucide-react';
 import { 
@@ -23,11 +24,24 @@ export const TemplatesPage: React.FC = () => {
   const [showNewTemplateForm, setShowNewTemplateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterType>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [categories, setCategories] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
   useEffect(() => {
     loadTemplates();
+    loadCategories();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const cats = await getTemplateCategories();
+      setCategories(cats);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      setCategories(['laboral', 'arrendamiento', 'compraventa', 'servicios', 'otros']);
+    }
+  };
 
   const loadTemplates = async () => {
     try {
@@ -227,8 +241,11 @@ export const TemplatesPage: React.FC = () => {
     } else if (filterStatus === 'draft') {
       matchesFilter = !hasPublishedVersion;
     }
+
+    // Category filter
+    const matchesCategory = filterCategory === 'all' || template.category === filterCategory;
     
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesFilter && matchesCategory;
   });
 
   if (loading) {
@@ -271,6 +288,20 @@ export const TemplatesPage: React.FC = () => {
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
           />
         </div>
+
+        {/* Category Filter */}
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+        >
+          <option value="all">Todas las categorías</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </option>
+          ))}
+        </select>
 
         <div className="flex bg-slate-100 p-1 rounded-lg">
           {(['all', 'published', 'draft'] as const).map((status) => (
@@ -316,7 +347,8 @@ export const TemplatesPage: React.FC = () => {
             <table className="w-full">
               <thead className="bg-slate-50/50 border-b border-slate-100">
                 <tr>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[40%]">Nombre / Slug</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[35%]">Nombre / Slug</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoría</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio Base</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Versión</th>
@@ -341,6 +373,16 @@ export const TemplatesPage: React.FC = () => {
                             <p className="text-xs text-slate-500 font-mono mt-0.5">{template.slug}</p>
                           </div>
                         </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {template.category ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                            {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">Sin categoría</span>
+                        )}
                       </td>
                       
                       <td className="px-6 py-4">

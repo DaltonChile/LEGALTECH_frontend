@@ -19,7 +19,7 @@ export function Navbar() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 via-cyan-500 to-lime-500 rounded-md flex items-center justify-center">
                 <Scale className="w-4.5 h-4.5 text-white" />
               </div>
-              <span className="text-xl tracking-tight text-slate-900">legaltech</span>
+              <span className="text-xl tracking-tight text-slate-900">Contrato Seguro</span>
             </button>
             
             <div className="hidden md:flex items-center gap-8">

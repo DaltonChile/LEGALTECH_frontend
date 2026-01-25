@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download, Play, CheckCircle, Plus, History, Save, Trash2 } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import NewVersionUploader from '../NewVersionUploader';
-import api from '../../../../services/api';
+import api, { getTemplateCategories } from '../../../../services/api';
 import type { Template } from '../../../../types/templates';
 
 interface TemplateDetailModalProps {
@@ -24,14 +24,30 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 }) => {
   const [showVersions, setShowVersions] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
-  const [editingField, setEditingField] = useState<'title' | 'description' | 'price' | string | null>(null);
+  const [editingField, setEditingField] = useState<'title' | 'description' | 'price' | 'category' | string | null>(null);
   const [editData, setEditData] = useState({
     title: template.title,
     description: template.description || '',
   });
   const [editPrice, setEditPrice] = useState('');
   const [editCapsulePrice, setEditCapsulePrice] = useState('');
+  const [editCategory, setEditCategory] = useState(template.category || '');
+  const [categories, setCategories] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Load categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const cats = await getTemplateCategories();
+        setCategories(cats);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        setCategories(['laboral', 'arrendamiento', 'compraventa', 'servicios', 'otros']);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const publishedVersion = template.versions?.find(v => v.is_published);
   // Usar la versión publicada, o si no hay, la última versión (para editar cápsulas)
@@ -65,6 +81,11 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     setEditingField(`capsule-${capsuleIndex}`);
   };
 
+  const handleStartEditCategory = () => {
+    setEditCategory(template.category || '');
+    setEditingField('category');
+  };
+
   const handleCancelEdit = () => {
     // Restaurar valores originales
     setEditData({
@@ -73,6 +94,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     });
     setEditPrice('');
     setEditCapsulePrice('');
+    setEditCategory(template.category || '');
     setEditingField(null);
   };
 
@@ -116,6 +138,24 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
       alert('Error al actualizar el precio');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveCategory = async () => {
+    if (saving) return;
+    
+    setSaving(true);
+    try {
+      await api.put(`/admin/templates/${template.id}`, {
+        category: editCategory || null
+      });
+      setEditingField(null);
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating category:', error);
+      alert('Error al actualizar la categoría');
+    } finally {
+      setSaving(false);;
     }
   };
 
@@ -429,6 +469,63 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
           ) : (
               <button
                 onClick={() => handleStartEdit('description')}
+                className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
+              >
+                editar
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Categoría */}
+        <div>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Categoría</label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              {editingField === 'category' ? (
+                <select
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 bg-white"
+                  autoFocus
+                >
+                  <option value="">Sin categoría</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
+                  <p className="text-slate-700">
+                    {template.category 
+                      ? template.category.charAt(0).toUpperCase() + template.category.slice(1)
+                      : 'Sin categoría'}
+                  </p>
+                </div>
+              )}
+            </div>
+            {editingField === 'category' ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                  className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveCategory}
+                  disabled={saving}
+                  className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
+                >
+                  {saving ? '...' : 'Guardar'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleStartEditCategory}
                 className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
               >
                 editar

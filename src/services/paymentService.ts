@@ -31,7 +31,7 @@ export interface PaymentStatusResponse {
   success: boolean;
   data: {
     contract_id: string;
-    contract_status: 'pending_payment' | 'draft' | 'waiting_signatures' | 'waiting_notary' | 'signed' | 'completed' | 'failed';
+    contract_status: 'pending_payment' | 'draft' | 'waiting_signatures' | 'waiting_notary' | 'completed' | 'failed';
     payment_status: 'pending' | 'approved' | 'rejected' | 'in_process';
     payment_id: string;
     amount: number;

@@ -128,7 +128,7 @@ export function SignatureStep({
       };
     }
     
-    if (status === 'signed' || status === 'completed') {
+    if (status === 'completed') {
       return {
         text: 'Completado',
         bgColor: 'bg-green-50',
@@ -211,7 +211,7 @@ export function SignatureStep({
                     <Scale className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-lg">LegalTech Signature</h3>
+                    <h3 className="font-bold text-slate-900 text-lg">Contrato Seguro Signature</h3>
                     <div className="flex items-center gap-2 text-sm text-slate-500">
                       <span>Ref: {trackingCode}</span>
                       <button onClick={copyToClipboard} className="hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-slate-50" title="Copiar código">

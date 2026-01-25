@@ -22,10 +22,10 @@ export function HomePage() {
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
                   <span className="text-white text-sm font-semibold">L</span>
                 </div>
-                <span className="text-white text-xl">legaltech</span>
+                <span className="text-white text-xl">Contrato Seguro</span>
               </div>
               <p className="text-slate-400 text-sm">
-                © 2025 legaltech. Contratos legales al instante.
+                © 2025 Contrato Seguro. Contratos legales al instante.
               </p>
             </div>
           </div>

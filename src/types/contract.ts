@@ -1,10 +1,8 @@
 export type ContractStatus = 
   | 'pending_payment'    // 30% completado, esperando pago
   | 'draft'              // Pagado, puede completar formulario
-  | 'paid'               // Legacy - pagado
   | 'waiting_signatures' // Aprobado, esperando firmas
   | 'waiting_notary'     // Esperando firma de notario
-  | 'signed'             // Firmado
   | 'completed'          // Completado
   | 'failed';            // Fallido
 
