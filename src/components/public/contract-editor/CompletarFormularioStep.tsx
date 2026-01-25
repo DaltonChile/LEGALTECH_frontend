@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import axios from 'axios';
-import { ArrowRight, CheckCircle, Edit3, AlertCircle } from 'lucide-react';
+import { ArrowRight, Edit3, AlertCircle } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { EditorHeader } from './EditorHeader';
@@ -50,7 +50,7 @@ export function CompletarFormularioStep({
   const [error, setError] = useState<string | null>(null);
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
   const documentRef = useRef<HTMLDivElement>(null);
-  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Obtener las cápsulas seleccionadas (IDs)
   const selectedCapsuleIds = useMemo(() => {
