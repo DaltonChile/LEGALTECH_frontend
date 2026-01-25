@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { 
   FileText, Clock, CheckCircle, XCircle, AlertCircle, 
   X, Eye, TrendingUp, TrendingDown, DollarSign, 
-  FileSignature, BarChart3, PieChart as PieChartIcon, Loader2,
+  BarChart3, PieChart as PieChartIcon, Loader2,
   Calendar, Filter, RefreshCw
 } from 'lucide-react';
 import { 
@@ -624,7 +624,7 @@ export function AdminDashboard() {
                         boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)',
                         padding: '12px 16px'
                       }}
-                      formatter={(value: number, name: string) => [
+                      formatter={(value, name) => [
                         name === 'ingresos' ? `$${value}K` : value,
                         name === 'ingresos' ? 'Ingresos' : 'Contratos'
                       ]}
@@ -691,7 +691,7 @@ export function AdminDashboard() {
                             border: 'none', 
                             boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)' 
                           }}
-                          formatter={(value: number) => [`${value} contratos`, '']}
+                          formatter={(value) => [`${value} contratos`, '']}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -866,64 +866,6 @@ const StatCard: React.FC<StatCardProps> = ({
   );
 };
 
-// Signature Comparison Card Component
-interface SignatureComparisonCardProps {
-  simple: number;
-  fea: number;
-}
-
-const SignatureComparisonCard: React.FC<SignatureComparisonCardProps> = ({ simple, fea }) => {
-  const total = simple + fea;
-  const simplePercent = total > 0 ? Math.round((simple / total) * 100) : 0;
-  const feaPercent = total > 0 ? Math.round((fea / total) * 100) : 0;
-
-  return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-start justify-between mb-3">
-        <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-100 to-purple-100">
-          <FileSignature className="w-5 h-5 text-cyan-600" />
-        </div>
-        <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
-          {total} completados
-        </span>
-      </div>
-      <p className="text-xs text-slate-500 font-medium mb-3">Tipo de Firma</p>
-      
-      {/* Progress Bar */}
-      <div className="h-3 bg-slate-100 rounded-full overflow-hidden flex mb-3">
-        {simplePercent > 0 && (
-          <div 
-            className="bg-cyan-500 h-full transition-all duration-500"
-            style={{ width: `${simplePercent}%` }}
-          />
-        )}
-        {feaPercent > 0 && (
-          <div 
-            className="bg-purple-500 h-full transition-all duration-500"
-            style={{ width: `${feaPercent}%` }}
-          />
-        )}
-      </div>
-
-      {/* Legend */}
-      <div className="flex justify-between text-xs">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
-          <span className="text-slate-600">Simple</span>
-          <span className="font-bold text-slate-900">{simple}</span>
-          <span className="text-slate-400">({simplePercent}%)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-          <span className="text-slate-600">FEA</span>
-          <span className="font-bold text-slate-900">{fea}</span>
-          <span className="text-slate-400">({feaPercent}%)</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 interface ContractRowProps {
   contract: Contract;
   onView: () => void;
@@ -997,9 +939,9 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
     color: 'bg-gray-100 text-gray-600', 
     dotColor: 'bg-gray-400' 
   };
-  const statusIcons = {
-    draft: FileText, pending_payment: Clock, paid: CheckCircle,
-    waiting_notary: AlertCircle, waiting_signatures: Clock, signed: CheckCircle, failed: XCircle
+  const statusIcons: Record<string, typeof FileText> = {
+    draft: FileText, pending_payment: Clock, completed: CheckCircle,
+    waiting_notary: AlertCircle, waiting_signatures: Clock, failed: XCircle
   };
   const StatusIcon = statusIcons[contract.status] || FileText;
 

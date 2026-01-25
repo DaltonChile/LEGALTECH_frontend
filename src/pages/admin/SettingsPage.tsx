@@ -82,18 +82,6 @@ export const SettingsPage = () => {
     return SettingsIcon;
   };
 
-  // Parse JSON values for display
-  const parseValue = (config: PlatformConfig): string[] | null => {
-    if (config.value_type === 'json') {
-      try {
-        return JSON.parse(config.value);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  };
-
   // Handle adding a new category
   const handleAddCategory = (key: string) => {
     const newCategory = prompt('Ingresa el nombre de la nueva categoría:');
