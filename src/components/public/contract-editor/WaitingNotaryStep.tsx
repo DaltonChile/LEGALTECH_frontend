@@ -24,10 +24,7 @@ export function WaitingNotaryStep({
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 relative">
-      {/* Background Grid */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-
+    <div className="h-full flex flex-col bg-slate-100 relative">
       <EditorHeader 
         steps={steps} 
         currentStep="review"
@@ -43,21 +40,21 @@ export function WaitingNotaryStep({
         <div className="max-w-4xl mx-auto p-8 relative z-10 space-y-8">
             
           {/* Main Card */}
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden animate-fade-in-up">
+          <div className="bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden animate-fade-in-up">
             
             {/* Card Header */}
-            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
                   <Gavel className="w-6 h-6 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg">Contrato Seguro Notaría</h3>
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <h3 className="font-serif font-bold text-navy-900 text-lg">Contrato Seguro Notaría</h3>
+                  <div className="flex items-center gap-2 text-sm text-slate-500 font-sans">
                     <span>Ref: {trackingCode}</span>
                     <button 
                       onClick={copyToClipboard} 
-                      className="hover:text-blue-600 transition-colors p-1 rounded-md hover:bg-slate-50" 
+                      className="hover:text-legal-emerald-600 transition-colors p-1 rounded-md hover:bg-slate-50" 
                       title="Copiar código"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -85,26 +82,26 @@ export function WaitingNotaryStep({
               
               {/* Status Text */}
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-3">{title}</h2>
-                <p className="text-slate-600 max-w-md mx-auto">
+                <h2 className="text-2xl font-serif font-bold text-navy-900 mb-3">{title}</h2>
+                <p className="text-slate-600 max-w-md mx-auto font-sans">
                   {description}
                 </p>
               </div>
 
               {/* Tracking Info Alert */}
-              <div className="bg-slate-50 rounded-xl p-6 mb-8 border border-slate-100">
-                <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <div className="bg-slate-50 rounded-lg p-6 mb-8 border border-slate-200">
+                <h3 className="font-semibold text-navy-900 mb-2 flex items-center gap-2 font-sans">
                   <Mail className="w-5 h-5 text-slate-500" />
                   Guarda tu código de seguimiento
                 </h3>
-                <p className="text-slate-600 text-sm mb-4">
+                <p className="text-slate-600 text-sm mb-4 font-sans">
                   Podrás consultar el estado de tu contrato en cualquier momento utilizando este código en nuestra página de seguimiento.
                 </p>
                 <div className="bg-white p-4 rounded-lg border border-slate-200 flex items-center justify-between">
-                  <code className="text-xl font-mono text-slate-800 font-bold">{trackingCode}</code>
+                  <code className="text-xl font-mono text-navy-900 font-bold">{trackingCode}</code>
                   <button 
                     onClick={copyToClipboard} 
-                    className="text-blue-600 font-medium text-sm hover:underline"
+                    className="text-legal-emerald-600 font-medium text-sm hover:underline font-sans"
                   >
                     Copiar
                   </button>
@@ -113,28 +110,28 @@ export function WaitingNotaryStep({
 
               {/* Info Cards */}
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <div className="bg-legal-emerald-50 rounded-lg p-4 border border-legal-emerald-100">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Mail className="w-4 h-4 text-blue-600" />
+                    <div className="w-8 h-8 bg-legal-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-4 h-4 text-legal-emerald-600" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-blue-900 text-sm">Notificación por Email</h4>
-                      <p className="text-blue-700 text-xs mt-1">
+                      <h4 className="font-semibold text-legal-emerald-900 text-sm font-sans">Notificación por Email</h4>
+                      <p className="text-legal-emerald-700 text-xs mt-1 font-sans">
                         Recibirás un correo cuando el notario haya validado tu documento.
                       </p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                <div className="bg-navy-50 rounded-lg p-4 border border-navy-100">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Scale className="w-4 h-4 text-green-600" />
+                    <div className="w-8 h-8 bg-navy-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Scale className="w-4 h-4 text-navy-900" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-green-900 text-sm">Validez Legal</h4>
-                      <p className="text-green-700 text-xs mt-1">
+                      <h4 className="font-semibold text-navy-900 text-sm font-sans">Validez Legal</h4>
+                      <p className="text-navy-700 text-xs mt-1 font-sans">
                         La firma notarial otorga plena validez legal a tu documento.
                       </p>
                     </div>

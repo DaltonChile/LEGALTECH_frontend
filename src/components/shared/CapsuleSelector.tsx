@@ -53,12 +53,12 @@ export function CapsuleSelector({
 
   if (capsules.length === 0) {
     return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200 p-8 text-center text-slate-500">
+      <div className="bg-white rounded-lg shadow-document border border-slate-200 p-8 text-center text-slate-500 font-sans">
         Este contrato no tiene cláusulas opcionales disponibles
         <div className="mt-4">
           <button
             onClick={() => window.location.href = '#editor'}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 via-cyan-500 to-lime-500 text-white rounded-xl hover:shadow-lg transition-all font-semibold"
+            className="px-6 py-3 bg-navy-900 text-white rounded-lg hover:bg-navy-800 transition-all font-semibold font-sans"
           >
             Continuar al editor →
           </button>
@@ -71,8 +71,8 @@ export function CapsuleSelector({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold text-slate-900 mb-3">Cláusulas Opcionales</h2>
-        <p className="text-slate-600 text-lg">
+        <h2 className="text-2xl font-serif font-bold text-navy-900 mb-3">Cláusulas Opcionales</h2>
+        <p className="text-slate-600 font-sans">
           Selecciona las cláusulas adicionales que deseas incluir en tu contrato
         </p>
       </div>
@@ -86,12 +86,12 @@ export function CapsuleSelector({
           return (
             <div
               key={capsule.id}
-              className={`bg-white rounded-xl border-2 transition-all ${
-                isSelected ? 'border-cyan-500 ring-2 ring-cyan-200' : 'border-slate-200 hover:border-slate-300'
+              className={`bg-white rounded-lg border transition-all ${
+                isSelected ? 'border-legal-emerald-500 ring-1 ring-legal-emerald-200 bg-legal-emerald-50/30' : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               {/* Capsule Header */}
-              <div className="p-6">
+              <div className="p-5">
                 <div className="flex items-start space-x-4">
                   {/* Checkbox */}
                   <div className="flex-shrink-0 mt-1">
@@ -99,16 +99,16 @@ export function CapsuleSelector({
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => handleToggleCapsule(capsule.id)}
-                      className="h-6 w-6 text-cyan-600 focus:ring-2 focus:ring-cyan-500 border-slate-300 rounded cursor-pointer"
+                      className="h-5 w-5 text-legal-emerald-600 focus:ring-2 focus:ring-legal-emerald-500 border-slate-300 rounded cursor-pointer"
                     />
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
-                      <h3 className="text-lg font-semibold text-slate-900">{capsule.title}</h3>
+                      <h3 className="text-base font-semibold text-navy-900 font-sans">{capsule.title}</h3>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-lg font-bold text-cyan-600">
+                        <span className={`text-base font-bold font-sans ${isSelected ? 'text-legal-emerald-600' : 'text-slate-600'}`}>
                           {capsule.price === 0 ? 'Gratis' : formatPrice(capsule.price)}
                         </span>
                         {/* Expand/Collapse button */}
@@ -136,7 +136,7 @@ export function CapsuleSelector({
 
                     {/* Short description */}
                     {!isExpanded && capsule.legal_text && (
-                      <p className="mt-2 text-sm text-slate-600 line-clamp-2">
+                      <p className="mt-2 text-sm text-slate-600 line-clamp-2 font-sans">
                         {capsule.legal_text.substring(0, 150)}
                         {capsule.legal_text.length > 150 ? '...' : ''}
                       </p>
@@ -144,17 +144,17 @@ export function CapsuleSelector({
 
                     {/* Expanded content */}
                     {isExpanded && (
-                      <div className="mt-4 pl-4 border-l-2 border-cyan-300">
+                      <div className="mt-4 pl-4 border-l-2 border-legal-emerald-300">
                         {capsule.legal_text && (
                           <>
-                            <h4 className="text-sm font-medium text-slate-700 mb-2">Texto completo:</h4>
-                            <p className="text-sm text-slate-600 whitespace-pre-wrap">{capsule.legal_text}</p>
+                            <h4 className="text-sm font-medium text-slate-700 mb-2 font-sans">Texto completo:</h4>
+                            <p className="text-sm text-slate-600 whitespace-pre-wrap font-sans">{capsule.legal_text}</p>
                           </>
                         )}
 
                         {capsule.form_schema && capsule.form_schema.length > 0 && (
                           <div className="mt-3">
-                            <h4 className="text-sm font-medium text-slate-700 mb-2">
+                            <h4 className="text-sm font-medium text-slate-700 mb-2 font-sans">
                               Campos adicionales ({capsule.form_schema.length}):
                             </h4>
                             <div className="flex flex-wrap gap-2">
@@ -180,16 +180,16 @@ export function CapsuleSelector({
       </div>
 
       {/* Price Summary */}
-      <div className="bg-white rounded-xl border-2 border-slate-200 p-6">
+      <div className="bg-white rounded-lg border border-slate-200 p-5 shadow-document">
         <div className="space-y-4">
-          <div className="flex justify-between text-slate-600">
+          <div className="flex justify-between text-slate-600 font-sans">
             <span>Precio base del contrato</span>
             <span className="font-medium">{formatPrice(basePrice)}</span>
           </div>
 
           {selectedCapsules.length > 0 && (
             <>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-slate-600 font-sans">
                 <span>Cláusulas opcionales ({selectedCapsules.length})</span>
                 <span className="font-medium">
                   {formatPrice(
@@ -200,10 +200,10 @@ export function CapsuleSelector({
                 </span>
               </div>
 
-              <div className="border-t-2 border-slate-200 pt-4 mt-1">
+              <div className="border-t border-slate-200 pt-4 mt-1">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-2xl font-bold text-slate-900">Total</span>
-                  <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-500 to-lime-500 bg-clip-text text-transparent">
+                  <span className="text-xl font-serif font-bold text-navy-900">Total</span>
+                  <span className="text-2xl font-bold text-navy-900 font-sans">
                     {formatPrice(calculateTotalPrice())}
                   </span>
                 </div>
@@ -212,10 +212,10 @@ export function CapsuleSelector({
           )}
 
           {selectedCapsules.length === 0 && (
-            <div className="border-t-2 border-slate-200 pt-4 mt-1">
+            <div className="border-t border-slate-200 pt-4 mt-1">
               <div className="flex justify-between items-baseline">
-                <span className="text-2xl font-bold text-slate-900">Total</span>
-                <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-cyan-500 to-lime-500 bg-clip-text text-transparent">
+                <span className="text-xl font-serif font-bold text-navy-900">Total</span>
+                <span className="text-2xl font-bold text-navy-900 font-sans">
                   {formatPrice(basePrice)}
                 </span>
               </div>

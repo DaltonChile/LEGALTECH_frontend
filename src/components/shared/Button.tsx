@@ -12,18 +12,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
+// Updated to match the new professional design system
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-cyan-100 text-slate-700 border-2 border-cyan-300 hover:bg-cyan-200',
-  secondary: 'bg-white border-2 border-slate-200 text-slate-600 hover:border-slate-300',
-  success: 'bg-green-100 text-green-700 border-2 border-green-300 hover:bg-green-200',
-  danger: 'bg-red-100 text-red-700 border-2 border-red-300 hover:bg-red-200',
-  outline: 'bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50',
+  primary: 'bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950',
+  secondary: 'bg-white text-navy-900 border border-slate-300 hover:bg-slate-50 active:bg-slate-100',
+  success: 'bg-legal-emerald-700 text-white hover:bg-legal-emerald-800 active:bg-legal-emerald-900',
+  danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
+  outline: 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
   sm: 'px-3 py-1.5 text-sm',
-  md: 'px-6 py-3 text-base',
-  lg: 'px-8 py-4 text-lg',
+  md: 'px-4 py-2.5 text-sm',
+  lg: 'px-6 py-3 text-base',
 };
 
 export const Button: React.FC<ButtonProps> = ({ 
@@ -42,7 +43,7 @@ export const Button: React.FC<ButtonProps> = ({
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${fullWidth ? 'w-full' : ''}
-        rounded-2xl font-semibold transition-all shadow-sm
+        rounded-md font-medium transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
         flex items-center justify-center gap-2
         ${className}
@@ -50,7 +51,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
       {...props}
     >
-      {Icon && <Icon className="w-5 h-5" />}
+      {Icon && <Icon className="w-4 h-4" />}
       {children}
     </button>
   );

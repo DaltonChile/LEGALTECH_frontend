@@ -1,5 +1,7 @@
 import { Scale } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Text } from '../ui/primitives/Text';
+import { Button } from '../ui/primitives/Button';
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -8,51 +10,45 @@ export function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-white shadow-md from-slate-50 via-cyan-50/30 to-lime-50/30 sticky top-0 z-50">
+    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-10">
             <button 
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 via-cyan-500 to-lime-500 rounded-md flex items-center justify-center">
-                <Scale className="w-4.5 h-4.5 text-white" />
+              <div className="w-9 h-9 bg-navy-900 rounded-lg flex items-center justify-center shadow-sm">
+                <Scale className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl tracking-tight text-slate-900">Contrato Seguro</span>
+              <Text as="span" variant="h4" className="text-xl tracking-tight">Contrato Seguro</Text>
             </button>
             
-            <div className="hidden md:flex items-center gap-8">
-              <button 
+            <div className="hidden md:flex items-center gap-2">
+              <Button 
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate('/')}
-                className={`text-sm transition-colors ${
-                  isActive('/') 
-                    ? 'text-blue-600 font-medium' 
-                    : 'text-slate-700 hover:text-slate-900'
-                }`}
+                className={isActive('/') ? 'text-navy-900 bg-slate-100' : ''}
               >
                 Catálogo
-              </button>
-              <button 
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate('/seguimiento')}
-                className={`text-sm transition-colors ${
-                  isActive('/seguimiento') 
-                    ? 'text-blue-600 font-medium' 
-                    : 'text-slate-700 hover:text-slate-900'
-                }`}
+                className={isActive('/seguimiento') ? 'text-navy-900 bg-slate-100' : ''}
               >
                 Seguimiento
-              </button>
-              <button 
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate('/ayuda')}
-                className={`text-sm transition-colors ${
-                  isActive('/ayuda') 
-                    ? 'text-blue-600 font-medium' 
-                    : 'text-slate-700 hover:text-slate-900'
-                }`}
+                className={isActive('/ayuda') ? 'text-navy-900 bg-slate-100' : ''}
               >
                 Ayuda y Políticas
-              </button>
+              </Button>
             </div>
           </div>
         </div>

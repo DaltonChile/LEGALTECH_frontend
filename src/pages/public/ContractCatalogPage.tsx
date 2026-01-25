@@ -105,32 +105,32 @@ export function ContractCatalogPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando contratos...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-900 mx-auto"></div>
+          <p className="mt-4 text-slate-600 font-sans">Cargando contratos...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-lime-50/30">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-document border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Catálogo de Contratos</h1>
-          <p className="mt-2 text-gray-600">Selecciona el contrato que necesitas y personalízalo</p>
+          <h1 className="text-3xl font-serif font-bold text-navy-900">Catálogo de Contratos</h1>
+          <p className="mt-2 text-slate-600 font-sans">Selecciona el contrato que necesitas y personalízalo</p>
         </div>
       </header>
 
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-lg shadow-document border border-slate-200 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Search */}
             <div>
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="search" className="block text-sm font-medium text-navy-900 mb-2 font-sans">
                 Buscar
               </label>
               <input
@@ -139,20 +139,20 @@ export function ContractCatalogPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nombre o descripción..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-legal-emerald-500 focus:border-transparent font-sans"
               />
             </div>
 
             {/* Category filter */}
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="category" className="block text-sm font-medium text-navy-900 mb-2 font-sans">
                 Categoría
               </label>
               <select
                 id="category"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-legal-emerald-500 focus:border-transparent font-sans"
               >
                 <option value="all">Todas las categorías</option>
                 {categories.map((cat) => (
@@ -170,14 +170,14 @@ export function ContractCatalogPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {filteredTemplates.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">No se encontraron contratos</p>
+            <p className="text-slate-500 font-sans">No se encontraron contratos</p>
           </div>
         ) : (
           <div className="space-y-10">
             {sortedCategories.map((category) => (
               <div key={category}>
                 {/* Category Title */}
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                <h2 className="text-2xl font-serif font-bold text-navy-900 mb-6">
                   {formatCategoryTitle(category)}
                 </h2>
                 
@@ -186,41 +186,41 @@ export function ContractCatalogPage() {
                   {groupedTemplates[category].map((template) => (
               <div
                 key={template.id}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer border border-gray-200"
+                className="bg-white rounded-lg shadow-document hover:shadow-document-hover transition-shadow p-6 cursor-pointer border border-slate-200"
                 onClick={() => handleSelectTemplate(template.slug)}
               >
                 {/* Category badge */}
                 <div className="flex items-center justify-between mb-3">
                   {template.category ? (
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                    <span className="px-3 py-1 bg-legal-emerald-50 text-legal-emerald-700 text-xs font-semibold rounded-full font-sans">
                       {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
                     </span>
                   ) : (
-                    <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs font-semibold rounded-full">
+                    <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-semibold rounded-full font-sans">
                       General
                     </span>
                   )}
-                  <span className="text-lg font-bold text-gray-900">
+                  <span className="text-lg font-bold text-navy-900 font-sans">
                     {formatPrice(template.base_price)}
                   </span>
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{template.title}</h3>
+                <h3 className="text-xl font-serif font-bold text-navy-900 mb-2">{template.title}</h3>
 
                 {/* Description */}
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">{template.description}</p>
+                <p className="text-slate-600 text-sm mb-4 line-clamp-3 font-sans">{template.description}</p>
 
                 {/* Stats */}
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="text-gray-500">
+                <div className="border-t border-slate-200 pt-4">
+                  <div className="flex items-center justify-between text-sm font-sans">
+                    <div className="text-slate-500">
                       <span className="font-medium">
                         {template.published_version?.base_variables?.length || 0}
                       </span>{' '}
                       campos
                     </div>
-                    <div className="text-gray-500">
+                    <div className="text-slate-500">
                       <span className="font-medium">
                         {template.published_version?.capsules?.length || 0}
                       </span>{' '}
@@ -231,18 +231,18 @@ export function ContractCatalogPage() {
                   {/* Capsules preview */}
                   {template.published_version?.capsules && template.published_version.capsules.length > 0 && (
                     <div className="mt-3">
-                      <p className="text-xs text-gray-500 mb-2">Cláusulas disponibles:</p>
+                      <p className="text-xs text-slate-500 mb-2 font-sans">Cláusulas disponibles:</p>
                       <div className="flex flex-wrap gap-1">
                         {template.published_version.capsules.slice(0, 3).map((capsule) => (
                           <span
                             key={capsule.id}
-                            className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
+                            className="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded font-sans"
                           >
                             {capsule.title}
                           </span>
                         ))}
                         {template.published_version.capsules.length > 3 && (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                          <span className="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded font-sans">
                             +{template.published_version.capsules.length - 3} más
                           </span>
                         )}
@@ -252,7 +252,7 @@ export function ContractCatalogPage() {
                 </div>
 
                 {/* CTA Button */}
-                <button className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                <button className="mt-4 w-full bg-navy-900 text-white py-2 px-4 rounded-lg hover:bg-navy-800 transition-colors font-medium font-sans">
                   Crear contrato
                 </button>
               </div>

@@ -116,7 +116,7 @@ export function ResumeContractPage() {
           <div className="space-y-3">
             <button
               onClick={() => navigate('/seguimiento')}
-              className="w-full bg-cyan-600 text-white px-6 py-3 rounded-lg hover:bg-cyan-700 transition-colors font-medium"
+              className="w-full bg-navy-900 text-white px-6 py-3 rounded-md hover:bg-navy-800 transition-colors font-medium"
             >
               Ir a Seguimiento
             </button>

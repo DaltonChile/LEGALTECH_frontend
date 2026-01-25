@@ -107,7 +107,7 @@ export const TemplateEditPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy-900"></div>
       </div>
     );
   }
@@ -119,7 +119,7 @@ export const TemplateEditPage: React.FC = () => {
           <p className="text-slate-500 text-lg">Template no encontrado</p>
           <button
             onClick={() => navigate('/admin/templates')}
-            className="mt-4 px-6 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-2xl font-semibold hover:bg-cyan-200 transition-all"
+            className="mt-4 px-6 py-3 bg-navy-900 text-white rounded-md font-medium hover:bg-navy-800 transition-all"
           >
             Volver a Templates
           </button>

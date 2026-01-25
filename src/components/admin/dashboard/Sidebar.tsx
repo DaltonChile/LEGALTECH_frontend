@@ -8,7 +8,8 @@ import {
   LogOut,
   ClipboardCheck,
   Scale,
-  X
+  X,
+  FileCheck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -69,6 +70,7 @@ const RouteSelect = ({ onClose }: { onClose?: () => void }) => {
   const adminRoutes = [
     { icon: Home, label: 'Dashboard', path: '/admin' },
     { icon: FileText, label: 'Plantillas', path: '/admin/templates' },
+    { icon: FileCheck, label: 'Contratos', path: '/admin/contracts' },
     { icon: Users, label: 'Usuarios', path: '/admin/users' },
     { icon: Settings, label: 'Configuración', path: '/admin/settings' },
   ];

@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import axios from 'axios';
-import { ArrowRight, CheckCircle, Edit3, AlertCircle } from 'lucide-react';
+import { ArrowRight, Edit3, AlertCircle } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { EditorHeader } from './EditorHeader';
@@ -38,6 +38,10 @@ export function CompletarFormularioStep({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onBack: _onBack,
 }: CompletarFormularioStepProps) {
+  // Debug: Log variables metadata
+  console.log('📋 Template variables_metadata:', template.variables_metadata);
+  console.log('📋 Template:', template);
+  
   // Inicializar formData con los datos existentes del contrato
   const [formData, setFormData] = useState<Record<string, string>>(contractData.form_data || {});
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +50,7 @@ export function CompletarFormularioStep({
   const [error, setError] = useState<string | null>(null);
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
   const documentRef = useRef<HTMLDivElement>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Obtener las cápsulas seleccionadas (IDs)
   const selectedCapsuleIds = useMemo(() => {
@@ -133,6 +138,24 @@ export function CompletarFormularioStep({
     setFormData(data);
   };
 
+  const handleFieldFocus = (variable: string) => {
+    // Cancelar cualquier timeout pendiente de blur
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    console.log('🎯 Field focused:', variable);
+    setActiveField(variable);
+  };
+
+  const handleFieldBlur = () => {
+    // Delay para mantener el activeField el tiempo suficiente para ver el tooltip
+    blurTimeoutRef.current = setTimeout(() => {
+      console.log('👋 Field blur - clearing activeField');
+      setActiveField(null);
+    }, 200); // 200ms delay
+  };
+
   const handleContinueToReview = async () => {
     setError(null);
 
@@ -176,30 +199,17 @@ export function CompletarFormularioStep({
   };
 
   return (
-    <div className="h-full bg-slate-50 flex flex-col">
-       {/* Background Grid */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-
+    <div className="h-full bg-slate-100 flex flex-col">
       {/* Header */}
       <EditorHeader
          steps={steps}
          currentStep="completar"
-         onBack={_onBack}
          rightAction={
             <div className="flex items-center gap-6">
-                 {/* Payment Info Badge */}
-                 <div className="hidden lg:flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    <div>
-                      <div className="text-xs font-bold text-green-800 leading-none">Pago OK</div>
-                      <div className="text-[10px] text-green-600 font-mono leading-none mt-0.5">{contractData.tracking_code}</div>
-                    </div>
-                </div>
-
                  <button
                     onClick={handleContinueToReview}
                     disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting}
-                    className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap"
+                    className="bg-slate-900 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap text-sm md:text-base"
                   >
                     {isSubmitting ? (
                       <>
@@ -217,9 +227,9 @@ export function CompletarFormularioStep({
          }
       />
       
-      <div className="relative z-10 flex-1 w-full max-w-[1920px] mx-auto p-6 flex gap-6 overflow-hidden min-h-0" ref={documentRef}>  
+      <div className="relative z-10 flex-1 w-full max-w-[1920px] mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 overflow-hidden min-h-0" ref={documentRef}>  
         {/* Vista previa del documento */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0 min-h-[400px] lg:min-h-0">
           <DocumentPreview
             templateText={template.template_content}
             renderedContract={renderedContract}
@@ -251,8 +261,8 @@ export function CompletarFormularioStep({
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
                   activeField={activeField}
-                  onFieldFocus={setActiveField}
-                  onFieldBlur={() => setActiveField(null)}
+                  onFieldFocus={handleFieldFocus}
+                  onFieldBlur={handleFieldBlur}
                />
            </div>
 

@@ -48,10 +48,10 @@ export function ContractInfoModal({
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+      <div className="relative bg-white rounded-lg shadow-document-hover max-w-2xl w-full max-h-[80vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">{title}</h3>
+        <div className="bg-navy-900 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-xl font-serif font-bold text-white">{title}</h3>
           <button
             onClick={onClose}
             className="text-white/80 hover:text-white transition-colors"
@@ -64,10 +64,10 @@ export function ContractInfoModal({
         <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
           {/* Description */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">
+            <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 font-sans">
               Descripción
             </h4>
-            <p className="text-slate-600 leading-relaxed">
+            <p className="text-slate-700 leading-relaxed font-sans">
               {description}
             </p>
           </div>
@@ -75,7 +75,7 @@ export function ContractInfoModal({
           {/* Capsules */}
           {capsules && capsules.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+              <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3 font-sans">
                 Cláusulas Opcionales ({capsules.length})
               </h4>
               <div className="space-y-2">
@@ -90,19 +90,19 @@ export function ContractInfoModal({
                     >
                       <div className="flex items-center gap-3 flex-1">
                         <ChevronDown
-                          className={`w-5 h-5 text-slate-500 transition-transform ${
+                          className={`w-5 h-5 text-slate-400 transition-transform ${
                             expandedCapsule === capsule.id ? 'rotate-180' : ''
                           }`}
                         />
-                        <span className="text-slate-800 font-medium text-left">{capsule.title}</span>
+                        <span className="text-navy-900 font-medium text-left font-sans">{capsule.title}</span>
                       </div>
-                      <span className="text-sm text-slate-600 font-semibold">
+                      <span className="text-sm text-legal-emerald-600 font-semibold font-sans">
                         {formatPrice(capsule.price)}
                       </span>
                     </button>
                     {expandedCapsule === capsule.id && capsule.description && (
                       <div className="px-3 pb-3 pt-0 border-t border-slate-200 bg-white">
-                        <p className="text-sm text-slate-600 leading-relaxed pt-3">
+                        <p className="text-sm text-slate-600 leading-relaxed pt-3 font-sans">
                           {capsule.description}
                         </p>
                       </div>
@@ -115,7 +115,7 @@ export function ContractInfoModal({
 
           {(!capsules || capsules.length === 0) && (
             <div className="mt-4">
-              <p className="text-slate-500 text-sm italic">
+              <p className="text-slate-500 text-sm italic font-sans">
                 Este contrato no tiene cláusulas opcionales disponibles.
               </p>
             </div>

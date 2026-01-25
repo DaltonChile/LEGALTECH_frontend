@@ -68,9 +68,9 @@ export function AdminLayout() {
                </button>
             </div>
             
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 via-cyan-500 to-lime-500 p-[2px] cursor-pointer md:hidden">
+            <div className="w-8 h-8 rounded-full bg-navy-900 p-[2px] cursor-pointer md:hidden">
                <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                  <span className="text-xs font-bold text-slate-700">{firstName.charAt(0)}</span>
+                  <span className="text-xs font-bold text-navy-900">{firstName.charAt(0)}</span>
                </div>
             </div>
           </div>

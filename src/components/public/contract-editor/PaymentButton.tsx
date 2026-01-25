@@ -18,17 +18,17 @@ export function PaymentButton({
   const isDisabled = isLoading || completionPercentage < 100 || hasValidationErrors;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 py-4 px-4">
+    <div className="bg-white rounded-lg shadow-document border border-slate-200 py-4 px-4">
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm text-slate-600 py-4">Total a pagar</span>
-        <span className="text-2xl font-bold text-slate-900">
+        <span className="text-2xl font-bold text-navy-900">
           ${totalPrice.toLocaleString('es-CL')}
         </span>
       </div>
       <button
         onClick={onContinue}
         disabled={isDisabled}
-        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed py-4"
+        className="w-full flex items-center justify-center gap-2 bg-navy-900 text-white py-3 rounded-md text-sm font-semibold hover:bg-navy-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed py-4"
       >
         <CreditCard className="w-5 h-5" />
         Continuar a Revisión

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 import { contractEditorStyles } from './styles';
+import { formatVariableName } from './utils/templateParser';
 
 interface VariableWithDescription {
   name: string;
@@ -30,8 +31,11 @@ export function DocumentPreview({
   lockedOverlayContent
 }: DocumentPreviewProps) {
   const contractRef = useRef<HTMLDivElement>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{ top: number; left: number } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const contentWrapperRef = useRef<HTMLDivElement>(null);
   const [currentDescription, setCurrentDescription] = useState<string | null>(null);
+  const [currentFieldName, setCurrentFieldName] = useState<string | null>(null);
+  const [contentHeight, setContentHeight] = useState<number>(0);
 
   useEffect(() => {
     if (contractRef.current) {
@@ -41,92 +45,126 @@ export function DocumentPreview({
       if (onHtmlReady && renderedContract) {
         onHtmlReady(renderedContract);
       }
+      
+      // Calcular altura del contenido para vista parcial
+      if (visiblePercentage !== undefined && contentWrapperRef.current) {
+        setTimeout(() => {
+          const height = contractRef.current?.scrollHeight || 0;
+          setContentHeight(height);
+        }, 100);
+      }
     }
-  }, [renderedContract, onHtmlReady]);
+  }, [renderedContract, onHtmlReady, visiblePercentage]);
 
-  // Efecto para posicionar el tooltip al lado de la variable activa
+  // Efecto para hacer scroll a la variable activa y mostrar descripción
   useEffect(() => {
-    if (!activeField || !contractRef.current) {
-      setTooltipPosition(null);
+    console.log('🎯 Active field changed:', activeField);
+    console.log('📚 Variables metadata available:', variablesMetadata);
+    
+    if (!activeField || !contractRef.current || !scrollContainerRef.current) {
       setCurrentDescription(null);
+      setCurrentFieldName(null);
       return;
     }
 
-    // Buscar la descripción de la variable activa
-    console.log('🔍 Active field:', activeField);
-    console.log('📚 Variables metadata:', variablesMetadata);
+    const scrollContainer = scrollContainerRef.current;
     
-    const variableData = variablesMetadata.find(v => v.name === activeField);
-    console.log('📝 Found variable data:', variableData);
-    
-    if (!variableData?.description) {
-      console.warn('⚠️ No description found for:', activeField);
-      setTooltipPosition(null);
-      setCurrentDescription(null);
-      return;
-    }
-
-    setCurrentDescription(variableData.description);
-    console.log('✅ Description set:', variableData.description);
-
     // Buscar el span con la variable activa en el DOM
     const variableSpan = contractRef.current.querySelector(`[data-variable="${activeField}"]`);
-    console.log('🎯 Found span:', variableSpan);
     
     if (!variableSpan) {
       console.warn('⚠️ No span found with data-variable:', activeField);
-      setTooltipPosition(null);
+      setCurrentDescription(null);
+      setCurrentFieldName(null);
       return;
     }
 
-    const rect = variableSpan.getBoundingClientRect();
-    const containerRect = contractRef.current.getBoundingClientRect();
+    console.log('✅ Found variable span:', variableSpan);
 
-    // Obtener el scroll actual del contenedor
-    const scrollTop = contractRef.current.parentElement?.scrollTop || 0;
-
-    // Calcular posición relativa al contenedor + scroll (debajo de la variable)
-    const position = {
-      top: rect.bottom - containerRect.top + scrollTop + 12,
-      left: rect.left - containerRect.left
-    };
+    // Buscar la descripción de la variable activa
+    const variableData = variablesMetadata.find(v => v.name === activeField);
+    console.log('🔍 Variable data found:', variableData);
     
-    console.log('📍 Tooltip position:', position);
-    console.log('📜 Scroll position:', scrollTop);
-    setTooltipPosition(position);
+    if (variableData?.description) {
+      setCurrentDescription(variableData.description);
+      setCurrentFieldName(activeField);
+    } else {
+      setCurrentDescription(null);
+      setCurrentFieldName(null);
+    }
+
+    // Hacer scroll al elemento de forma suave
+    const spanRect = variableSpan.getBoundingClientRect();
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const scrollTop = scrollContainer.scrollTop;
+    
+    // Calcular posición para centrar el elemento en el viewport
+    const targetScrollTop = scrollTop + spanRect.top - containerRect.top - (containerRect.height / 2) + (spanRect.height / 2);
+    
+    scrollContainer.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: 'smooth'
+    });
   }, [activeField, renderedContract, variablesMetadata]);
 
   // Determinar si mostrar el documento parcialmente (con gradiente)
   const isPartialView = visiblePercentage !== undefined && visiblePercentage < 100;
+  
+  // Calcular altura visible basada en el porcentaje del contenido real
+  const visibleHeight = isPartialView && contentHeight > 0 
+    ? (contentHeight * (visiblePercentage || 60) / 100) 
+    : undefined;
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden h-full flex flex-col">
-        {/* Header */}
-
-        
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 relative">
-          {!templateText || templateText.trim() === '' ? (
-            <div className="text-center py-12 text-slate-400">
-              <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="font-medium">No hay contenido</p>
+      <div className="h-full flex flex-col bg-slate-100 p-6">
+        {/* Paper Sheet */}
+        <div className="flex-1 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.08)] border border-slate-200 overflow-hidden flex flex-col mx-auto w-full max-w-3xl">
+          
+          {/* Description Banner - Fixed at top */}
+          {currentDescription && currentFieldName && (
+            <div className="bg-navy-900 text-white px-6 py-3 border-b border-navy-800 flex items-start gap-3 animate-fade-in">
+              <div className="w-6 h-6 bg-legal-emerald-600 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-xs font-bold">i</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-legal-emerald-400 mb-1 font-sans">
+                  {formatVariableName(currentFieldName)}
+                </p>
+                <p className="text-sm leading-relaxed font-sans">{currentDescription}</p>
+              </div>
             </div>
-          ) : (
-            <div className="relative">
-              {/* Contenedor con altura limitada si es vista parcial */}
-              <div className={`${isPartialView ? 'relative' : ''}`} style={isPartialView ? { maxHeight: `${visiblePercentage}vh`, overflow: 'hidden' } : {}}>
-                <div
-                  ref={contractRef}
-                  className="contract-preview prose prose-sm max-w-none select-none"
-                  dangerouslySetInnerHTML={{ __html: renderedContract }}
-                />
+          )}
+          
+          {/* Content */}
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-12 py-10 relative scroll-smooth">
+            {!templateText || templateText.trim() === '' ? (
+              <div className="text-center py-12 text-slate-400">
+                <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="font-medium font-sans">No hay contenido</p>
+              </div>
+            ) : (
+              <div className="relative">
+                {/* Contenedor con altura limitada si es vista parcial */}
+                <div 
+                  ref={contentWrapperRef}
+                  className={`relative ${isPartialView ? 'overflow-hidden' : ''}`} 
+                  style={isPartialView && visibleHeight ? { 
+                    maxHeight: `${visibleHeight}px`,
+                  } : {}}
+                >
+                  <div
+                    ref={contractRef}
+                    className="contract-preview prose prose-sm max-w-none select-none font-serif"
+                    dangerouslySetInnerHTML={{ __html: renderedContract }}
+                  />
                 
                 {/* Gradiente con blur y transparencia si es vista parcial */}
-                {isPartialView && (
+                {isPartialView && visibleHeight && (
                   <div 
-                    className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
+                    className="absolute bottom-0 left-0 right-0 pointer-events-none"
                     style={{
+                      height: '120px',
                       background: 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.7) 40%, rgba(255,255,255,0.95) 100%)',
                       backdropFilter: 'blur(4px)',
                       WebkitBackdropFilter: 'blur(4px)'
@@ -141,32 +179,9 @@ export function DocumentPreview({
                   {lockedOverlayContent}
                 </div>
               )}
-              
-              {/* Popup tipo comic con la descripción */}
-              {tooltipPosition && currentDescription && (
-                <div
-                  className="absolute z-[9999] animate-fade-in"
-                  style={{
-                    top: `${tooltipPosition.top}px`,
-                    left: `${tooltipPosition.left}px`,
-                    pointerEvents: 'none'
-                  }}
-                >
-                  <div className="relative">
-                    {/* Punta del bocadillo apuntando hacia arriba */}
-                    <div className="absolute left-6 -top-2">
-                      <div className="w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-slate-900"></div>
-                    </div>
-                    
-                    {/* Contenido del bocadillo */}
-                    <div className="bg-slate-900 text-white text-sm rounded-xl px-5 py-4 shadow-[0_10px_40px_rgba(0,0,0,0.5)] max-w-sm border-2 border-slate-800">
-                      <p className="font-normal text-sm leading-relaxed">{currentDescription}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
+          </div>
         </div>
       </div>
       

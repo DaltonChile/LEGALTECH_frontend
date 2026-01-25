@@ -6,7 +6,7 @@ export const contractEditorStyles = `
   }
   .contract-preview strong {
     font-weight: 700;
-    color: #0891b2;
+    color: #111827;
     font-size: 1.05em;
     letter-spacing: 0.5px;
   }
