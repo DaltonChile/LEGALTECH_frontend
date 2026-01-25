@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 import { contractEditorStyles } from './styles';
+import { formatVariableName } from './utils/templateParser';
 
 interface VariableWithDescription {
   name: string;
@@ -30,8 +31,9 @@ export function DocumentPreview({
   lockedOverlayContent
 }: DocumentPreviewProps) {
   const contractRef = useRef<HTMLDivElement>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{ top: number; left: number } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentDescription, setCurrentDescription] = useState<string | null>(null);
+  const [currentFieldName, setCurrentFieldName] = useState<string | null>(null);
 
   useEffect(() => {
     if (contractRef.current) {
@@ -44,73 +46,55 @@ export function DocumentPreview({
     }
   }, [renderedContract, onHtmlReady]);
 
-  // Efecto para hacer scroll a la variable activa y posicionar el tooltip
+  // Efecto para hacer scroll a la variable activa y mostrar descripción
   useEffect(() => {
-    if (!activeField || !contractRef.current) {
-      setTooltipPosition(null);
+    console.log('🎯 Active field changed:', activeField);
+    console.log('📚 Variables metadata available:', variablesMetadata);
+    
+    if (!activeField || !contractRef.current || !scrollContainerRef.current) {
       setCurrentDescription(null);
+      setCurrentFieldName(null);
       return;
     }
 
-    // Buscar la descripción de la variable activa
-    console.log('🔍 Active field:', activeField);
-    console.log('📚 Variables metadata:', variablesMetadata);
+    const scrollContainer = scrollContainerRef.current;
     
-    const variableData = variablesMetadata.find(v => v.name === activeField);
-    console.log('📝 Found variable data:', variableData);
-    
-    if (variableData?.description) {
-      setCurrentDescription(variableData.description);
-      console.log('✅ Description set:', variableData.description);
-    } else {
-      console.warn('⚠️ No description found for:', activeField);
-      setCurrentDescription(null);
-    }
-
     // Buscar el span con la variable activa en el DOM
     const variableSpan = contractRef.current.querySelector(`[data-variable="${activeField}"]`);
-    console.log('🎯 Found span:', variableSpan);
     
     if (!variableSpan) {
       console.warn('⚠️ No span found with data-variable:', activeField);
-      setTooltipPosition(null);
+      setCurrentDescription(null);
+      setCurrentFieldName(null);
       return;
     }
 
-    // Hacer scroll al elemento de forma suave
-    const scrollContainer = contractRef.current.parentElement;
-    if (scrollContainer) {
-      const spanRect = variableSpan.getBoundingClientRect();
-      const containerRect = scrollContainer.getBoundingClientRect();
-      const scrollTop = scrollContainer.scrollTop;
-      
-      // Calcular posición para centrar el elemento en el viewport
-      const targetScrollTop = scrollTop + spanRect.top - containerRect.top - (containerRect.height / 2) + (spanRect.height / 2);
-      
-      scrollContainer.scrollTo({
-        top: targetScrollTop,
-        behavior: 'smooth'
-      });
-      
-      // Esperar a que termine el scroll para posicionar el tooltip
-      setTimeout(() => {
-        if (!variableData?.description) return;
-        
-        const rect = variableSpan.getBoundingClientRect();
-        const updatedContainerRect = contractRef.current!.getBoundingClientRect();
-        const updatedScrollTop = scrollContainer.scrollTop;
+    console.log('✅ Found variable span:', variableSpan);
 
-        // Calcular posición relativa al contenedor + scroll (debajo de la variable)
-        const position = {
-          top: rect.bottom - updatedContainerRect.top + updatedScrollTop + 12,
-          left: rect.left - updatedContainerRect.left
-        };
-        
-        console.log('📍 Tooltip position:', position);
-        console.log('📜 Scroll position:', updatedScrollTop);
-        setTooltipPosition(position);
-      }, 300); // Esperar a que termine la animación del scroll
+    // Buscar la descripción de la variable activa
+    const variableData = variablesMetadata.find(v => v.name === activeField);
+    console.log('🔍 Variable data found:', variableData);
+    
+    if (variableData?.description) {
+      setCurrentDescription(variableData.description);
+      setCurrentFieldName(activeField);
+    } else {
+      setCurrentDescription(null);
+      setCurrentFieldName(null);
     }
+
+    // Hacer scroll al elemento de forma suave
+    const spanRect = variableSpan.getBoundingClientRect();
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const scrollTop = scrollContainer.scrollTop;
+    
+    // Calcular posición para centrar el elemento en el viewport
+    const targetScrollTop = scrollTop + spanRect.top - containerRect.top - (containerRect.height / 2) + (spanRect.height / 2);
+    
+    scrollContainer.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: 'smooth'
+    });
   }, [activeField, renderedContract, variablesMetadata]);
 
   // Determinar si mostrar el documento parcialmente (con gradiente)
@@ -121,8 +105,24 @@ export function DocumentPreview({
       <div className="h-full flex flex-col bg-slate-100 p-6">
         {/* Paper Sheet */}
         <div className="flex-1 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.08)] border border-slate-200 overflow-hidden flex flex-col mx-auto w-full max-w-3xl">
+          
+          {/* Description Banner - Fixed at top */}
+          {currentDescription && currentFieldName && (
+            <div className="bg-navy-900 text-white px-6 py-3 border-b border-navy-800 flex items-start gap-3 animate-fade-in">
+              <div className="w-6 h-6 bg-legal-emerald-600 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-xs font-bold">i</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-legal-emerald-400 mb-1 font-sans">
+                  {formatVariableName(currentFieldName)}
+                </p>
+                <p className="text-sm leading-relaxed font-sans">{currentDescription}</p>
+              </div>
+            </div>
+          )}
+          
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-12 py-10 relative">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-12 py-10 relative scroll-smooth">
             {!templateText || templateText.trim() === '' ? (
               <div className="text-center py-12 text-slate-400">
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -155,30 +155,6 @@ export function DocumentPreview({
               {isPartialView && lockedOverlayContent && (
                 <div className="mt-4 py-8 flex flex-col items-center justify-center border-t border-slate-200">
                   {lockedOverlayContent}
-                </div>
-              )}
-              
-              {/* Popup tipo comic con la descripción */}
-              {tooltipPosition && currentDescription && (
-                <div
-                  className="absolute z-[9999] animate-fade-in"
-                  style={{
-                    top: `${tooltipPosition.top}px`,
-                    left: `${tooltipPosition.left}px`,
-                    pointerEvents: 'none'
-                  }}
-                >
-                  <div className="relative">
-                    {/* Punta del bocadillo apuntando hacia arriba */}
-                    <div className="absolute left-6 -top-2">
-                      <div className="w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-navy-900"></div>
-                    </div>
-                    
-                    {/* Contenido del bocadillo */}
-                    <div className="bg-navy-900 text-white text-sm rounded-lg px-4 py-3 shadow-lg max-w-sm">
-                      <p className="font-normal text-sm leading-relaxed font-sans">{currentDescription}</p>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

@@ -38,6 +38,10 @@ export function CompletarFormularioStep({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onBack: _onBack,
 }: CompletarFormularioStepProps) {
+  // Debug: Log variables metadata
+  console.log('📋 Template variables_metadata:', template.variables_metadata);
+  console.log('📋 Template:', template);
+  
   // Inicializar formData con los datos existentes del contrato
   const [formData, setFormData] = useState<Record<string, string>>(contractData.form_data || {});
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +50,7 @@ export function CompletarFormularioStep({
   const [error, setError] = useState<string | null>(null);
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
   const documentRef = useRef<HTMLDivElement>(null);
+  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Obtener las cápsulas seleccionadas (IDs)
   const selectedCapsuleIds = useMemo(() => {
@@ -131,6 +136,24 @@ export function CompletarFormularioStep({
 
   const handleFormChange = (data: Record<string, string>) => {
     setFormData(data);
+  };
+
+  const handleFieldFocus = (variable: string) => {
+    // Cancelar cualquier timeout pendiente de blur
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    console.log('🎯 Field focused:', variable);
+    setActiveField(variable);
+  };
+
+  const handleFieldBlur = () => {
+    // Delay para mantener el activeField el tiempo suficiente para ver el tooltip
+    blurTimeoutRef.current = setTimeout(() => {
+      console.log('👋 Field blur - clearing activeField');
+      setActiveField(null);
+    }, 200); // 200ms delay
   };
 
   const handleContinueToReview = async () => {
@@ -238,8 +261,8 @@ export function CompletarFormularioStep({
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
                   activeField={activeField}
-                  onFieldFocus={setActiveField}
-                  onFieldBlur={() => setActiveField(null)}
+                  onFieldFocus={handleFieldFocus}
+                  onFieldBlur={handleFieldBlur}
                />
            </div>
 
