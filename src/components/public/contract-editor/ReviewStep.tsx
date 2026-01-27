@@ -189,7 +189,7 @@ export function ReviewStep({
         </div>
 
         {/* Sidebar - Resumen y Acciones */}
-        <div className="w-full lg:w-80 flex flex-col gap-3 md:gap-4 lg:order-last">
+        <div className="w-full lg:w-80 flex flex-col gap-3 md:gap-4 lg:order-last overflow-y-auto max-h-[calc(100vh-200px)] lg:max-h-none">
           {/* Info de firma seleccionada */}
           {signatureType !== 'none' && (
             <div className="bg-white rounded-lg shadow-document border border-slate-200 p-4 md:p-5">

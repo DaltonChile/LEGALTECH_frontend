@@ -129,6 +129,9 @@ export function useContractRenderer({
     // 4. Remove signature blocks from main content (they're rendered separately)
     result = result.replace(/\[\s*FIRMA\s*:[^\]]+\]([\s\S]*?)\[\s*\/\s*FIRMA\s*\]/gi, '');
 
+    // 5. Remove file upload tags [ARCHIVO: ...] from preview
+    result = result.replace(/\[\s*ARCHIVO\s*:\s*[^\]]+\s*\]/gi, '');
+
     return result;
   }, [templateText, formData, extractedVariables, selectedCapsules, capsules, clauseNumbers, clauseNumbering, activeField]);
 

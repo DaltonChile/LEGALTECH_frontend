@@ -8,7 +8,6 @@ export const contractEditorStyles = `
     font-weight: 700;
     color: #111827;
     font-size: 1.05em;
-    letter-spacing: 0.5px;
   }
   .filled-var {
     background-color: #dbeafe;
@@ -17,6 +16,8 @@ export const contractEditorStyles = `
     font-weight: 600;
     color: #1e40af;
     transition: all 0.3s ease;
+    display: inline-block;
+    white-space: nowrap;
   }
   .empty-var {
     background-color: #e5e7eb;
@@ -25,6 +26,8 @@ export const contractEditorStyles = `
     color: #6b7280;
     font-weight: 500;
     transition: all 0.3s ease;
+    display: inline-block;
+    white-space: nowrap;
   }
   .active-var {
     animation: pulse-highlight 1s ease-in-out infinite;
@@ -38,6 +41,8 @@ export const contractEditorStyles = `
   .prose p {
     margin-bottom: 1em;
     text-align: justify;
+    text-align-last: left;
+    word-spacing: normal;
   }
   .prose h1, .prose h2, .prose h3 {
     color: #111827;

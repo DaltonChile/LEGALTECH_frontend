@@ -394,6 +394,8 @@ export function ContractEditorPage() {
             onComplete={(newFormData, html) => {
               setFormData(newFormData);
               setRenderedContractHtml(html);
+              // Actualizar contractData con el nuevo form_data para persistir al volver
+              setContractData(prev => prev ? { ...prev, form_data: newFormData } : null);
               setCurrentStep('review');
             }}
             onBack={() => setCurrentStep('payment')}

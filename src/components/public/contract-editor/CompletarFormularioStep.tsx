@@ -4,6 +4,7 @@ import { ArrowRight, Edit3, AlertCircle } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { EditorHeader } from './EditorHeader';
+import { FileUploadStep } from './FileUploadStep';
 import { useContractRenderer } from './hooks/useContractRenderer';
 import { extractVariables, formatVariableName } from './utils/templateParser';
 import { contractEditorStyles } from './styles';
@@ -49,6 +50,7 @@ export function CompletarFormularioStep({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
+  const [allFilesUploaded, setAllFilesUploaded] = useState(true); // True by default if no files required
   const documentRef = useRef<HTMLDivElement>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -208,7 +210,7 @@ export function CompletarFormularioStep({
             <div className="flex items-center gap-6">
                  <button
                     onClick={handleContinueToReview}
-                    disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting}
+                    disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting || !allFilesUploaded}
                     className="bg-slate-900 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap text-sm md:text-base"
                   >
                     {isSubmitting ? (
@@ -266,12 +268,27 @@ export function CompletarFormularioStep({
                />
            </div>
 
+           {/* File Upload Section */}
+           <FileUploadStep
+             contractId={contractData.id}
+             trackingCode={contractData.tracking_code}
+             buyerRut={contractData.buyer_rut}
+             onAllFilesUploaded={() => setAllFilesUploaded(true)}
+             onFilesStatusChange={(allUploaded) => setAllFilesUploaded(allUploaded)}
+           />
+
            {/* Validation Errors */}
-           {(error || (completionPercentage < 100)) && (
+           {(error || (completionPercentage < 100) || !allFilesUploaded) && (
              <div className={`p-4 rounded-xl border flex items-start gap-3 ${error ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                 <div className="text-sm">
-                   {error ? <p className="font-medium">{error}</p> : <p>Completa todos los campos obligatorios marcados con * para continuar.</p>}
+                   {error ? (
+                     <p className="font-medium">{error}</p>
+                   ) : !allFilesUploaded ? (
+                     <p>Sube todos los documentos requeridos para continuar.</p>
+                   ) : (
+                     <p>Completa todos los campos obligatorios marcados con * para continuar.</p>
+                   )}
                 </div>
              </div>
            )}
