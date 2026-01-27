@@ -18,6 +18,7 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
     title: '',
     slug: '',
     description: '',
+    short_description: '',
     requires_notary: false,
     category: ''
   });
@@ -254,10 +255,27 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
           <textarea
             value={templateData.description}
             onChange={(e) => setTemplateData({ ...templateData, description: e.target.value })}
-            placeholder="Describe el template..."
+            placeholder="Describe el template en detalle (soporta Markdown)..."
             rows={2}
             className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-cyan-400 transition-colors resize-none"
           />
+        </div>
+
+        {/* Descripción Corta */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Descripción Corta
+            <span className="text-xs font-normal text-slate-400 ml-2">(para catálogo, máx 255)</span>
+          </label>
+          <input
+            type="text"
+            value={templateData.short_description}
+            onChange={(e) => setTemplateData({ ...templateData, short_description: e.target.value.slice(0, 255) })}
+            placeholder="Ej: Contrato para formalizar la relación entre arrendador e inquilino"
+            maxLength={255}
+            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-cyan-400 transition-colors"
+          />
+          <p className="text-xs text-slate-400 mt-1 text-right">{templateData.short_description.length}/255</p>
         </div>
 
         {/* Precio Base */}

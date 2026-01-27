@@ -1,5 +1,6 @@
 import { X, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { RichDescription } from './RichDescription';
 
 interface Capsule {
   id: string;
@@ -64,12 +65,10 @@ export function ContractInfoModal({
         <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
           {/* Description */}
           <div className="mb-6">
-            <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2 font-sans">
+            <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3 font-sans">
               Descripción
             </h4>
-            <p className="text-slate-700 leading-relaxed font-sans">
-              {description}
-            </p>
+            <RichDescription content={description} />
           </div>
 
           {/* Capsules */}

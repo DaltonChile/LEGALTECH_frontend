@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Play, CheckCircle, Plus, History, Save, Trash2 } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import NewVersionUploader from '../NewVersionUploader';
+import DescriptionEditor from '../DescriptionEditor';
 import api, { getTemplateCategories } from '../../../../services/api';
 import type { Template } from '../../../../types/templates';
 
@@ -24,10 +25,11 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 }) => {
   const [showVersions, setShowVersions] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
-  const [editingField, setEditingField] = useState<'title' | 'description' | 'price' | 'category' | string | null>(null);
+  const [editingField, setEditingField] = useState<'title' | 'description' | 'short_description' | 'price' | 'category' | string | null>(null);
   const [editData, setEditData] = useState({
     title: template.title,
     description: template.description || '',
+    short_description: template.short_description || '',
   });
   const [editPrice, setEditPrice] = useState('');
   const [editCapsulePrice, setEditCapsulePrice] = useState('');
@@ -60,11 +62,12 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     }
   };
 
-  const handleStartEdit = (field: 'title' | 'description') => {
+  const handleStartEdit = (field: 'title' | 'description' | 'short_description') => {
     // Restaurar valores actuales del template al empezar a editar
     setEditData({
       title: template.title,
       description: template.description || '',
+      short_description: template.short_description || '',
     });
     setEditingField(field);
   };
@@ -91,6 +94,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     setEditData({
       title: template.title,
       description: template.description || '',
+      short_description: template.short_description || '',
     });
     setEditPrice('');
     setEditCapsulePrice('');
@@ -98,7 +102,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     setEditingField(null);
   };
 
-  const handleSaveField = async (field: 'title' | 'description' | 'price') => {
+  const handleSaveField = async (field: 'title' | 'description' | 'short_description' | 'price') => {
     if (saving) return;
     
     setSaving(true);
@@ -429,46 +433,116 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 
         {/* Descripcion */}
         <div>
-          <label className="block text-sm font-medium text-slate-600 mb-2">Descripción</label>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              {editingField === 'description' ? (
-                <textarea
-                value={editData.description}
-                onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 resize-none"
-                rows={2}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') handleCancelEdit();
-                }}
-              />
-            ) : (
-              <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-h-[56px] flex items-center">
-                <p className="text-slate-700">{template.description || 'Sin descripción'}</p>
-              </div>
+          <label className="block text-sm font-medium text-slate-600 mb-2">
+            Descripción
+            {editingField !== 'description' && (
+              <span className="text-xs font-normal text-slate-400 ml-2">
+                (Soporta formato Markdown)
+              </span>
             )}
-          </div>
+          </label>
           {editingField === 'description' ? (
-            <div className="flex gap-2">
-              <button
-                onClick={handleCancelEdit}
-                disabled={saving}
-                className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleSaveField('description')}
-                disabled={saving}
-                className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
-              >
-                {saving ? '...' : 'Guardar'}
-              </button>
+            <div className="space-y-3">
+              <DescriptionEditor
+                value={editData.description}
+                onChange={(value) => setEditData({ ...editData, description: value })}
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                  className="px-4 py-2 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleSaveField('description')}
+                  disabled={saving}
+                  className="px-5 py-2 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
+                >
+                  {saving ? 'Guardando...' : 'Guardar Descripción'}
+                </button>
+              </div>
             </div>
           ) : (
+            <div className="flex items-start gap-3">
+              <div className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-h-[56px]">
+                <p className="text-slate-700 line-clamp-3 whitespace-pre-line">
+                  {template.description || 'Sin descripción'}
+                </p>
+                {template.description && template.description.length > 150 && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    {template.description.length} caracteres • Click en editar para ver completo
+                  </p>
+                )}
+              </div>
               <button
                 onClick={() => handleStartEdit('description')}
+                className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
+              >
+                editar
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Descripción Corta para Catálogo */}
+        <div>
+          <label className="block text-sm font-medium text-slate-600 mb-2">
+            Descripción Corta
+            <span className="text-xs font-normal text-slate-400 ml-2">
+              (Preview en catálogo, máx 255 caracteres)
+            </span>
+          </label>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              {editingField === 'short_description' ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={editData.short_description}
+                    onChange={(e) => setEditData({ ...editData, short_description: e.target.value.slice(0, 255) })}
+                    className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500"
+                    placeholder="Ej: Contrato para formalizar la relación entre arrendador e inquilino"
+                    maxLength={255}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveField('short_description');
+                      if (e.key === 'Escape') handleCancelEdit();
+                    }}
+                  />
+                  <div className="text-xs text-slate-500 text-right">
+                    {editData.short_description.length}/255 caracteres
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-h-[56px] flex items-center">
+                  <p className="text-slate-700">
+                    {template.short_description || <span className="text-slate-400 italic">Sin descripción corta (se usará la descripción completa)</span>}
+                  </p>
+                </div>
+              )}
+            </div>
+            {editingField === 'short_description' ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                  className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleSaveField('short_description')}
+                  disabled={saving}
+                  className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
+                >
+                  {saving ? '...' : 'Guardar'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleStartEdit('short_description')}
                 className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
               >
                 editar

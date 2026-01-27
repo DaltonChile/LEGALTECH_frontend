@@ -18,6 +18,7 @@ export interface Template {
   slug: string;
   base_price: number;
   description: string;
+  short_description?: string;
   requires_notary?: boolean;
   has_signers?: boolean;
   category?: string | null;

@@ -18,6 +18,7 @@ import {
   Info
 } from 'lucide-react';
 import { templatesApi, getTemplateCategories, type Template } from '../../../services/api';
+import { RichDescription } from './RichDescription';
 
 // Mapeo de iconos según el slug o título
 const getIconForTemplate = (slug: string): any => {
@@ -309,9 +310,11 @@ export function ContractCatalog() {
                             <Info className="w-4 h-4" />
                           </button>
                         </div>
-                        <p className="text-sm text-slate-500 font-sans line-clamp-2 mt-0.5">
-                          {template.description || 'Personaliza este documento con tu información'}
-                        </p>
+                        {template.short_description && (
+                          <p className="text-sm text-slate-500 font-sans line-clamp-2 mt-0.5">
+                            {template.short_description}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -412,9 +415,9 @@ export function ContractCatalog() {
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-semibold text-navy-900 mb-2 font-sans">Descripción</h4>
-                <p className="text-sm text-slate-700 font-sans leading-relaxed">
-                  {infoModalTemplate.description || 'Sin descripción disponible'}
-                </p>
+                <div className="max-h-64 overflow-y-auto">
+                  <RichDescription content={infoModalTemplate.description || 'Sin descripción disponible'} />
+                </div>
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-slate-200">

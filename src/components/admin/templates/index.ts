@@ -7,3 +7,4 @@ export { default as TemplateDetailModal } from './modals/TemplateDetailModal';
 
 // Other components
 export { default as NewVersionUploader } from './NewVersionUploader';
+export { default as DescriptionEditor } from './DescriptionEditor';

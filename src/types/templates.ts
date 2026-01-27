@@ -3,6 +3,7 @@ export interface Template {
   title: string;
   slug: string;
   description: string;
+  short_description?: string;
   is_active: boolean;
   requires_notary: boolean;
   category: string | null;
