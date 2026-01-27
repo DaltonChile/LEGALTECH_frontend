@@ -4,6 +4,7 @@ import { Upload } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import { createTemplate, uploadTemplateVersion, setCapsulePrices, getTemplateCategories } from '../../../../services/api';
 import type { CapsulePending } from '../../../../types/templates';
+import { DescriptionEditor } from '../DescriptionEditor';
 
 interface CreateTemplateModalProps {
   onClose: () => void;
@@ -220,7 +221,7 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
   }
 
   return (
-    <Modal onClose={onClose} title="Crear Nuevo Template">
+    <Modal onClose={onClose} title="Crear Nuevo Template" extraWide>
       <p className="text-slate-500 text-sm mb-6">
         Completa la información del template y sube el documento .docx
       </p>
@@ -251,13 +252,13 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
         
         {/* Descripción */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Descripción</label>
-          <textarea
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Descripción Principal
+            <span className="text-xs font-normal text-slate-400 ml-2">(soporta Markdown con vista previa)</span>
+          </label>
+          <DescriptionEditor
             value={templateData.description}
-            onChange={(e) => setTemplateData({ ...templateData, description: e.target.value })}
-            placeholder="Describe el template en detalle (soporta Markdown)..."
-            rows={2}
-            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-cyan-400 transition-colors resize-none"
+            onChange={(value) => setTemplateData({ ...templateData, description: value })}
           />
         </div>
 

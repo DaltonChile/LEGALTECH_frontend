@@ -191,7 +191,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   };
 
   return (
-    <Modal onClose={onClose} wide>
+    <Modal onClose={onClose} extraWide>
       <div className="space-y-6">
         {/* Vista de versiones anteriores */}
         {showVersions && (
