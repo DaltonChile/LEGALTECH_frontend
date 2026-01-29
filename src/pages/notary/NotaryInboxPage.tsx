@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Mail } from 'lucide-react';
 import { notaryApi, type NotaryContract } from '../../services/api';
 import { NotaryStatsCards, NotaryFilters, NotaryContractRow } from '../../components/notary';
+import { Text } from '../../components/ui/primitives/Text';
+import { Box } from '../../components/ui/primitives/Box';
 
 type FilterType = 'pending' | 'completed' | 'all';
 
@@ -105,7 +107,7 @@ export const NotaryInboxPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy-900"></div>
       </div>
     );
   }
@@ -115,8 +117,8 @@ export const NotaryInboxPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Bandeja de Entrada</h1>
-          <p className="text-slate-500 text-sm mt-1">Gestiona las firmas pendientes y contratos completados</p>
+          <Text variant="h2">Bandeja de Entrada</Text>
+          <Text variant="body-sm" color="muted" className="mt-1">Gestiona las firmas pendientes y contratos completados</Text>
         </div>
       </div>
 
@@ -141,31 +143,43 @@ export const NotaryInboxPage: React.FC = () => {
       />
 
       {/* Table Container */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <Box variant="document" padding="none" className="overflow-hidden">
         {filteredContracts.length === 0 ? (
           <div className="text-center py-16 px-6">
-            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+            <div className="w-16 h-16 bg-slate-50 rounded-lg flex items-center justify-center mx-auto mb-4 border border-slate-200">
               <Mail className="w-8 h-8 text-slate-300" />
             </div>
-            <h3 className="text-slate-900 font-medium text-lg mb-1">No se encontraron contratos</h3>
-            <p className="text-slate-500 text-sm max-w-sm mx-auto">
+            <Text variant="h4" className="mb-1">No se encontraron contratos</Text>
+            <Text variant="body-sm" color="muted" className="max-w-sm mx-auto">
               {searchQuery ? 'Intenta ajustar tus filtros o búsqueda' : 'No hay documentos pendientes de revisión'}
-            </p>
+            </Text>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50/50 border-b border-slate-100">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[30%]">Contrato / Código</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Identificación</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Solicitante</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalles</th>
-                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                  <th className="text-left px-6 py-4 w-[30%]">
+                    <Text variant="caption" color="muted">CONTRATO / CÓDIGO</Text>
+                  </th>
+                  <th className="text-left px-6 py-4">
+                    <Text variant="caption" color="muted">IDENTIFICACIÓN</Text>
+                  </th>
+                  <th className="text-left px-6 py-4">
+                    <Text variant="caption" color="muted">ESTADO</Text>
+                  </th>
+                  <th className="text-left px-6 py-4">
+                    <Text variant="caption" color="muted">SOLICITANTE</Text>
+                  </th>
+                  <th className="text-left px-6 py-4">
+                    <Text variant="caption" color="muted">DETALLES</Text>
+                  </th>
+                  <th className="text-right px-6 py-4">
+                    <Text variant="caption" color="muted">ACCIONES</Text>
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {filteredContracts.map((contract) => (
                   <NotaryContractRow
                     key={contract.id}
@@ -179,7 +193,7 @@ export const NotaryInboxPage: React.FC = () => {
             </table>
           </div>
         )}
-      </div>
+      </Box>
     </div>
   );
 };

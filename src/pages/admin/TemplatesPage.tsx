@@ -16,6 +16,10 @@ import {
   TemplateDetailModal 
 } from '../../components/admin/templates';
 import type { Template, FilterType } from '../../types/templates';
+import { Text } from '../../components/ui/primitives/Text';
+import { Box } from '../../components/ui/primitives/Box';
+import { Button } from '../../components/ui/primitives/Button';
+import { Badge } from '../../components/ui/primitives/Badge';
 
 export const TemplatesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -251,7 +255,7 @@ export const TemplatesPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy-900"></div>
       </div>
     );
   }
@@ -261,23 +265,24 @@ export const TemplatesPage: React.FC = () => {
       {/* Header & Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Plantillas</h1>
-          <p className="text-slate-500 text-sm mt-1">Gestiona los modelos de contratos disponibles</p>
+          <Text variant="h2">Plantillas</Text>
+          <Text variant="body-sm" color="muted" className="mt-1">Gestiona los modelos de contratos disponibles</Text>
         </div>
         
         <div className="flex items-center gap-3">
-          <button 
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => setShowNewTemplateForm(true)}
-            className="px-4 py-2.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 flex items-center gap-2 text-sm"
+            leftIcon={<Plus className="w-4 h-4" />}
           >
-            <Plus className="w-4 h-4" />
             Nueva Plantilla
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Filters & Search - Styled like a toolbar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 flex flex-wrap items-center gap-4 shadow-sm">
+      <Box variant="document" padding="md" className="mb-6 flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-[240px] relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -285,7 +290,7 @@ export const TemplatesPage: React.FC = () => {
             placeholder="Buscar por nombre..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:border-navy-900 focus:ring-2 focus:ring-navy-900 transition-all"
           />
         </div>
 
@@ -293,7 +298,7 @@ export const TemplatesPage: React.FC = () => {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:border-navy-900 focus:ring-2 focus:ring-navy-900 transition-all"
         >
           <option value="all">Todas las categorías</option>
           {categories.map((cat) => (
@@ -308,10 +313,10 @@ export const TemplatesPage: React.FC = () => {
             <button 
               key={status}
               onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium font-sans rounded-md transition-all ${
                 filterStatus === status 
-                  ? 'bg-white text-slate-900 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-white text-navy-900 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {status === 'all' && 'Todos'}
@@ -320,104 +325,111 @@ export const TemplatesPage: React.FC = () => {
             </button>
           ))}
         </div>
-      </div>
+      </Box>
 
       {/* Templates Table Container */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <Box variant="document" padding="none" className="overflow-hidden">
         {filteredTemplates.length === 0 ? (
           <div className="text-center py-16 px-6">
-            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+            <div className="w-16 h-16 bg-slate-50 rounded-lg flex items-center justify-center mx-auto mb-4 border border-slate-200">
               <FileText className="w-8 h-8 text-slate-300" />
             </div>
-            <h3 className="text-slate-900 font-medium text-lg mb-1">No se encontraron plantillas</h3>
-            <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">
+            <Text variant="h4" className="mb-1">No se encontraron plantillas</Text>
+            <Text variant="body-sm" color="muted" className="max-w-sm mx-auto mb-6">
               {searchQuery ? 'Intenta ajustar tus filtros o búsqueda' : 'Comienza creando tu primera plantilla de contrato'}
-            </p>
+            </Text>
             {!searchQuery && (
-              <button
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={() => setShowNewTemplateForm(true)}
-                className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors"
               >
                 Crear Plantilla
-              </button>
+              </Button>
             )}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50/50 border-b border-slate-100">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[35%]">Nombre / Slug</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoría</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio Base</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Versión</th>
-                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                  <th className="text-left px-6 py-4 w-[35%]">
+                    <Text variant="caption" color="muted">NOMBRE / SLUG</Text>
+                  </th>
+                  <th className="text-left px-6 py-4">
+                    <Text variant="caption" color="muted">CATEGORÍA</Text>
+                  </th>
+                  <th className="text-left px-6 py-4">
+                    <Text variant="caption" color="muted">ESTADO</Text>
+                  </th>
+                  <th className="text-left px-6 py-4">
+                    <Text variant="caption" color="muted">PRECIO BASE</Text>
+                  </th>
+                  <th className="text-left px-6 py-4">
+                    <Text variant="caption" color="muted">VERSIÓN</Text>
+                  </th>
+                  <th className="text-right px-6 py-4">
+                    <Text variant="caption" color="muted">ACCIONES</Text>
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {filteredTemplates.map((template) => {
                   const hasPublishedVersion = template.versions?.some(v => v.is_published);
                   const publishedVersion = template.versions?.find(v => v.is_published);
                   const latestVersion = template.versions?.[0];
                   
                   return (
-                    <tr key={template.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr key={template.id} className="hover:bg-slate-50/80 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-3">
-                          <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${hasPublishedVersion ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
+                          <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${hasPublishedVersion ? 'bg-navy-100 text-navy-700' : 'bg-slate-100 text-slate-500'}`}>
                             <FileText className="w-4 h-4" />
                           </div>
                           <div>
-                            <h3 className="text-sm font-bold text-slate-900">{template.title}</h3>
-                            <p className="text-xs text-slate-500 font-mono mt-0.5">{template.slug}</p>
+                            <Text variant="body-sm" weight="bold" color="primary">{template.title}</Text>
+                            <Text variant="caption" color="muted" className="font-mono mt-0.5">{template.slug}</Text>
                           </div>
                         </div>
                       </td>
 
                       <td className="px-6 py-4">
                         {template.category ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                          <Badge variant="info" size="sm">
                             {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className="text-xs text-slate-400 italic">Sin categoría</span>
+                          <Text variant="caption" color="muted" className="italic">Sin categoría</Text>
                         )}
                       </td>
                       
                       <td className="px-6 py-4">
-                        {template.is_active ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                            Activo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                            Inactivo
-                          </span>
-                        )}
-                        <div className="mt-1 text-[10px] text-slate-400">
-                          {hasPublishedVersion ? 'Versión publicada disponible' : 'Sin versión publicada'}
+                        <Badge variant={template.is_active ? 'success' : 'draft'} size="sm">
+                          {template.is_active ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                        <div className="mt-1">
+                          <Text variant="caption" color="muted" className="text-[10px]">
+                            {hasPublishedVersion ? 'Versión publicada disponible' : 'Sin versión publicada'}
+                          </Text>
                         </div>
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900 text-sm">
+                        <Text variant="body-sm" weight="medium" color="primary">
                           ${(publishedVersion?.base_price || latestVersion?.base_price || 0).toLocaleString()}
-                        </div>
+                        </Text>
                       </td>
 
                       <td className="px-6 py-4">
                          {latestVersion ? (
                             <div className="flex flex-col">
-                              <span className="text-sm text-slate-700">v{latestVersion.version_number}</span>
-                              <span className="text-xs text-slate-400 text-[10px]">
+                              <Text variant="body-sm" color="secondary">v{latestVersion.version_number}</Text>
+                              <Text variant="caption" color="muted" className="text-[10px]">
                                 {new Date(latestVersion.created_at).toLocaleDateString()}
-                              </span>
+                              </Text>
                             </div>
                          ) : (
-                           <span className="text-xs text-slate-400 italic">--</span>
+                           <Text variant="caption" color="muted" className="italic">--</Text>
                          )}
                       </td>
 
@@ -427,7 +439,7 @@ export const TemplatesPage: React.FC = () => {
                           {publishedVersion && (
                             <button 
                               onClick={() => handleDownloadVersion(publishedVersion.id)}
-                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-navy-700 hover:bg-navy-50 rounded-lg transition-colors"
                               title="Descargar versión publicada"
                             >
                               <Download className="w-4 h-4" />
@@ -439,7 +451,7 @@ export const TemplatesPage: React.FC = () => {
                             onClick={() => handleToggleActive(template.id, template.is_active)}
                             className={`p-1.5 rounded-lg transition-colors ${
                               template.is_active 
-                                ? 'text-green-600 hover:bg-green-50 hover:text-green-700' 
+                                ? 'text-legal-emerald-700 hover:bg-legal-emerald-50 hover:text-legal-emerald-800' 
                                 : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                             }`}
                             title={template.is_active ? "Desactivar plantilla" : "Activar plantilla"}
@@ -450,7 +462,7 @@ export const TemplatesPage: React.FC = () => {
                           {/* Edit Button */}
                           <button 
                             onClick={() => navigate(`/admin/templates/${template.id}/edit`)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-navy-700 hover:bg-navy-50 rounded-lg transition-colors"
                             title="Editar plantilla"
                           >
                             <Edit className="w-4 h-4" />
@@ -473,7 +485,7 @@ export const TemplatesPage: React.FC = () => {
             </table>
           </div>
         )}
-      </div>
+      </Box>
 
       {/* New Template Modal - Now with file upload */}
       {showNewTemplateForm && (

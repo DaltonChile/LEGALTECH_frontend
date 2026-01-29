@@ -35,15 +35,8 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen relative bg-slate-50 flex flex-col">
-       {/* Grid Background */}
-       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-      
-      {/* Gradient Overlay */}
-      <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"></div>
-
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Navbar />
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Navbar />
 
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
@@ -125,7 +118,6 @@ export function LoginPage() {
             © 2025 Contrato Seguro. Plataforma segura.
           </p>
         </div>
-      </div>
     </div>
   );
 }

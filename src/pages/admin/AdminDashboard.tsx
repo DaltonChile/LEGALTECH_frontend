@@ -6,6 +6,10 @@ import {
   BarChart3, PieChart as PieChartIcon, Loader2,
   Calendar, Filter, RefreshCw
 } from 'lucide-react';
+import { Text } from '../../components/ui/primitives/Text';
+import { Box } from '../../components/ui/primitives/Box';
+import { Button } from '../../components/ui/primitives/Button';
+import { Badge } from '../../components/ui/primitives/Badge';
 import { 
   getDashboardStats, 
   getDashboardWeeklyActivity, 
@@ -108,15 +112,15 @@ interface Contract {
 // Estados reales del flujo:
 // pending_payment → draft → waiting_signatures → waiting_notary → completed
 const STATUS_CONFIG = {
-  pending_payment: { label: 'Pend. Pago', color: 'bg-amber-100 text-amber-700', dotColor: 'bg-amber-500', chartColor: '#f59e0b' },
-  draft: { label: 'Completando', color: 'bg-blue-100 text-blue-700', dotColor: 'bg-blue-500', chartColor: '#3b82f6' },
-  waiting_signatures: { label: 'Esp. Firmas', color: 'bg-cyan-100 text-cyan-700', dotColor: 'bg-cyan-500', chartColor: '#06b6d4' },
-  waiting_notary: { label: 'Esp. Notario', color: 'bg-purple-100 text-purple-700', dotColor: 'bg-purple-500', chartColor: '#8b5cf6' },
-  completed: { label: 'Completado', color: 'bg-emerald-100 text-emerald-700', dotColor: 'bg-emerald-500', chartColor: '#059669' },
-  failed: { label: 'Fallido', color: 'bg-red-100 text-red-700', dotColor: 'bg-red-500', chartColor: '#ef4444' }
+  pending_payment: { label: 'Pend. Pago', color: 'bg-amber-50 text-amber-700', dotColor: 'bg-amber-600', chartColor: '#d97706' },
+  draft: { label: 'Completando', color: 'bg-slate-100 text-slate-700', dotColor: 'bg-slate-600', chartColor: '#475569' },
+  waiting_signatures: { label: 'Esp. Firmas', color: 'bg-blue-50 text-blue-700', dotColor: 'bg-blue-600', chartColor: '#2563eb' },
+  waiting_notary: { label: 'Esp. Notario', color: 'bg-navy-100 text-navy-700', dotColor: 'bg-navy-600', chartColor: '#486581' },
+  completed: { label: 'Completado', color: 'bg-legal-emerald-50 text-legal-emerald-700', dotColor: 'bg-legal-emerald-600', chartColor: '#047857' },
+  failed: { label: 'Fallido', color: 'bg-red-50 text-red-700', dotColor: 'bg-red-600', chartColor: '#dc2626' }
 };
 
-const CHART_COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#94a3b8'];
+const CHART_COLORS = ['#047857', '#486581', '#2563eb', '#d97706', '#dc2626', '#475569', '#64748b'];
 
 // ============================================
 // Date Range Filter Types & Constants
@@ -238,22 +242,22 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm mb-6">
+    <Box variant="document" padding="md" className="mb-6">
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
         {/* Filter Icon & Label */}
-        <div className="flex items-center gap-2">
-          <div className={`p-2 rounded-lg ${isFiltered ? 'bg-cyan-100' : 'bg-slate-100'}`}>
-            <Calendar className={`w-5 h-5 ${isFiltered ? 'text-cyan-600' : 'text-slate-500'}`} />
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${isFiltered ? 'bg-legal-emerald-100' : 'bg-slate-100'}`}>
+            <Calendar className={`w-5 h-5 ${isFiltered ? 'text-legal-emerald-700' : 'text-slate-500'}`} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-700">Período de datos</p>
+            <Text variant="body-sm" weight="medium" color="primary">Período de datos</Text>
             {isFiltered && (
-              <p className="text-xs text-cyan-600 font-medium flex items-center gap-1">
+              <Text variant="caption" className="text-legal-emerald-700 font-medium flex items-center gap-1 mt-0.5">
                 <Filter className="w-3 h-3" />
                 Filtro activo: {dateRange.preset === 'custom' 
                   ? `${formatDisplayDate(dateRange.startDate)} - ${formatDisplayDate(dateRange.endDate)}`
                   : currentPresetLabel}
-              </p>
+              </Text>
             )}
           </div>
         </div>
@@ -264,10 +268,10 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             <button
               key={preset.value}
               onClick={() => handlePresetChange(preset.value)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium font-sans rounded-md transition-all ${
                 dateRange.preset === preset.value
-                  ? 'bg-cyan-500 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-navy-900 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               {preset.label}
@@ -281,7 +285,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             type="date"
             value={dateRange.startDate}
             onChange={(e) => handleDateChange('startDate', e.target.value)}
-            className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            className="px-3 py-1.5 text-sm font-sans border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
             placeholder="Desde"
           />
           <span className="text-slate-400">—</span>
@@ -289,22 +293,23 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             type="date"
             value={dateRange.endDate}
             onChange={(e) => handleDateChange('endDate', e.target.value)}
-            className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            className="px-3 py-1.5 text-sm font-sans border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
             placeholder="Hasta"
           />
         </div>
 
         {/* Refresh Button */}
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={onRefresh}
           disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all disabled:opacity-50"
+          leftIcon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />}
         >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          <span className="text-sm font-medium">Actualizar</span>
-        </button>
+          Actualizar
+        </Button>
       </div>
-    </div>
+    </Box>
   );
 };
 
@@ -453,39 +458,35 @@ export function AdminDashboard() {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-50">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
-          <p className="text-slate-500 text-sm">Cargando dashboard...</p>
+          <Loader2 className="w-10 h-10 text-navy-900 animate-spin" />
+          <Text variant="body-sm" color="muted">Cargando dashboard...</Text>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen relative bg-slate-50">
-      {/* Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-      
-      {/* Gradient Overlay */}
-      <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"></div>
-
-      <div className="relative z-10 p-6 md:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50">
+      <div className="p-6 md:p-8">
+        <div className="space-y-6">
           
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-              <p className="text-sm text-slate-500 mt-1">Resumen de actividad y métricas</p>
+              <Text variant="h2">Dashboard Administrativo</Text>
+              <Text variant="body-sm" color="muted" className="mt-1">Resumen de actividad y métricas</Text>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-400">Última actualización</p>
-              <p className="text-sm font-medium text-slate-600">{new Date().toLocaleDateString('es-CL', { 
-                day: '2-digit', 
-                month: 'short', 
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}</p>
+              <Text variant="caption" color="muted" className="block">Última actualización</Text>
+              <Text variant="body-sm" weight="medium" color="secondary" className="mt-0.5">
+                {new Date().toLocaleDateString('es-CL', { 
+                  day: '2-digit', 
+                  month: 'short', 
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Text>
             </div>
           </div>
 
@@ -502,8 +503,8 @@ export function AdminDashboard() {
             {/* Ventas Completadas (contratos con status completed) */}
             <StatCard 
               icon={<CheckCircle className="w-5 h-5" />}
-              iconBg="bg-emerald-100"
-              iconColor="text-emerald-600"
+              iconBg="bg-legal-emerald-100"
+              iconColor="text-legal-emerald-700"
               title="Ventas Completadas" 
               value={formatNumber(stats?.totalSales || 0)} 
               subtitle="contratos finalizados"
@@ -512,8 +513,8 @@ export function AdminDashboard() {
             {/* Ingresos de Ventas */}
             <StatCard 
               icon={<DollarSign className="w-5 h-5" />}
-              iconBg="bg-cyan-100"
-              iconColor="text-cyan-600"
+              iconBg="bg-navy-100"
+              iconColor="text-navy-700"
               title="Ingresos por Ventas" 
               value={formatCurrency(stats?.totalSalesRevenue || 0)} 
               subtitle="de contratos completados"
@@ -523,7 +524,7 @@ export function AdminDashboard() {
             <StatCard 
               icon={<FileText className="w-5 h-5" />}
               iconBg="bg-blue-100"
-              iconColor="text-blue-600"
+              iconColor="text-blue-700"
               title="Total Solicitudes" 
               value={formatNumber(stats?.totalContracts || 0)} 
               subtitle="todos los estados"
@@ -532,8 +533,8 @@ export function AdminDashboard() {
             {/* Tasa de Completación */}
             <StatCard 
               icon={<TrendingUp className="w-5 h-5" />}
-              iconBg="bg-purple-100"
-              iconColor="text-purple-600"
+              iconBg="bg-slate-100"
+              iconColor="text-slate-700"
               title="Tasa de Completación" 
               value={`${stats && stats.totalContracts > 0 ? ((stats.totalSales / stats.totalContracts) * 100).toFixed(1) : 0}%`} 
               subtitle="completados / total"
@@ -542,43 +543,43 @@ export function AdminDashboard() {
 
           {/* ================= VENTAS POR CATEGORÍA ================= */}
           {stats?.salesByCategory && stats.salesByCategory.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+            <Box variant="document" padding="md">
               <div className="mb-4">
-                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                  <PieChartIcon className="w-5 h-5 text-emerald-500" />
+                <Text variant="h4" className="flex items-center gap-2">
+                  <PieChartIcon className="w-5 h-5 text-legal-emerald-700" />
                   Ventas por Categoría
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">Contratos completados agrupados por categoría</p>
+                </Text>
+                <Text variant="caption" color="muted" className="mt-1">Contratos completados agrupados por categoría</Text>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {stats.salesByCategory.map((cat, index) => (
-                  <div key={cat.category} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                  <div key={cat.category} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                     <div className="flex items-center gap-2 mb-2">
                       <div 
                         className="w-3 h-3 rounded-full" 
                         style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                       />
-                      <span className="text-sm font-medium text-slate-700 truncate">{cat.category}</span>
+                      <Text variant="body-sm" weight="medium" color="secondary" className="truncate">{cat.category}</Text>
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">{cat.count}</p>
-                    <p className="text-xs text-slate-500">{formatCurrency(cat.revenue)}</p>
+                    <Text variant="h3" className="text-2xl font-sans">{cat.count}</Text>
+                    <Text variant="caption" color="muted">{formatCurrency(cat.revenue)}</Text>
                   </div>
                 ))}
               </div>
-            </div>
+            </Box>
           )}
 
           {/* ================= CHARTS ROW ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
             {/* Chart: Actividad (8 cols) */}
-            <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+            <Box variant="document" padding="md" className="lg:col-span-8">
               <div className="mb-6">
-                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-cyan-500" />
+                <Text variant="h4" className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-navy-700" />
                   Actividad
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">Contratos e ingresos por período seleccionado</p>
+                </Text>
+                <Text variant="caption" color="muted" className="mt-1">Contratos e ingresos por período seleccionado</Text>
               </div>
               
               <div className="h-72">
@@ -586,12 +587,12 @@ export function AdminDashboard() {
                   <AreaChart data={activityData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorContratos" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#047857" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#047857" stopOpacity={0}/>
                       </linearGradient>
                       <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#486581" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#486581" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -638,7 +639,7 @@ export function AdminDashboard() {
                       yAxisId="left"
                       type="monotone" 
                       dataKey="contratos" 
-                      stroke="#06b6d4" 
+                      stroke="#047857" 
                       strokeWidth={2}
                       fillOpacity={1} 
                       fill="url(#colorContratos)" 
@@ -647,7 +648,7 @@ export function AdminDashboard() {
                       yAxisId="right"
                       type="monotone" 
                       dataKey="ingresos" 
-                      stroke="#8b5cf6" 
+                      stroke="#486581" 
                       strokeWidth={2}
                       fillOpacity={1} 
                       fill="url(#colorIngresos)" 
@@ -655,16 +656,16 @@ export function AdminDashboard() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </Box>
 
             {/* Chart: Estados (4 cols) */}
-            <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+            <Box variant="document" padding="md" className="lg:col-span-4">
               <div className="mb-4">
-                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                  <PieChartIcon className="w-5 h-5 text-purple-500" />
+                <Text variant="h4" className="flex items-center gap-2">
+                  <PieChartIcon className="w-5 h-5 text-navy-700" />
                   Estados
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">Distribución de contratos</p>
+                </Text>
+                <Text variant="caption" color="muted" className="mt-1">Distribución de contratos</Text>
               </div>
 
               {statusChartData.length > 0 ? (
@@ -697,64 +698,74 @@ export function AdminDashboard() {
                     </ResponsiveContainer>
                     {/* Center Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-2xl font-bold text-slate-800">{stats?.totalContracts || 0}</span>
-                      <span className="text-xs text-slate-500">Total</span>
+                      <Text variant="h3" className="text-2xl font-sans">{stats?.totalContracts || 0}</Text>
+                      <Text variant="caption" color="muted">Total</Text>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 mt-4">
                     {statusChartData.slice(0, 6).map((item, index) => (
-                      <div key={index} className="flex items-center gap-2 text-xs">
+                      <div key={index} className="flex items-center gap-2">
                         <span 
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
                           style={{ backgroundColor: item.color }}
                         />
-                        <span className="text-slate-600 truncate">{item.name}</span>
-                        <span className="text-slate-900 font-semibold ml-auto">{item.value}</span>
+                        <Text variant="caption" color="secondary" className="truncate flex-1">{item.name}</Text>
+                        <Text variant="body-sm" weight="semibold" color="primary">{item.value}</Text>
                       </div>
                     ))}
                   </div>
                 </>
               ) : (
-                <div className="h-48 flex items-center justify-center text-slate-400 text-sm">
-                  Sin datos de estados
+                <div className="h-48 flex items-center justify-center">
+                  <Text variant="body-sm" color="muted">Sin datos de estados</Text>
                 </div>
               )}
-            </div>
+            </Box>
           </div>
 
           {/* ================= TABLES ROW ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
             {/* Recent Contracts (8 cols) */}
-            <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between p-6 border-b border-slate-100">
+            <Box variant="document" padding="none" className="lg:col-span-8 overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg">Contratos Recientes</h3>
-                  <p className="text-xs text-slate-400 mt-1">Últimos movimientos registrados</p>
+                  <Text variant="h4">Contratos Recientes</Text>
+                  <Text variant="caption" color="muted" className="mt-1">Últimos movimientos registrados</Text>
                 </div>
-                <button className="text-sm font-medium text-cyan-600 hover:text-cyan-700 transition-colors">
-                  Ver todos →
-                </button>
+                <Button variant="ghost" size="sm" rightIcon={<span>→</span>}>
+                  Ver todos
+                </Button>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-slate-50/50">
+                  <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Código</th>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contrato</th>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
-                      <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Monto</th>
+                      <th className="text-left px-6 py-4">
+                        <Text variant="caption" color="muted">CÓDIGO</Text>
+                      </th>
+                      <th className="text-left px-6 py-4">
+                        <Text variant="caption" color="muted">CONTRATO</Text>
+                      </th>
+                      <th className="text-left px-6 py-4">
+                        <Text variant="caption" color="muted">FECHA</Text>
+                      </th>
+                      <th className="text-left px-6 py-4">
+                        <Text variant="caption" color="muted">ESTADO</Text>
+                      </th>
+                      <th className="text-left px-6 py-4">
+                        <Text variant="caption" color="muted">MONTO</Text>
+                      </th>
                       <th className="px-6 py-4"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-200">
                     {recentContracts.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                          No hay contratos recientes
+                        <td colSpan={6} className="px-6 py-12 text-center">
+                          <Text variant="body-sm" color="muted">No hay contratos recientes</Text>
                         </td>
                       </tr>
                     ) : (
@@ -769,37 +780,37 @@ export function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </Box>
 
             {/* Popular Templates (4 cols) */}
-            <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-100">
-                <h3 className="font-bold text-slate-900 text-lg">Templates Populares</h3>
-                <p className="text-xs text-slate-400 mt-1">Más utilizados</p>
+            <Box variant="document" padding="none" className="lg:col-span-4 overflow-hidden">
+              <div className="px-6 py-5 border-b border-slate-200">
+                <Text variant="h4">Templates Populares</Text>
+                <Text variant="caption" color="muted" className="mt-1">Más utilizados</Text>
               </div>
 
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-slate-200">
                 {popularTemplates.length === 0 ? (
-                  <div className="px-6 py-12 text-center text-slate-400 text-sm">
-                    Sin templates disponibles
+                  <div className="px-6 py-12 text-center">
+                    <Text variant="body-sm" color="muted">Sin templates disponibles</Text>
                   </div>
                 ) : (
                   popularTemplates.map((template, index) => (
                     <div key={template.id} className="p-4 hover:bg-slate-50 transition-colors">
                       <div className="flex items-start gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold`}
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-sans text-sm font-bold`}
                           style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}>
                           {index + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 text-sm truncate">{template.title}</p>
+                          <Text variant="body-sm" weight="medium" color="primary" className="truncate block">{template.title}</Text>
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs text-slate-500">
+                            <Text variant="caption" color="muted">
                               {template.usage_count} usos
-                            </span>
-                            <span className="text-xs font-medium text-emerald-600">
+                            </Text>
+                            <Text variant="caption" weight="medium" className="text-legal-emerald-700">
                               {formatCurrency(template.total_revenue)}
-                            </span>
+                            </Text>
                           </div>
                         </div>
                       </div>
@@ -807,7 +818,7 @@ export function AdminDashboard() {
                   ))
                 )}
               </div>
-            </div>
+            </Box>
           </div>
 
         </div>
@@ -845,24 +856,27 @@ const StatCard: React.FC<StatCardProps> = ({
   const isPositive = change !== undefined && change >= 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all">
+    <Box variant="document" padding="md" className="hover:shadow-document-hover transition-all">
       <div className="flex items-start justify-between mb-4">
-        <div className={`p-2.5 rounded-xl ${iconBg}`}>
+        <div className={`p-2.5 rounded-lg ${iconBg}`}>
           <span className={iconColor}>{icon}</span>
         </div>
         {showChange && change !== undefined && (
-          <span className={`text-xs font-bold flex items-center gap-0.5 px-2 py-1 rounded-full ${
-            isPositive ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'
-          }`}>
+          <Badge 
+            variant={isPositive ? 'success' : 'error'}
+            size="sm"
+            dot={false}
+            className="gap-1"
+          >
             {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
             {Math.abs(change).toFixed(1)}%
-          </span>
+          </Badge>
         )}
       </div>
-      <p className="text-xs text-slate-500 font-medium mb-1">{title}</p>
-      <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
-      <p className="text-xs text-slate-400 mt-2">{subtitle}</p>
-    </div>
+      <Text variant="caption" color="muted" className="block mb-1">{title}</Text>
+      <Text variant="h3" className="text-3xl font-sans tracking-tight">{value}</Text>
+      <Text variant="body-sm" color="muted" className="mt-2">{subtitle}</Text>
+    </Box>
   );
 };
 
@@ -874,52 +888,64 @@ interface ContractRowProps {
 const ContractRow: React.FC<ContractRowProps> = ({ contract, onView }) => {
   const status = STATUS_CONFIG[contract.status] || { 
     label: contract.status, 
-    color: 'bg-gray-100 text-gray-600', 
-    dotColor: 'bg-gray-400' 
+    color: 'bg-slate-100 text-slate-700', 
+    dotColor: 'bg-slate-400' 
+  };
+
+  // Map status to Badge variant
+  const getBadgeVariant = (status: string): 'draft' | 'pending' | 'success' | 'error' | 'info' | 'warning' => {
+    switch(status) {
+      case 'completed': return 'success';
+      case 'failed': return 'error';
+      case 'pending_payment': return 'warning';
+      case 'draft': return 'draft';
+      case 'waiting_signatures':
+      case 'waiting_notary': return 'info';
+      default: return 'draft';
+    }
   };
 
   return (
     <tr className="hover:bg-slate-50/80 transition-colors group">
       <td className="px-6 py-4">
-        <span className="font-mono text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">
+        <span className="font-mono text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
           {contract.tracking_code}
         </span>
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center text-cyan-600">
+          <div className="w-8 h-8 rounded-lg bg-navy-100 flex items-center justify-center text-navy-700">
             <FileText className="w-4 h-4" />
           </div>
-          <span className="text-sm font-medium text-slate-900 truncate max-w-[180px]">
+          <Text variant="body-sm" weight="medium" color="primary" className="truncate max-w-[180px]">
             {contract.templateVersion?.template?.title || 'Sin template'}
-          </span>
+          </Text>
         </div>
       </td>
       <td className="px-6 py-4">
         <div className="flex flex-col">
-          <span className="text-sm text-slate-700 font-medium">
+          <Text variant="body-sm" weight="medium" color="secondary">
             {new Date(contract.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-          </span>
-          <span className="text-xs text-slate-400">
+          </Text>
+          <Text variant="caption" color="muted">
             {new Date(contract.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-          </span>
+          </Text>
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${status.color}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`}></span>
+        <Badge variant={getBadgeVariant(contract.status)} size="sm">
           {status.label}
-        </span>
+        </Badge>
       </td>
       <td className="px-6 py-4">
-        <span className="text-sm font-bold text-slate-900">
+        <Text variant="body-sm" weight="bold" color="primary">
           ${(contract.total_amount || 0).toLocaleString()}
-        </span>
+        </Text>
       </td>
       <td className="px-6 py-4 text-right">
         <button
           onClick={onView}
-          className="p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+          className="p-2 text-slate-400 hover:text-navy-700 hover:bg-navy-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
         >
           <Eye className="w-4 h-4" />
         </button>
@@ -936,8 +962,8 @@ interface ContractDetailModalProps {
 const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onClose }) => {
   const status = STATUS_CONFIG[contract.status] || { 
     label: contract.status, 
-    color: 'bg-gray-100 text-gray-600', 
-    dotColor: 'bg-gray-400' 
+    color: 'bg-slate-100 text-slate-700', 
+    dotColor: 'bg-slate-400' 
   };
   const statusIcons: Record<string, typeof FileText> = {
     draft: FileText, pending_payment: Clock, completed: CheckCircle,
@@ -946,56 +972,59 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
   const StatusIcon = statusIcons[contract.status] || FileText;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white">
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      <Box variant="elevated" padding="none" className="max-w-lg w-full overflow-hidden shadow-document-hover">
+        {/* Navy top accent stripe */}
+        <div className="border-t-4 border-navy-900"></div>
+        
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Detalle del Contrato</h2>
-            <p className="text-xs text-slate-500 font-mono mt-0.5">{contract.tracking_code}</p>
+            <Text variant="h4">Detalle del Contrato</Text>
+            <Text variant="caption" color="muted" className="font-mono mt-0.5">{contract.tracking_code}</Text>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
             <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
         
         <div className="p-6 space-y-6">
-          <div className={`flex items-start gap-4 p-4 rounded-xl ${status.color} bg-opacity-50`}>
-            <div className={`p-2 rounded-lg ${status.dotColor.replace('bg-', 'text-')} bg-white`}>
+          <div className={`flex items-start gap-4 p-4 rounded-lg border ${status.color} border-current border-opacity-20`}>
+            <div className="p-2 rounded-lg bg-white border border-slate-200">
               <StatusIcon className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-bold text-sm">{status.label}</p>
-              <p className="text-xs opacity-80 mt-0.5">Estado actual del proceso</p>
+              <Text variant="body-sm" weight="bold">{status.label}</Text>
+              <Text variant="caption" color="muted" className="mt-0.5">Estado actual del proceso</Text>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Monto</p>
-              <p className="text-xl font-bold text-slate-900">${(contract.total_amount || 0).toLocaleString()}</p>
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <Text variant="caption" color="muted" className="block mb-1">MONTO</Text>
+              <Text variant="h4" className="text-xl font-sans">${(contract.total_amount || 0).toLocaleString()}</Text>
             </div>
-             <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">RUT Cliente</p>
-              <p className="text-sm font-bold text-slate-900 font-mono">{contract.buyer_rut}</p>
+             <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <Text variant="caption" color="muted" className="block mb-1">RUT CLIENTE</Text>
+              <Text variant="body-sm" weight="bold" className="font-mono">{contract.buyer_rut}</Text>
             </div>
           </div>
 
           <div className="space-y-3">
-             <div className="flex items-center justify-between py-2 border-b border-slate-50">
-                <span className="text-sm text-slate-500">Template</span>
-                <span className="text-sm font-medium text-slate-900">{contract.templateVersion?.template?.title || 'N/A'}</span>
+             <div className="flex items-center justify-between py-2 border-b border-slate-200">
+                <Text variant="body-sm" color="muted">Template</Text>
+                <Text variant="body-sm" weight="medium" color="primary">{contract.templateVersion?.template?.title || 'N/A'}</Text>
              </div>
-             <div className="flex items-center justify-between py-2 border-b border-slate-50">
-                <span className="text-sm text-slate-500">Email Cliente</span>
-                <span className="text-sm font-medium text-slate-900">{contract.buyer_email}</span>
+             <div className="flex items-center justify-between py-2 border-b border-slate-200">
+                <Text variant="body-sm" color="muted">Email Cliente</Text>
+                <Text variant="body-sm" weight="medium" color="primary">{contract.buyer_email}</Text>
              </div>
-             <div className="flex items-center justify-between py-2 border-b border-slate-50">
-                <span className="text-sm text-slate-500">Requiere Notario</span>
-                <span className="text-sm font-medium text-slate-900">{contract.requires_notary ? 'Sí' : 'No'}</span>
+             <div className="flex items-center justify-between py-2 border-b border-slate-200">
+                <Text variant="body-sm" color="muted">Requiere Notario</Text>
+                <Text variant="body-sm" weight="medium" color="primary">{contract.requires_notary ? 'Sí' : 'No'}</Text>
              </div>
              <div className="flex items-center justify-between py-2">
-                <span className="text-sm text-slate-500">Fecha Creación</span>
-                <span className="text-sm font-medium text-slate-900">
+                <Text variant="body-sm" color="muted">Fecha Creación</Text>
+                <Text variant="body-sm" weight="medium" color="primary">
                   {new Date(contract.created_at).toLocaleDateString('es-CL', {
                     day: '2-digit',
                     month: 'long',
@@ -1003,25 +1032,20 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
                     hour: '2-digit',
                     minute: '2-digit'
                   })}
-                </span>
+                </Text>
              </div>
           </div>
         </div>
 
-        <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-          <button 
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-          >
+        <div className="px-6 py-5 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+          <Button variant="ghost" size="md" onClick={onClose}>
             Cerrar
-          </button>
-          <button 
-            className="px-4 py-2 text-sm font-medium bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors"
-          >
+          </Button>
+          <Button variant="primary" size="md">
             Ver Detalles Completos
-          </button>
+          </Button>
         </div>
-      </div>
+      </Box>
     </div>
   );
 };

@@ -10,10 +10,7 @@ export function AdminLayout() {
   const firstName = user?.full_name?.split(' ')[0] || 'Admin';
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 relative">
-      {/* Grid Background - Global for Admin */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none fixed"></div>
-      
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       {/* Sidebar - Desktop & Mobile */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <Sidebar onClose={() => setIsSidebarOpen(false)} />
@@ -28,7 +25,7 @@ export function AdminLayout() {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col md:ml-64 relative z-10 min-h-screen transition-all duration-200">
+      <div className="flex-1 flex flex-col md:ml-64 min-h-screen transition-all duration-200">
         
         {/* Top Navbar */}
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 px-4 md:px-8 flex items-center justify-between">
@@ -78,9 +75,7 @@ export function AdminLayout() {
 
         {/* Page Content */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto animate-in fade-in zoom-in-95 duration-300">
-            <Outlet />
-          </div>
+          <Outlet />
         </main>
       </div>
     </div>
