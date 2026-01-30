@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Home, 
-  Briefcase, 
-  FileText, 
-  ShieldCheck, 
-  Users, 
-  HandshakeIcon, 
-  Loader2, 
-  Search, 
+import {
+  Home,
+  Briefcase,
+  FileText,
+  ShieldCheck,
+  Users,
+  HandshakeIcon,
+  Loader2,
+  Search,
   ArrowRight,
   Scale,
   Building2,
@@ -32,13 +32,13 @@ const getIconForTemplate = (slug: string): any => {
     'poder': Gavel,
     'finiquito': FileSignature,
   };
-  
+
   for (const [key, icon] of Object.entries(iconMap)) {
     if (slug.toLowerCase().includes(key)) {
       return icon;
     }
   }
-  
+
   return FileText;
 };
 
@@ -91,14 +91,14 @@ export function ContractCatalog() {
   // Filtrar templates
   const filteredTemplates = (templates || []).filter(template => {
     const query = searchQuery.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       template.title.toLowerCase().includes(query) ||
       template.description?.toLowerCase().includes(query) ||
       template.slug.toLowerCase().includes(query) ||
       (template.category || '').toLowerCase().includes(query);
-    
+
     const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -143,7 +143,7 @@ export function ContractCatalog() {
             </div>
             <p className="text-navy-900 text-xl font-serif font-bold mb-2">Error al cargar documentos</p>
             <p className="text-slate-600 text-center max-w-md font-sans">{error}</p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="mt-6 px-6 py-3 bg-navy-900 text-white rounded-md hover:bg-navy-800 transition-colors font-sans font-medium"
             >
@@ -174,7 +174,7 @@ export function ContractCatalog() {
   return (
     <section className="py-20 px-6 lg:px-8 bg-white" id="documentos">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-4xl font-serif font-bold text-navy-900 mb-3">
@@ -188,7 +188,7 @@ export function ContractCatalog() {
         {/* Filters Bar */}
         <div className="bg-slate-50 rounded-lg p-4 mb-8 border border-slate-200">
           <div className="flex flex-col lg:flex-row gap-4">
-            
+
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
@@ -215,11 +215,10 @@ export function ContractCatalog() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory('all')}
-                className={`px-4 py-2 rounded-md text-sm font-medium font-sans transition-colors ${
-                  selectedCategory === 'all'
+                className={`px-4 py-2 rounded-md text-sm font-medium font-sans transition-colors ${selectedCategory === 'all'
                     ? 'bg-navy-900 text-white'
                     : 'bg-white text-slate-600 border border-slate-200 hover:border-navy-200 hover:text-navy-900'
-                }`}
+                  }`}
               >
                 Todos ({getCategoryCount('all')})
               </button>
@@ -227,16 +226,15 @@ export function ContractCatalog() {
                 const config = categoryConfig[category] || categoryConfig['otros'];
                 const count = getCategoryCount(category);
                 if (count === 0) return null;
-                
+
                 return (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium font-sans transition-colors flex items-center gap-2 ${
-                      selectedCategory === category
+                    className={`px-4 py-2 rounded-md text-sm font-medium font-sans transition-colors flex items-center gap-2 ${selectedCategory === category
                         ? 'bg-navy-900 text-white'
                         : 'bg-white text-slate-600 border border-slate-200 hover:border-navy-200 hover:text-navy-900'
-                    }`}
+                      }`}
                   >
                     <config.icon className="w-4 h-4" />
                     {formatCategoryTitle(category)} ({count})
@@ -283,9 +281,9 @@ export function ContractCatalog() {
               {filteredTemplates.map((template) => {
                 const Icon = getIconForTemplate(template.slug);
                 const config = categoryConfig[template.category || 'otros'] || categoryConfig['otros'];
-                
+
                 return (
-                  <div 
+                  <div
                     key={template.id}
                     className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 hover:bg-slate-50 transition-colors group"
                   >
@@ -378,20 +376,36 @@ export function ContractCatalog() {
           </div>
         )}
 
-        {/* Help text */}
-        <p className="text-center text-sm text-slate-500 mt-6 font-sans">
-          ¿No encuentras lo que buscas? <a href="mailto:soporte@contratoseguro.cl" className="text-navy-900 hover:underline">Contáctanos</a> para solicitar un documento personalizado
-        </p>
+        {/* Custom Document CTA Section */}
+        <div className="mt-10 bg-gradient-to-r from-navy-900 to-navy-800 rounded-xl p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-center md:text-left">
+              <h3 className="text-xl font-serif font-bold text-white mb-2">
+                ¿No encuentras lo que buscas?
+              </h3>
+              <p className="text-slate-300 font-sans text-sm">
+                Sube tu propio documento PDF y fírmalo electrónicamente con nuestra plataforma.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/custom-document')}
+              className="flex-shrink-0 bg-legal-emerald-500 hover:bg-legal-emerald-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors flex items-center gap-2 shadow-lg font-sans"
+            >
+              <ArrowRight className="w-5 h-5" />
+              Subir documento
+            </button>
+          </div>
+        </div>
 
       </div>
 
       {/* Info Modal */}
       {infoModalTemplate && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in"
           onClick={() => setInfoModalTemplate(null)}
         >
-          <div 
+          <div
             className="bg-white rounded-lg shadow-document max-w-lg w-full p-6 animate-fade-in-up"
             onClick={(e) => e.stopPropagation()}
           >
@@ -411,7 +425,7 @@ export function ContractCatalog() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-semibold text-navy-900 mb-2 font-sans">Descripción</h4>
