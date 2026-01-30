@@ -17,15 +17,16 @@ import {
 type Step = 'upload-configure' | 'payment' | 'preview' | 'signatures' | 'waiting-notary';
 
 interface StepConfig {
+    id: string;
     key: Step;
     label: string;
 }
 
 const PROGRESS_STEPS: StepConfig[] = [
-    { key: 'upload-configure', label: 'Documento y firma' },
-    { key: 'payment', label: 'Pago' },
-    { key: 'preview', label: 'Revisar' },
-    { key: 'signatures', label: 'Firmas' },
+    { id: 'upload-configure', key: 'upload-configure', label: 'Documento y firma' },
+    { id: 'payment', key: 'payment', label: 'Pago' },
+    { id: 'preview', key: 'preview', label: 'Revisar' },
+    { id: 'signatures', key: 'signatures', label: 'Firmas' },
 ];
 
 export function CustomDocumentUploadPage() {
@@ -38,7 +39,6 @@ export function CustomDocumentUploadPage() {
 
     // Configuration state
     const [buyerRut, setBuyerRut] = useState('');
-    const [buyerEmail, setBuyerEmail] = useState('');
     const [signatureType, setSignatureType] = useState<'simple' | 'fea' | 'none'>('simple');
     const [signers, setSigners] = useState<CustomContractSigner[]>([]);
     const [requireNotary, setRequireNotary] = useState(false);
@@ -92,7 +92,6 @@ export function CustomDocumentUploadPage() {
             setContractId(data.id);
             setTrackingCode(data.tracking_code);
             setBuyerRut(data.buyer_rut);
-            setBuyerEmail(data.buyer_email);
             setTotalAmount(data.total_amount);
             setSignatureType(data.signature_type as 'simple' | 'fea' | 'none');
             setRequireNotary(data.require_notary);
@@ -141,7 +140,6 @@ export function CustomDocumentUploadPage() {
         setTrackingCode(data.trackingCode);
         setTotalAmount(data.totalAmount);
         setBuyerRut(data.buyerRut);
-        setBuyerEmail(data.buyerEmail);
         setSignatureType(data.signatureType);
         setSigners(data.signers);
         setRequireNotary(data.requireNotary);
