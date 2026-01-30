@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Upload, FileText, X, AlertCircle, Plus, Trash2, User, ArrowRight, Info } from 'lucide-react';
 import { EditorHeader } from '../contract-editor/EditorHeader';
 import { uploadCustomDocument, calculateCustomPrice, type PricingInfo, type CustomContractSigner } from '../../../services/customContract.service';
@@ -50,6 +50,7 @@ function InfoTooltip({ text }: { text: string }) {
 export function UploadConfigureStep({ pricing, steps, onContinue }: UploadConfigureStepProps) {
     // File state
     const [file, setFile] = useState<File | null>(null);
+    const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [fileError, setFileError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,6 +70,15 @@ export function UploadConfigureStep({ pricing, steps, onContinue }: UploadConfig
     const [buyerEmail, setBuyerEmail] = useState('');
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+    // Cleanup preview URL on unmount
+    useEffect(() => {
+        return () => {
+            if (filePreviewUrl) {
+                URL.revokeObjectURL(filePreviewUrl);
+            }
+        };
+    }, [filePreviewUrl]);
 
     // Calculate price
     const priceInfo = useMemo(() => {
@@ -110,6 +120,9 @@ export function UploadConfigureStep({ pricing, steps, onContinue }: UploadConfig
         const droppedFile = e.dataTransfer.files[0];
         if (droppedFile && validateFile(droppedFile)) {
             setFile(droppedFile);
+            // Create preview URL
+            const url = URL.createObjectURL(droppedFile);
+            setFilePreviewUrl(url);
         }
     }, []);
 
@@ -117,12 +130,20 @@ export function UploadConfigureStep({ pricing, steps, onContinue }: UploadConfig
         const selectedFile = e.target.files?.[0];
         if (selectedFile && validateFile(selectedFile)) {
             setFile(selectedFile);
+            // Create preview URL
+            const url = URL.createObjectURL(selectedFile);
+            setFilePreviewUrl(url);
         }
     }, []);
 
     const removeFile = () => {
         setFile(null);
         setFileError(null);
+        // Clean up the preview URL
+        if (filePreviewUrl) {
+            URL.revokeObjectURL(filePreviewUrl);
+            setFilePreviewUrl(null);
+        }
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -297,8 +318,32 @@ export function UploadConfigureStep({ pricing, steps, onContinue }: UploadConfig
 
                 {/* Left Column - PDF Upload */}
                 <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0 min-h-[400px] lg:min-h-0">
-                    <div className="p-4 border-b border-slate-200 bg-slate-50">
+                    {/* Header with file info */}
+                    <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-4">
                         <h3 className="font-semibold text-navy-900 font-sans">Documento PDF</h3>
+                        
+                        {file && (
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-legal-emerald-50 rounded-lg flex items-center justify-center">
+                                        <FileText className="w-4 h-4 text-legal-emerald-600" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <p className="font-medium text-navy-900 text-sm truncate max-w-[200px]" title={file.name}>
+                                            {file.name}
+                                        </p>
+                                        <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={removeFile}
+                                    className="py-1.5 px-3 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                    Cambiar archivo
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex-1 p-4 overflow-auto">
@@ -337,19 +382,21 @@ export function UploadConfigureStep({ pricing, steps, onContinue }: UploadConfig
                                 />
                             </div>
                         ) : (
-                            <div className="h-full min-h-[300px] flex flex-col items-center justify-center">
-                                <div className="w-24 h-24 bg-legal-emerald-50 rounded-xl flex items-center justify-center mb-4">
-                                    <FileText className="w-12 h-12 text-legal-emerald-600" />
-                                </div>
-                                <p className="font-medium text-navy-900 text-center mb-1 break-all px-4 text-lg">{file.name}</p>
-                                <p className="text-sm text-slate-500 mb-4">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                                <button
-                                    onClick={removeFile}
-                                    className="py-2 px-4 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center gap-2 transition-colors"
-                                >
-                                    <X className="w-4 h-4" />
-                                    Cambiar archivo
-                                </button>
+                            <div className="h-full min-h-[300px]">
+                                {/* PDF Preview - Full height */}
+                                {filePreviewUrl && (
+                                    <div className="h-full border-2 border-slate-200 rounded-lg overflow-hidden bg-slate-50 relative">
+                                        <iframe
+                                            src={`${filePreviewUrl}#view=FitH&toolbar=0&navpanes=0&scrollbar=1`}
+                                            className="w-full h-full min-h-[400px]"
+                                            title="Vista previa del PDF"
+                                            style={{ border: 'none' }}
+                                        />
+                                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs text-slate-600 shadow-sm">
+                                            Vista previa
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

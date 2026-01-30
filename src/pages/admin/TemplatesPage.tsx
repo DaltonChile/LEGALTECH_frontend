@@ -337,22 +337,22 @@ export const TemplatesPage: React.FC = () => {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-4">
+                  <th className="text-left px-3 md:px-4 py-3">
                     <Text variant="caption" color="muted">NOMBRE / SLUG</Text>
                   </th>
-                  <th className="text-left px-6 py-4 hidden lg:table-cell">
+                  <th className="text-left px-3 md:px-4 py-3 hidden xl:table-cell">
                     <Text variant="caption" color="muted">CATEGORÍA</Text>
                   </th>
-                  <th className="text-left px-6 py-4">
+                  <th className="text-left px-3 md:px-4 py-3 hidden lg:table-cell">
                     <Text variant="caption" color="muted">ESTADO</Text>
                   </th>
-                  <th className="text-left px-6 py-4 hidden lg:table-cell">
+                  <th className="text-left px-3 md:px-4 py-3 hidden xl:table-cell">
                     <Text variant="caption" color="muted">PRECIO BASE</Text>
                   </th>
-                  <th className="text-left px-6 py-4 hidden lg:table-cell">
+                  <th className="text-left px-3 md:px-4 py-3 hidden xl:table-cell">
                     <Text variant="caption" color="muted">VERSIÓN</Text>
                   </th>
-                  <th className="text-right px-6 py-4">
+                  <th className="text-right px-3 md:px-4 py-3">
                     <Text variant="caption" color="muted">ACCIONES</Text>
                   </th>
                 </tr>
@@ -365,21 +365,29 @@ export const TemplatesPage: React.FC = () => {
 
                   return (
                     <tr key={template.id} className="hover:bg-slate-50/80 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${hasPublishedVersion ? 'bg-navy-100 text-navy-700' : 'bg-slate-100 text-slate-500'}`}>
-                            <FileText className="w-4 h-4" />
+                      <td className="px-3 md:px-4 py-3">
+                        <div className="flex items-start gap-2">
+                          <div className={`mt-0.5 flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${hasPublishedVersion ? 'bg-navy-100 text-navy-700' : 'bg-slate-100 text-slate-500'}`}>
+                            <FileText className="w-3.5 h-3.5" />
                           </div>
-                          <div>
-                            <div className="min-w-0 max-w-[200px] sm:max-w-xs">
+                          <div className="min-w-0">
+                            <div className="min-w-0 max-w-[160px] md:max-w-[200px] lg:max-w-xs">
                               <Text variant="body-sm" weight="bold" color="primary" className="truncate block">{template.title}</Text>
-                              <Text variant="caption" color="muted" className="font-mono mt-0.5 truncate block">{template.slug}</Text>
+                              <Text variant="caption" color="muted" className="font-mono mt-0.5 truncate block text-[10px]">{template.slug}</Text>
+                              {/* Show category badge on mobile/tablet when column is hidden */}
+                              <div className="xl:hidden mt-1">
+                                {template.category && (
+                                  <Badge variant="info" size="sm">
+                                    {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 hidden lg:table-cell">
+                      <td className="px-3 md:px-4 py-3 hidden xl:table-cell">
                         {template.category ? (
                           <Badge variant="info" size="sm">
                             {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
@@ -389,24 +397,24 @@ export const TemplatesPage: React.FC = () => {
                         )}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-3 md:px-4 py-3 hidden lg:table-cell">
                         <Badge variant={template.is_active ? 'success' : 'draft'} size="sm">
                           {template.is_active ? 'Activo' : 'Inactivo'}
                         </Badge>
                         <div className="mt-1">
                           <Text variant="caption" color="muted" className="text-[10px]">
-                            {hasPublishedVersion ? 'Versión publicada disponible' : 'Sin versión publicada'}
+                            {hasPublishedVersion ? 'V. publicada' : 'Sin v. publicada'}
                           </Text>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 hidden lg:table-cell">
+                      <td className="px-3 md:px-4 py-3 hidden xl:table-cell">
                         <Text variant="body-sm" weight="medium" color="primary">
                           ${(publishedVersion?.base_price || latestVersion?.base_price || 0).toLocaleString()}
                         </Text>
                       </td>
 
-                      <td className="px-6 py-4 hidden lg:table-cell">
+                      <td className="px-3 md:px-4 py-3 hidden xl:table-cell">
                         {latestVersion ? (
                           <div className="flex flex-col">
                             <Text variant="body-sm" color="secondary">v{latestVersion.version_number}</Text>
@@ -419,8 +427,8 @@ export const TemplatesPage: React.FC = () => {
                         )}
                       </td>
 
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="px-3 md:px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                           {/* Download Button - only if published version exists */}
                           {publishedVersion && (
                             <button
@@ -428,7 +436,7 @@ export const TemplatesPage: React.FC = () => {
                               className="p-1.5 text-slate-400 hover:text-navy-700 hover:bg-navy-50 rounded-lg transition-colors"
                               title="Descargar versión publicada"
                             >
-                              <Download className="w-4 h-4" />
+                              <Download className="w-3.5 h-3.5" />
                             </button>
                           )}
 
@@ -441,7 +449,7 @@ export const TemplatesPage: React.FC = () => {
                               }`}
                             title={template.is_active ? "Desactivar plantilla" : "Activar plantilla"}
                           >
-                            {template.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                            {template.is_active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                           </button>
 
                           {/* Edit Button */}
@@ -450,7 +458,7 @@ export const TemplatesPage: React.FC = () => {
                             className="p-1.5 text-slate-400 hover:text-navy-700 hover:bg-navy-50 rounded-lg transition-colors"
                             title="Editar plantilla"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Delete Button */}
@@ -459,7 +467,7 @@ export const TemplatesPage: React.FC = () => {
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Eliminar plantilla"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
