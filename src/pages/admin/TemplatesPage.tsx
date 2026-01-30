@@ -1,8 +1,8 @@
 // LEGALTECH_frontend/src/pages/admin/TemplatesPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  getAdminTemplates, 
+import {
+  getAdminTemplates,
   publishVersion,
   getTemplateVersionDownloadUrl,
   deleteTemplateVersion,
@@ -10,10 +10,10 @@ import {
   updateTemplateStatus,
   getTemplateCategories
 } from '../../services/api';
-import { Search, Plus, FileText, Edit, Eye, EyeOff, Download, Trash2 } from 'lucide-react';
-import { 
-  CreateTemplateModal, 
-  TemplateDetailModal 
+import { Search, FileText, Edit, Eye, EyeOff, Download, Trash2 } from 'lucide-react';
+import {
+  CreateTemplateModal,
+  TemplateDetailModal
 } from '../../components/admin/templates';
 import type { Template, FilterType } from '../../types/templates';
 import { Text } from '../../components/ui/primitives/Text';
@@ -62,10 +62,10 @@ export const TemplatesPage: React.FC = () => {
   const handlePublishVersion = async (versionId: string) => {
     try {
       await publishVersion(versionId);
-      
+
       // Recargar templates inmediatamente
       await loadTemplates();
-      
+
       // Actualizar template seleccionado si está abierto
       if (selectedTemplate) {
         // Esperar un momento para que la base de datos se actualice
@@ -77,7 +77,7 @@ export const TemplatesPage: React.FC = () => {
           }
         }, 500);
       }
-      
+
       alert('Versión publicada exitosamente');
     } catch (error: any) {
       console.error('Error publishing version:', error);
@@ -89,21 +89,21 @@ export const TemplatesPage: React.FC = () => {
   const handleDownloadVersion = async (versionId: string) => {
     try {
       const result = await getTemplateVersionDownloadUrl(versionId);
-      
+
       if (result.success) {
         const link = document.createElement('a');
         link.href = result.download_url;
         link.download = result.filename || 'template.docx';
-        
+
         // No abrir en nueva pestaña para blobs
         if (!result.isBlob) {
           link.target = '_blank';
         }
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // Liberar memoria del blob URL
         if (result.isBlob) {
           setTimeout(() => window.URL.revokeObjectURL(result.download_url), 100);
@@ -123,10 +123,10 @@ export const TemplatesPage: React.FC = () => {
     try {
       console.log('Deleting version with ID:', versionId, 'type:', typeof versionId);
       await deleteTemplateVersion(versionId);
-      
+
       // Recargar templates inmediatamente
       await loadTemplates();
-      
+
       // Actualizar template seleccionado si está abierto
       if (selectedTemplate) {
         setTimeout(async () => {
@@ -137,7 +137,7 @@ export const TemplatesPage: React.FC = () => {
           }
         }, 500);
       }
-      
+
       alert('Versión eliminada exitosamente');
     } catch (error: any) {
       console.error('Error deleting version:', error);
@@ -160,10 +160,10 @@ export const TemplatesPage: React.FC = () => {
     }
 
     const isHardDelete = action === '2';
-    const confirmMessage = isHardDelete 
+    const confirmMessage = isHardDelete
       ? `⚠️ PELIGRO: ¿Estás ABSOLUTAMENTE SEGURO de eliminar permanentemente "${templateTitle}"?\n\nEsta acción:\n- Eliminará el template PARA SIEMPRE\n- Eliminará TODAS sus versiones\n- Eliminará TODAS las cápsulas asociadas\n- NO SE PUEDE DESHACER\n\n¡Escribe "ELIMINAR" para confirmar!`
       : `¿Estás seguro de desactivar el template "${templateTitle}"?\n\nEl template dejará de estar visible en el catálogo pero se podrá reactivar después.`;
-    
+
     if (isHardDelete) {
       const confirmation = prompt(confirmMessage);
       if (confirmation !== 'ELIMINAR') {
@@ -190,12 +190,12 @@ export const TemplatesPage: React.FC = () => {
 
   const handleToggleActive = async (templateId: string, currentStatus: boolean) => {
     const template = templates.find(t => t.id === templateId);
-    
+
     if (!currentStatus) {
       // Intentando publicar
       const hasPublishedVersion = template?.versions?.some(v => v.is_published);
       const latestVersion = template?.versions?.[0];
-      
+
       if (!latestVersion) {
         alert('No se puede publicar un template sin versiones. Sube una versión primero.');
         return;
@@ -205,7 +205,7 @@ export const TemplatesPage: React.FC = () => {
       if (!hasPublishedVersion) {
         message = `¿Estás seguro de publicar este template?\n\nSe publicará automáticamente la versión ${latestVersion.version_number} (la más reciente).`;
       }
-      
+
       if (!confirm(message)) return;
     } else {
       // Intentando esconder
@@ -235,10 +235,10 @@ export const TemplatesPage: React.FC = () => {
     const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Check if template has a published version
     const hasPublishedVersion = template.versions?.some(v => v.is_published);
-    
+
     let matchesFilter = true;
     if (filterStatus === 'published') {
       matchesFilter = hasPublishedVersion;
@@ -248,7 +248,7 @@ export const TemplatesPage: React.FC = () => {
 
     // Category filter
     const matchesCategory = filterCategory === 'all' || template.category === filterCategory;
-    
+
     return matchesSearch && matchesFilter && matchesCategory;
   });
 
@@ -262,24 +262,9 @@ export const TemplatesPage: React.FC = () => {
 
   return (
     <div className="p-0"> {/* Removed padding to fit dashboard style better */}
+
       {/* Header & Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <Text variant="h2">Plantillas</Text>
-          <Text variant="body-sm" color="muted" className="mt-1">Gestiona los modelos de contratos disponibles</Text>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => setShowNewTemplateForm(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            Nueva Plantilla
-          </Button>
-        </div>
-      </div>
+
 
       {/* Filters & Search - Styled like a toolbar */}
       <Box variant="document" padding="md" className="mb-6 flex flex-wrap items-center gap-4">
@@ -310,14 +295,13 @@ export const TemplatesPage: React.FC = () => {
 
         <div className="flex bg-slate-100 p-1 rounded-lg">
           {(['all', 'published', 'draft'] as const).map((status) => (
-            <button 
+            <button
               key={status}
               onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1.5 text-xs font-medium font-sans rounded-md transition-all ${
-                filterStatus === status 
-                  ? 'bg-white text-navy-900 shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-3 py-1.5 text-xs font-medium font-sans rounded-md transition-all ${filterStatus === status
+                ? 'bg-white text-navy-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               {status === 'all' && 'Todos'}
               {status === 'published' && 'Publicados'}
@@ -353,19 +337,19 @@ export const TemplatesPage: React.FC = () => {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-4 w-[35%]">
+                  <th className="text-left px-6 py-4">
                     <Text variant="caption" color="muted">NOMBRE / SLUG</Text>
                   </th>
-                  <th className="text-left px-6 py-4">
+                  <th className="text-left px-6 py-4 hidden lg:table-cell">
                     <Text variant="caption" color="muted">CATEGORÍA</Text>
                   </th>
                   <th className="text-left px-6 py-4">
                     <Text variant="caption" color="muted">ESTADO</Text>
                   </th>
-                  <th className="text-left px-6 py-4">
+                  <th className="text-left px-6 py-4 hidden lg:table-cell">
                     <Text variant="caption" color="muted">PRECIO BASE</Text>
                   </th>
-                  <th className="text-left px-6 py-4">
+                  <th className="text-left px-6 py-4 hidden lg:table-cell">
                     <Text variant="caption" color="muted">VERSIÓN</Text>
                   </th>
                   <th className="text-right px-6 py-4">
@@ -378,7 +362,7 @@ export const TemplatesPage: React.FC = () => {
                   const hasPublishedVersion = template.versions?.some(v => v.is_published);
                   const publishedVersion = template.versions?.find(v => v.is_published);
                   const latestVersion = template.versions?.[0];
-                  
+
                   return (
                     <tr key={template.id} className="hover:bg-slate-50/80 transition-colors group">
                       <td className="px-6 py-4">
@@ -387,13 +371,15 @@ export const TemplatesPage: React.FC = () => {
                             <FileText className="w-4 h-4" />
                           </div>
                           <div>
-                            <Text variant="body-sm" weight="bold" color="primary">{template.title}</Text>
-                            <Text variant="caption" color="muted" className="font-mono mt-0.5">{template.slug}</Text>
+                            <div className="min-w-0 max-w-[200px] sm:max-w-xs">
+                              <Text variant="body-sm" weight="bold" color="primary" className="truncate block">{template.title}</Text>
+                              <Text variant="caption" color="muted" className="font-mono mt-0.5 truncate block">{template.slug}</Text>
+                            </div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 hidden lg:table-cell">
                         {template.category ? (
                           <Badge variant="info" size="sm">
                             {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
@@ -402,7 +388,7 @@ export const TemplatesPage: React.FC = () => {
                           <Text variant="caption" color="muted" className="italic">Sin categoría</Text>
                         )}
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         <Badge variant={template.is_active ? 'success' : 'draft'} size="sm">
                           {template.is_active ? 'Activo' : 'Inactivo'}
@@ -414,30 +400,30 @@ export const TemplatesPage: React.FC = () => {
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 hidden lg:table-cell">
                         <Text variant="body-sm" weight="medium" color="primary">
                           ${(publishedVersion?.base_price || latestVersion?.base_price || 0).toLocaleString()}
                         </Text>
                       </td>
 
-                      <td className="px-6 py-4">
-                         {latestVersion ? (
-                            <div className="flex flex-col">
-                              <Text variant="body-sm" color="secondary">v{latestVersion.version_number}</Text>
-                              <Text variant="caption" color="muted" className="text-[10px]">
-                                {new Date(latestVersion.created_at).toLocaleDateString()}
-                              </Text>
-                            </div>
-                         ) : (
-                           <Text variant="caption" color="muted" className="italic">--</Text>
-                         )}
+                      <td className="px-6 py-4 hidden lg:table-cell">
+                        {latestVersion ? (
+                          <div className="flex flex-col">
+                            <Text variant="body-sm" color="secondary">v{latestVersion.version_number}</Text>
+                            <Text variant="caption" color="muted" className="text-[10px]">
+                              {new Date(latestVersion.created_at).toLocaleDateString()}
+                            </Text>
+                          </div>
+                        ) : (
+                          <Text variant="caption" color="muted" className="italic">--</Text>
+                        )}
                       </td>
 
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                           {/* Download Button - only if published version exists */}
                           {publishedVersion && (
-                            <button 
+                            <button
                               onClick={() => handleDownloadVersion(publishedVersion.id)}
                               className="p-1.5 text-slate-400 hover:text-navy-700 hover:bg-navy-50 rounded-lg transition-colors"
                               title="Descargar versión publicada"
@@ -447,20 +433,19 @@ export const TemplatesPage: React.FC = () => {
                           )}
 
                           {/* Toggle Active Button */}
-                          <button 
+                          <button
                             onClick={() => handleToggleActive(template.id, template.is_active)}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              template.is_active 
-                                ? 'text-legal-emerald-700 hover:bg-legal-emerald-50 hover:text-legal-emerald-800' 
-                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-                            }`}
+                            className={`p-1.5 rounded-lg transition-colors ${template.is_active
+                              ? 'text-legal-emerald-700 hover:bg-legal-emerald-50 hover:text-legal-emerald-800'
+                              : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                              }`}
                             title={template.is_active ? "Desactivar plantilla" : "Activar plantilla"}
                           >
                             {template.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                           </button>
 
                           {/* Edit Button */}
-                          <button 
+                          <button
                             onClick={() => navigate(`/admin/templates/${template.id}/edit`)}
                             className="p-1.5 text-slate-400 hover:text-navy-700 hover:bg-navy-50 rounded-lg transition-colors"
                             title="Editar plantilla"
@@ -469,7 +454,7 @@ export const TemplatesPage: React.FC = () => {
                           </button>
 
                           {/* Delete Button */}
-                          <button 
+                          <button
                             onClick={() => handleDeleteTemplate(template.id, template.title)}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Eliminar plantilla"

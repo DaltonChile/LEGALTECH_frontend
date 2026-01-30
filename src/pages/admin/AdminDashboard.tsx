@@ -267,24 +267,7 @@ export function AdminDashboard() {
         <div className="space-y-6">
 
           {/* Header */}
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <Text variant="h2">Dashboard Administrativo</Text>
-              <Text variant="body-sm" color="muted" className="mt-1">Resumen de actividad y métricas</Text>
-            </div>
-            <div className="text-right">
-              <Text variant="caption" color="muted" className="block">Última actualización</Text>
-              <Text variant="body-sm" weight="medium" color="secondary" className="mt-0.5">
-                {new Date().toLocaleDateString('es-CL', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </Text>
-            </div>
-          </div>
+
 
           {/* ================= KPI CARDS - VENTAS ================= */}
 

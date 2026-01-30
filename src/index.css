@@ -14,7 +14,7 @@
   --color-navy-800: #243b53;
   --color-navy-900: #102a43;
   --color-navy-950: #0a1929;
-  
+
   /* Sophisticated Emerald Green palette */
   --color-legal-emerald-50: #ecfdf5;
   --color-legal-emerald-100: #d1fae5;
@@ -41,13 +41,19 @@
 }
 
 @layer base {
+
   /* Set default font */
   body {
     @apply font-sans text-slate-700 antialiased;
   }
 
   /* Headings use serif */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-serif text-navy-900;
   }
 
@@ -63,6 +69,7 @@
 }
 
 @layer components {
+
   /* Document-style container */
   .container-document {
     @apply bg-white border border-slate-200 rounded-card shadow-document;
@@ -106,9 +113,25 @@
   .badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-md text-sm font-medium font-sans;
   }
+
+  /* Admin/Notary Theme Override - Uses modern sans font for everything */
+  .theme-admin {
+    @apply font-sans;
+  }
+
+  .theme-admin h1,
+  .theme-admin h2,
+  .theme-admin h3,
+  .theme-admin h4,
+  .theme-admin h5,
+  .theme-admin h6,
+  .theme-admin .font-serif {
+    font-family: var(--font-sans) !important;
+  }
 }
 
 @layer utilities {
+
   /* Text balance for headings */
   .text-balance {
     text-wrap: balance;

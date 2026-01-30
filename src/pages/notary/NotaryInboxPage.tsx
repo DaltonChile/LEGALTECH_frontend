@@ -62,13 +62,13 @@ export const NotaryInboxPage: React.FC = () => {
       loadContracts();
     } catch (error: unknown) {
       console.error('Error uploading signed contract:', error);
-      
+
       let errorMessage = 'Error al subir el documento firmado';
-      
+
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
         const data = axiosError.response?.data;
-        
+
         if (data?.message) {
           errorMessage = data.message;
         } else if (data?.error) {
@@ -79,7 +79,7 @@ export const NotaryInboxPage: React.FC = () => {
           errorMessage = errorMessages[data.error] || data.error;
         }
       }
-      
+
       alert(errorMessage);
     } finally {
       setUploading(false);
@@ -88,11 +88,11 @@ export const NotaryInboxPage: React.FC = () => {
 
   // Combine and filter contracts
   const allContracts = [...pendingContracts, ...completedContracts];
-  const contractsToShow = filter === 'pending' 
-    ? pendingContracts 
-    : filter === 'completed' 
-    ? completedContracts 
-    : allContracts;
+  const contractsToShow = filter === 'pending'
+    ? pendingContracts
+    : filter === 'completed'
+      ? completedContracts
+      : allContracts;
 
   const filteredContracts = contractsToShow.filter(contract => {
     const searchLower = searchQuery.toLowerCase();
@@ -113,7 +113,7 @@ export const NotaryInboxPage: React.FC = () => {
   }
 
   return (
-    <div className="p-0">
+    <div className="p-0 theme-admin">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -123,7 +123,7 @@ export const NotaryInboxPage: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <NotaryStatsCards 
+      <NotaryStatsCards
         pending={pendingContracts.length}
         completed={completedContracts.length}
         total={pendingContracts.length + completedContracts.length}

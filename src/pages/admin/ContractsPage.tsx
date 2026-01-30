@@ -36,12 +36,7 @@ export function ContractsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Text variant="h2" className="text-navy-900">Contratos</Text>
-          <Text variant="body-sm" color="muted">Gestiona todos los contratos del sistema</Text>
-        </div>
-      </div>
+
 
       {/* Filters */}
       <Box variant="document" padding="md">
@@ -50,7 +45,7 @@ export function ContractsPage() {
             <Filter className="w-4 h-4 text-slate-600" />
             <Text variant="body-sm" weight="medium">Filtros:</Text>
           </div>
-          
+
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -89,7 +84,7 @@ export function ContractsPage() {
             <Text variant="body-sm" color="muted">
               Mostrando {contracts.length} de {pagination.total} contratos
             </Text>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
@@ -100,7 +95,7 @@ export function ContractsPage() {
                 <ChevronLeft className="w-4 h-4" />
                 Anterior
               </Button>
-              
+
               <div className="flex items-center gap-1">
                 {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
                   let pageNum;
@@ -113,7 +108,7 @@ export function ContractsPage() {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <Button
                       key={pageNum}
@@ -126,7 +121,7 @@ export function ContractsPage() {
                   );
                 })}
               </div>
-              
+
               <Button
                 variant="secondary"
                 size="sm"
