@@ -26,7 +26,7 @@ interface ContractStatus {
 const STEPS = [
   { id: 'payment', label: 'Pago' },
   { id: 'draft', label: 'Borrador' },
-  { id: 'signatures', label: 'Firmas' },
+  { id: 'signatures', label: 'Firmando' },
   { id: 'completed', label: 'Completado' }
 ];
 
@@ -50,7 +50,7 @@ const getStepStatus = (stepId: string, currentStatus: string) => {
   const stepIndex = stepIndices[stepId];
 
   if (currentStatus === 'failed' || currentStatus === 'cancelled') return 'error';
-  
+
   if (currentProgression > stepIndex) return 'completed';
   if (currentProgression === stepIndex) return 'current';
   return 'waiting';
@@ -85,7 +85,7 @@ export function TrackingPage() {
   const handleContinueEditing = () => {
     if (!contractData) return;
     setRutError('');
-    
+
     if (!buyerRut || !isValidRut(buyerRut)) {
       setRutError('Por favor ingresa un RUT válido');
       return;
@@ -98,7 +98,7 @@ export function TrackingPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!trackingCode.trim()) {
       setError('Por favor ingresa un código de seguimiento');
       return;
@@ -139,11 +139,11 @@ export function TrackingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="flex flex-col bg-slate-50">
       <Navbar />
 
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        
+      <main className="min-h-screen w-full max-w-3xl mx-auto px-6 py-12">
+
         {/* Page Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-serif font-bold text-navy-900 mb-3">
@@ -167,7 +167,7 @@ export function TrackingPage() {
               placeholder="Ingresa tu código de seguimiento (ej: CNT-123)"
               className="flex-1 px-4 py-3 bg-transparent outline-none text-navy-900 placeholder-slate-400 w-full uppercase font-mono"
             />
-            <button 
+            <button
               type="submit"
               disabled={loading}
               className="bg-navy-900 text-white px-6 py-2.5 rounded-md font-medium font-sans hover:bg-navy-800 transition-colors disabled:opacity-50"
@@ -188,7 +188,7 @@ export function TrackingPage() {
         {/* Results Card */}
         {contractData && (
           <div className="bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden">
-            
+
             {/* Card Header with Navy Accent */}
             <div className="border-t-4 border-t-navy-900 p-6 border-b border-slate-100">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -200,8 +200,8 @@ export function TrackingPage() {
                     <h3 className="font-serif font-bold text-navy-900 text-lg">Contrato Seguro</h3>
                     <div className="flex items-center gap-2 text-sm text-slate-500 font-sans">
                       <span className="font-mono">{contractData.tracking_code}</span>
-                      <button 
-                        onClick={copyToClipboard} 
+                      <button
+                        onClick={copyToClipboard}
                         className="hover:text-navy-700 transition-colors p-1 rounded-md hover:bg-slate-100"
                         title="Copiar código"
                       >
@@ -211,7 +211,7 @@ export function TrackingPage() {
                   </div>
                 </div>
                 {(contractData.status === 'draft') && (
-                  <button 
+                  <button
                     onClick={() => setShowRutForm(true)}
                     className="bg-navy-900 text-white px-4 py-2 rounded-md text-sm font-medium font-sans hover:bg-navy-800 transition-colors flex items-center gap-2"
                   >
@@ -232,29 +232,29 @@ export function TrackingPage() {
                 {/* Progress Bar */}
                 <div className="relative mb-12 px-4">
                   <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-100 -translate-y-1/2 rounded-full"></div>
-                  <div 
+                  <div
                     className="absolute top-1/2 left-0 h-1 bg-legal-emerald-500 -translate-y-1/2 rounded-full transition-all duration-1000"
-                    style={{ width: `${(Math.max(0, STEPS.findIndex(s => getStepStatus(s.id, contractData.status) === 'current') ) / (STEPS.length - 1)) * 100}%` }}
+                    style={{ width: `${(Math.max(0, STEPS.findIndex(s => getStepStatus(s.id, contractData.status) === 'current')) / (STEPS.length - 1)) * 100}%` }}
                   />
-                  
+
                   <div className="relative flex justify-between">
                     {STEPS.map((step) => {
                       const status = getStepStatus(step.id, contractData.status);
                       const isCompleted = status === 'completed';
                       const isCurrent = status === 'current';
                       const isError = status === 'error';
-                      
+
                       return (
                         <div key={step.id} className="flex flex-col items-center gap-2 relative">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center border-4 transition-colors z-10 bg-white
-                            ${isCompleted ? 'bg-legal-emerald-500 border-legal-emerald-500 text-white' : 
-                              isCurrent ? 'bg-white border-legal-emerald-500 text-legal-emerald-500' : 
-                              isError ? 'bg-red-500 border-red-500 text-white' :
-                              'bg-slate-50 border-slate-200 text-slate-300'}
+                            ${isCompleted ? 'bg-legal-emerald-500 border-legal-emerald-500 text-white' :
+                              isCurrent ? 'bg-white border-legal-emerald-500 text-legal-emerald-500' :
+                                isError ? 'bg-red-500 border-red-500 text-white' :
+                                  'bg-slate-50 border-slate-200 text-slate-300'}
                           `}>
-                            {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : 
+                            {isCompleted ? <CheckCircle2 className="w-4 h-4" /> :
                               isError ? <XCircle className="w-4 h-4" /> :
-                              <Circle className="w-4 h-4 fill-current" />}
+                                <Circle className="w-4 h-4 fill-current" />}
                           </div>
                           <span className={`text-xs font-medium font-sans absolute -bottom-6 w-max ${isCurrent ? 'text-navy-900' : 'text-slate-400'} hidden sm:block`}>
                             {step.label}
@@ -268,19 +268,19 @@ export function TrackingPage() {
 
               {/* Detail Sections */}
               <div className="border rounded-lg border-slate-200 divide-y divide-slate-100 mt-6">
-                
+
                 {/* Timeline Toggle */}
-                <button 
+                <button
                   onClick={() => setShowDetails(!showDetails)}
                   className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
                 >
                   <span className="font-semibold text-navy-900 text-sm font-sans">Detalles del Proceso</span>
                   {showDetails ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                 </button>
-                
+
                 {showDetails && (
                   <div className="p-4 space-y-6 bg-slate-50">
-                    
+
                     {/* Signers Info */}
                     <div>
                       <h4 className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 font-sans">
@@ -345,7 +345,7 @@ export function TrackingPage() {
             <p className="text-slate-500 text-sm font-sans">Nuestro equipo de soporte está disponible para asistirte</p>
           </div>
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={() => navigate('/ayuda')}
               className="px-4 py-2 text-sm font-medium font-sans text-navy-900 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
             >
@@ -366,7 +366,7 @@ export function TrackingPage() {
             <p className="text-slate-600 mb-6 text-sm font-sans">
               Para retomar la edición del contrato, por favor verifica tu identidad ingresando tu RUT.
             </p>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-navy-900 mb-1 font-sans">
@@ -380,11 +380,10 @@ export function TrackingPage() {
                     setRutError('');
                   }}
                   placeholder="12.345.678-9"
-                  className={`w-full p-3 bg-slate-50 border rounded-md outline-none focus:ring-2 transition-all font-sans ${
-                    rutError 
-                      ? 'border-red-300 focus:ring-red-100' 
-                      : 'border-slate-200 focus:ring-navy-100 focus:border-navy-900'
-                  }`}
+                  className={`w-full p-3 bg-slate-50 border rounded-md outline-none focus:ring-2 transition-all font-sans ${rutError
+                    ? 'border-red-300 focus:ring-red-100'
+                    : 'border-slate-200 focus:ring-navy-100 focus:border-navy-900'
+                    }`}
                 />
                 {rutError && (
                   <p className="mt-1 text-sm text-red-600 flex items-center gap-1 font-sans">
@@ -393,7 +392,7 @@ export function TrackingPage() {
                   </p>
                 )}
               </div>
-              
+
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowRutForm(false)}
