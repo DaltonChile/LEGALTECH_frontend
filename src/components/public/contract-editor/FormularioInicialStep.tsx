@@ -7,6 +7,7 @@ import { EditorHeader } from './EditorHeader';
 import { useContractRenderer } from './hooks/useContractRenderer';
 import { extractVariables, formatVariableName } from './utils/templateParser';
 import { contractEditorStyles } from './styles';
+import { formatRut, isValidRut, isValidEmail } from '../../../utils/validators';
 import type { InitialFormResponse } from '../../../types/contract';
 import type { Capsule } from './types';
 
@@ -146,42 +147,6 @@ export function FormularioInicialStep({
     setFormData(newFormData);
   };
 
-  // Función para formatear RUT mientras se escribe
-  const formatRut = (value: string) => {
-    // Eliminar todo excepto números y K
-    let rut = value.replace(/[^0-9kK]/g, '').toUpperCase();
-    if (rut.length > 1) {
-      // Separar cuerpo del dígito verificador
-      const dv = rut.slice(-1);
-      let body = rut.slice(0, -1);
-      // Agregar puntos cada 3 dígitos desde la derecha
-      body = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      rut = body + '-' + dv;
-    }
-    return rut;
-  };
-
-  // Validar formato de RUT chileno
-  const isValidRut = (rut: string) => {
-    if (!rut || rut.length < 3) return false;
-    const cleanRut = rut.replace(/[.-]/g, '').toUpperCase();
-    const body = cleanRut.slice(0, -1);
-    const dv = cleanRut.slice(-1);
-    
-    if (!/^\d+$/.test(body)) return false;
-    
-    let sum = 0;
-    let multiplier = 2;
-    for (let i = body.length - 1; i >= 0; i--) {
-      sum += parseInt(body[i]) * multiplier;
-      multiplier = multiplier === 7 ? 2 : multiplier + 1;
-    }
-    const expectedDv = 11 - (sum % 11);
-    const dvChar = expectedDv === 11 ? '0' : expectedDv === 10 ? 'K' : expectedDv.toString();
-    
-    return dv === dvChar;
-  };
-
   const handleGoToPayment = async () => {
     setError(null);
     setIsSubmitting(true);
@@ -195,8 +160,7 @@ export function FormularioInicialStep({
       }
 
       // Validar email de contacto
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!contactEmail || !emailRegex.test(contactEmail)) {
+      if (!contactEmail || !isValidEmail(contactEmail)) {
         setError('Por favor ingresa un correo electrónico válido para recibir tu código de seguimiento.');
         setIsSubmitting(false);
         return;

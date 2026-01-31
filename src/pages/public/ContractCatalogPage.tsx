@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { PageFooter } from '../../components/shared/PageFooter';
 
 interface Capsule {
   id: number;
@@ -263,6 +264,8 @@ export function ContractCatalogPage() {
           </div>
         )}
       </div>
+
+      <PageFooter />
     </div>
   );
 }
