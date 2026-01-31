@@ -32,8 +32,9 @@ export function extractVariables(
     }
   });
   
-  // Extract all variables from template
-  const varSet = new Set<string>();
+  // Extract all variables from template in ORDER OF APPEARANCE
+  const seenVars = new Set<string>();
+  const orderedVars: string[] = [];
   const regex = /\{\{([^}:]+)(?::([^}]*))?\}\}/g;
   let match;
   
@@ -41,12 +42,14 @@ export function extractVariables(
     const varName = match[1].trim();
     if (varName && 
         !varName.toUpperCase().startsWith('NUMERACI') && 
-        !unselectedCapsuleVars.has(varName)) {
-      varSet.add(varName);
+        !unselectedCapsuleVars.has(varName) &&
+        !seenVars.has(varName)) {
+      seenVars.add(varName);
+      orderedVars.push(varName);
     }
   }
   
-  return Array.from(varSet);
+  return orderedVars;
 }
 
 /**

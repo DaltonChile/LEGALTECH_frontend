@@ -96,8 +96,8 @@ export function FormularioInicialStep({
     const validVariables = allVariables.filter(v => v);
     if (!searchTerm) return validVariables;
     const term = searchTerm.toLowerCase();
-    return validVariables.filter((v) => 
-      v.toLowerCase().includes(term) || 
+    return validVariables.filter((v) =>
+      v.toLowerCase().includes(term) ||
       formatVariableName(v).toLowerCase().includes(term)
     );
   }, [allVariables, searchTerm]);
@@ -128,16 +128,16 @@ export function FormularioInicialStep({
       .filter(c => selectedCapsules.includes(c.id))
       .forEach(c => { price += c.price; });
     if (signatureInfo && signatureType !== 'none') {
-      price += signatureType === 'fea' 
-        ? signatureInfo.pricing.fea.totalPrice 
+      price += signatureType === 'fea'
+        ? signatureInfo.pricing.fea.totalPrice
         : signatureInfo.pricing.fes.totalPrice;
     }
     return price;
   }, [template.base_price, template.capsules, selectedCapsules, signatureInfo, signatureType]);
 
   const toggleCapsule = (capsuleId: number) => {
-    setSelectedCapsules(prev => 
-      prev.includes(capsuleId) 
+    setSelectedCapsules(prev =>
+      prev.includes(capsuleId)
         ? prev.filter(id => id !== capsuleId)
         : [...prev, capsuleId]
     );
@@ -219,26 +219,26 @@ export function FormularioInicialStep({
   return (
     <div className="h-full bg-slate-100 flex flex-col">
       {/* Header */}
-      <EditorHeader 
-         steps={steps}
-         currentStep="formulario-inicial"
-         onBack={onBack}
-         totalPrice={totalPrice}
-         rightAction={
-            <button
-              onClick={() => setShowContactModal(true)}
-              disabled={isSubmitting}
-              className="bg-slate-900 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 text-sm md:text-base"
-            >
-              <span>Continuar al pago</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-         }
+      <EditorHeader
+        steps={steps}
+        currentStep="formulario-inicial"
+        onBack={onBack}
+        totalPrice={totalPrice}
+        rightAction={
+          <button
+            onClick={() => setShowContactModal(true)}
+            disabled={isSubmitting}
+            className="bg-slate-900 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 text-sm md:text-base"
+          >
+            <span>Continuar al pago</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        }
       />
 
       {/* Main Content */}
       <div className="relative z-10 flex-1 w-full max-w-[1920px] mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 overflow-hidden min-h-0">
-        
+
         {/* Left: Document Preview */}
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0 min-h-[400px] lg:min-h-0">
           <DocumentPreview
@@ -249,139 +249,139 @@ export function FormularioInicialStep({
             visiblePercentage={VISIBLE_PERCENTAGE}
             lockedOverlayContent={lockedOverlayContent}
             variablesMetadata={template.variables_metadata || []}
+            allVariables={allVariables}
           />
         </div>
 
         {/* Right: Sidebar */}
         <div className="flex-1 h-full overflow-y-auto pr-2 space-y-4 pb-20 custom-scrollbar">
 
-            {/* Capsules */}
-            {template.capsules.length > 0 && (
-              <div className="bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden transition-shadow hover:shadow-document-hover">
-                <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                  <h3 className="font-semibold text-navy-900 flex items-center gap-2 font-sans">
-                    <div className="w-8 h-8 rounded-lg bg-legal-emerald-50 flex items-center justify-center">
-                       <Plus className="w-4 h-4 text-legal-emerald-600" />
-                    </div>
-                    Cláusulas adicionales
-                  </h3>
-                   <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 font-sans">{selectedCapsules.length} seleccionadas</span>
-                </div>
-                <div className="divide-y divide-slate-100 overflow-y-auto">
-                   {template.capsules.map((capsule) => {
-                      const isSelected = selectedCapsules.includes(capsule.id);
-                      const isExpanded = expandedCapsules.includes(capsule.id);
-                      return (
-                        <div 
-                          key={capsule.id}
-                          className={`transition-colors flex flex-col group ${isSelected ? 'bg-legal-emerald-50/30' : 'hover:bg-slate-50'}`}
-                        >
-                           {/* Header */}
-                           <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => toggleCapsule(capsule.id)}>
-                               <div className={`w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-legal-emerald-600 border-legal-emerald-600' : 'border-slate-300 bg-white group-hover:border-legal-emerald-400'}`}>
-                                  {isSelected && <Check className="w-3 h-3 text-white" />}
-                               </div>
-                               <div className="flex-1 flex items-center justify-between gap-2">
-                                  <span className={`text-sm font-medium font-sans ${isSelected ? 'text-navy-900' : 'text-slate-700'}`}>{capsule.title}</span>
-                                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-sans">+{formatPrice(capsule.price)}</span>
-                               </div>
-                               <button 
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   setExpandedCapsules(prev => prev.includes(capsule.id) ? prev.filter(id => id !== capsule.id) : [...prev, capsule.id]);
-                                 }}
-                                 className="p-1 hover:bg-slate-200 rounded-full transition-colors"
-                               >
-                                 {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                               </button>
-                           </div>
-                           
-                           {/* Body (Accordion Content) */}
-                           {isExpanded && (
-                             <div className="px-4 pb-4 pl-12">
-                               <p className="text-xs text-slate-500 leading-relaxed font-sans">{capsule.description || capsule.legal_text}</p>
-                             </div>
-                           )}
-                        </div>
-                      )
-                   })}
-                </div>
-              </div>
-            )}
-
-            {/* Signature Type */}
-            {requiresSignature && signatureInfo && (
-              <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5 transition-shadow hover:shadow-document-hover">
-                <h3 className="font-semibold text-navy-900 mb-4 flex items-center gap-2 font-sans">
-                   <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                      <Shield className="w-4 h-4 text-amber-600" />
-                   </div>
-                   Tipo de Firma
+          {/* Capsules */}
+          {template.capsules.length > 0 && (
+            <div className="bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden transition-shadow hover:shadow-document-hover">
+              <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <h3 className="font-semibold text-navy-900 flex items-center gap-2 font-sans">
+                  <div className="w-8 h-8 rounded-lg bg-legal-emerald-50 flex items-center justify-center">
+                    <Plus className="w-4 h-4 text-legal-emerald-600" />
+                  </div>
+                  Cláusulas adicionales
                 </h3>
-
-                <div className="space-y-3">
-                   {/* Simple */}
-                   <button
-                     onClick={() => setSignatureType('simple')}
-                     className={`w-full p-4 rounded-lg border text-left transition-all relative ${
-                        signatureType === 'simple' 
-                        ? 'border-legal-emerald-500 bg-legal-emerald-50 ring-1 ring-legal-emerald-500' 
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                     }`}
-                   >
-                     <div className="flex items-center justify-between mb-1">
-                        <span className={`text-sm font-semibold font-sans ${signatureType === 'simple' ? 'text-navy-900' : 'text-slate-700'}`}>Firma Simple (FES)</span>
-                        <span className={`font-bold font-sans ${signatureType === 'simple' ? 'text-legal-emerald-700' : 'text-slate-700'}`}>{formatPrice(signatureInfo.pricing.fes.totalPrice)}</span>
-                     </div>
-                     <p className="text-xs text-slate-500 font-sans">Rápida y estándar. Para la mayoría de los casos.</p>
-                   </button>
-
-                   {/* Advanced */}
-                   <button
-                     onClick={() => setSignatureType('fea')}
-                     className={`w-full p-4 rounded-lg border text-left transition-all ${
-                        signatureType === 'fea' 
-                        ? 'border-legal-emerald-500 bg-legal-emerald-50 ring-1 ring-legal-emerald-500' 
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                     }`}
-                   >
-                     <div className="flex items-center justify-between mb-1">
-                        <span className={`text-sm font-semibold font-sans ${signatureType === 'fea' ? 'text-navy-900' : 'text-slate-700'}`}>Firma Avanzada (FEA)</span>
-                        <span className={`font-bold font-sans ${signatureType === 'fea' ? 'text-legal-emerald-700' : 'text-slate-700'}`}>{formatPrice(signatureInfo.pricing.fea.totalPrice)}</span>
-                     </div>
-                     <p className="text-xs text-slate-500 font-sans">Máxima seguridad legal. Verificación de identidad.</p>
-                   </button>
-                </div>
+                <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 font-sans">{selectedCapsules.length} seleccionadas</span>
               </div>
-            )}
+              <div className="divide-y divide-slate-100 overflow-y-auto">
+                {template.capsules.map((capsule) => {
+                  const isSelected = selectedCapsules.includes(capsule.id);
+                  const isExpanded = expandedCapsules.includes(capsule.id);
+                  return (
+                    <div
+                      key={capsule.id}
+                      className={`transition-colors flex flex-col group ${isSelected ? 'bg-legal-emerald-50/30' : 'hover:bg-slate-50'}`}
+                    >
+                      {/* Header */}
+                      <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => toggleCapsule(capsule.id)}>
+                        <div className={`w-5 h-5 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'bg-legal-emerald-600 border-legal-emerald-600' : 'border-slate-300 bg-white group-hover:border-legal-emerald-400'}`}>
+                          {isSelected && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <div className="flex-1 flex items-center justify-between gap-2">
+                          <span className={`text-sm font-medium font-sans ${isSelected ? 'text-navy-900' : 'text-slate-700'}`}>{capsule.title}</span>
+                          <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-sans">+{formatPrice(capsule.price)}</span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedCapsules(prev => prev.includes(capsule.id) ? prev.filter(id => id !== capsule.id) : [...prev, capsule.id]);
+                          }}
+                          className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+                        >
+                          {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                        </button>
+                      </div>
 
-           {/* Fields Form */}
-           <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5 transition-shadow hover:shadow-document-hover">
+                      {/* Body (Accordion Content) */}
+                      {isExpanded && (
+                        <div className="px-4 pb-4 pl-12">
+                          <p className="text-xs text-slate-500 leading-relaxed font-sans">{capsule.description || capsule.legal_text}</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Signature Type */}
+          {requiresSignature && signatureInfo && (
+            <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5 transition-shadow hover:shadow-document-hover">
               <h3 className="font-semibold text-navy-900 mb-4 flex items-center gap-2 font-sans">
-                <div className="w-8 h-8 rounded-lg bg-legal-emerald-50 flex items-center justify-center">
-                   <Edit3 className="w-4 h-4 text-legal-emerald-600" />
+                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-amber-600" />
                 </div>
-                Datos del documento
+                Tipo de Firma
               </h3>
-              <FieldsForm
-                 variables={filteredVariables}
-                 formData={formData}
-                 onFormChange={handleFormChange}
-                 searchTerm={searchTerm}
-                 onSearchChange={setSearchTerm}
-                 activeField={activeField}
-                 onFieldFocus={setActiveField}
-                 onFieldBlur={() => setActiveField(null)}
-              />
-           </div>
-            
-            {/* Error Display */}
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex items-start gap-2 animate-fade-in-up">
-                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                 <p>{error}</p>
+
+              <div className="space-y-3">
+                {/* Simple */}
+                <button
+                  onClick={() => setSignatureType('simple')}
+                  className={`w-full p-4 rounded-lg border text-left transition-all relative ${signatureType === 'simple'
+                    ? 'border-legal-emerald-500 bg-legal-emerald-50 ring-1 ring-legal-emerald-500'
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-sm font-semibold font-sans ${signatureType === 'simple' ? 'text-navy-900' : 'text-slate-700'}`}>Firma Simple (FES)</span>
+                    <span className={`font-bold font-sans ${signatureType === 'simple' ? 'text-legal-emerald-700' : 'text-slate-700'}`}>{formatPrice(signatureInfo.pricing.fes.totalPrice)}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-sans">Rápida y estándar. Para la mayoría de los casos.</p>
+                </button>
+
+                {/* Advanced */}
+                <button
+                  onClick={() => setSignatureType('fea')}
+                  className={`w-full p-4 rounded-lg border text-left transition-all ${signatureType === 'fea'
+                    ? 'border-legal-emerald-500 bg-legal-emerald-50 ring-1 ring-legal-emerald-500'
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-sm font-semibold font-sans ${signatureType === 'fea' ? 'text-navy-900' : 'text-slate-700'}`}>Firma Avanzada (FEA)</span>
+                    <span className={`font-bold font-sans ${signatureType === 'fea' ? 'text-legal-emerald-700' : 'text-slate-700'}`}>{formatPrice(signatureInfo.pricing.fea.totalPrice)}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-sans">Máxima seguridad legal. Verificación de identidad.</p>
+                </button>
               </div>
-            )}
+            </div>
+          )}
+
+          {/* Fields Form */}
+          <div className="bg-white rounded-lg shadow-document border border-slate-200 p-5 transition-shadow hover:shadow-document-hover">
+            <h3 className="font-semibold text-navy-900 mb-4 flex items-center gap-2 font-sans">
+              <div className="w-8 h-8 rounded-lg bg-legal-emerald-50 flex items-center justify-center">
+                <Edit3 className="w-4 h-4 text-legal-emerald-600" />
+              </div>
+              Datos del documento
+            </h3>
+            <FieldsForm
+              variables={filteredVariables}
+              formData={formData}
+              onFormChange={handleFormChange}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              activeField={activeField}
+              onFieldFocus={setActiveField}
+              onFieldBlur={() => setActiveField(null)}
+              visiblePercentage={VISIBLE_PERCENTAGE}
+            />
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex items-start gap-2 animate-fade-in-up">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <p>{error}</p>
+            </div>
+          )}
         </div>
       </div>
       {/* Contact Data Modal */}
@@ -395,7 +395,7 @@ export function FormularioInicialStep({
                 </div>
                 <h3 className="text-xl font-serif font-bold text-navy-900">Datos de contacto</h3>
               </div>
-              <button 
+              <button
                 onClick={() => setShowContactModal(false)}
                 className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center justify-center"
                 disabled={isSubmitting}
@@ -403,11 +403,11 @@ export function FormularioInicialStep({
                 ✕
               </button>
             </div>
-            
+
             <p className="text-slate-600 mb-6 text-sm font-sans leading-relaxed">
               Ingresa tus datos para enviarte el código de seguimiento y el acceso a tu borrador.
             </p>
-            
+
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-semibold text-navy-900 mb-2 font-sans">
@@ -437,7 +437,7 @@ export function FormularioInicialStep({
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-legal-emerald-500 focus:border-legal-emerald-500 transition-all disabled:opacity-50 font-sans text-navy-900"
                 />
               </div>
-              
+
               {/* Error Display inside Modal */}
               {error && (
                 <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm border border-red-100 flex items-start gap-3">
