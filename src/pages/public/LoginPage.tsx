@@ -117,6 +117,9 @@ export function LoginPage() {
            <p className="mt-8 text-center text-sm text-slate-400">
             © 2025 Contrato Seguro. Plataforma segura.
           </p>
+           <p className="text-center text-xs text-slate-400 mt-1">
+            powered by Dalton
+          </p>
         </div>
     </div>
   );

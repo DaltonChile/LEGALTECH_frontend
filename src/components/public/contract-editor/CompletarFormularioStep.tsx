@@ -8,6 +8,14 @@ import { FileUploadStep } from './FileUploadStep';
 import { useContractRenderer } from './hooks/useContractRenderer';
 import { extractVariables, formatVariableName } from './utils/templateParser';
 import { contractEditorStyles } from './styles';
+import {
+  isRutField,
+  isEmailField,
+  isPhoneField,
+  validateRutFormat,
+  validateEmail,
+  validatePhone,
+} from '../../../utils/validators';
 import type { ContractData } from '../../../types/contract';
 import type { Capsule } from './types';
 
@@ -83,43 +91,13 @@ export function CompletarFormularioStep({
     return validVariables.length > 0 ? Math.round((filled / validVariables.length) * 100) : 0;
   }, [formData, extractedVariables]);
 
-  // Validaciones
-  const isRutField = (variable: string): boolean => variable.toLowerCase().includes('rut');
-  const isEmailField = (variable: string): boolean => {
-    const v = variable.toLowerCase();
-    return v.includes('email') || v.includes('correo') || v.includes('mail');
-  };
-  const isPhoneField = (variable: string): boolean => {
-    const v = variable.toLowerCase();
-    return v.includes('telefono') || v.includes('teléfono') || v.includes('celular') || v.includes('phone');
-  };
-
-  const validateRut = (value: string): boolean => {
-    if (!value || value.trim() === '') return true;
-    const rutPattern = /^\d{7,8}-[\dkK]$/;
-    return rutPattern.test(value.trim());
-  };
-
-  const validateEmail = (value: string): boolean => {
-    if (!value || value.trim() === '') return true;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailPattern.test(value.trim());
-  };
-
-  const validatePhone = (value: string): boolean => {
-    if (!value || value.trim() === '') return false;
-    const cleaned = value.replace(/\s/g, '');
-    const phonePattern = /^(\+?56)?9\d{8}$/;
-    return phonePattern.test(cleaned);
-  };
-
-  // Verificar errores de validación
+  // Verificar errores de validación usando validadores compartidos
   const hasValidationErrors = useMemo(() => {
     return extractedVariables.some((variable) => {
       const value = formData[variable] || '';
-      if (isRutField(variable) && !validateRut(value)) return true;
-      if (isEmailField(variable) && !validateEmail(value)) return true;
-      if (isPhoneField(variable) && !validatePhone(value)) return true;
+      if (isRutField(variable) && validateRutFormat(value) !== null) return true;
+      if (isEmailField(variable) && validateEmail(value) !== null) return true;
+      if (isPhoneField(variable) && validatePhone(value) !== null) return true;
       return false;
     });
   }, [formData, extractedVariables]);

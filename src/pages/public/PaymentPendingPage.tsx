@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import paymentService from '../../services/paymentService';
 import { Navbar } from '../../components/landing/Navbar';
+import { PageFooter } from '../../components/shared/PageFooter';
 
 const PaymentPendingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -122,6 +123,8 @@ const PaymentPendingPage: React.FC = () => {
         </div>
       </div>
       </div>
+
+      <PageFooter />
     </div>
   );
 };

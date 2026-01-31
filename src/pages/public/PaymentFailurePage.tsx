@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '../../components/landing/Navbar';
+import { PageFooter } from '../../components/shared/PageFooter';
 
 const PaymentFailurePage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -110,6 +111,8 @@ const PaymentFailurePage: React.FC = () => {
         </div>
       </div>
       </div>
+
+      <PageFooter />
     </div>
   );
 };

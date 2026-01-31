@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Home, FileText, Mail, Copy } from 'lucide-react';
 import { Navbar } from '../../components/landing/Navbar';
+import { PageFooter } from '../../components/shared/PageFooter';
 
 export function ContractSuccessPage() {
   const [searchParams] = useSearchParams();
@@ -137,6 +138,8 @@ export function ContractSuccessPage() {
           </div>
         </div>
       </div>
+
+      <PageFooter />
     </div>
   );
 }

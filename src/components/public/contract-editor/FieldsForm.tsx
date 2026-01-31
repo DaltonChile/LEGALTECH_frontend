@@ -1,6 +1,16 @@
 import { useRef, useState } from 'react';
 import { Search, AlertCircle } from 'lucide-react';
 import { formatVariableName } from './utils/templateParser';
+import {
+  isNameField,
+  isRutField,
+  isEmailField,
+  isPhoneField,
+  validateName,
+  validateRutFormat,
+  validateEmail,
+  validatePhone,
+} from '../../../utils/validators';
 
 interface FieldsFormProps {
   variables: string[];
@@ -54,75 +64,6 @@ export function FieldsForm({
     return !formData[variable] || formData[variable].trim() === '';
   };
 
-  // Función para detectar si una variable es un nombre
-  const isNameField = (variable: string): boolean => {
-    const varLower = variable.toLowerCase();
-    return varLower.includes('nombre');
-  };
-
-  // Función para detectar si una variable es un RUT
-  const isRutField = (variable: string): boolean => {
-    const varLower = variable.toLowerCase();
-    return varLower.includes('rut');
-  };
-
-  // Función para detectar si una variable es un email
-  const isEmailField = (variable: string): boolean => {
-    const varLower = variable.toLowerCase();
-    return varLower.includes('email') || varLower.includes('correo') || varLower.includes('mail');
-  };
-
-  // Función para detectar si una variable es un teléfono
-  const isPhoneField = (variable: string): boolean => {
-    const varLower = variable.toLowerCase();
-    return varLower.includes('telefono') ||
-           varLower.includes('teléfono') ||
-           varLower.includes('celular') ||
-           varLower.includes('phone');
-  };
-
-  // Validación para campo nombre (mínimo 2 caracteres)
-  const validateName = (value: string): string | null => {
-    if (!value || value.trim() === '') return null; // No validar si está vacío
-    if (value.trim().length < 2) {
-      return 'El nombre debe tener al menos 2 caracteres';
-    }
-    return null;
-  };
-
-  // Validación para campo RUT (formato XXXXXXXX-X)
-  const validateRut = (value: string): string | null => {
-    if (!value || value.trim() === '') return null; // No validar si está vacío
-    const rutPattern = /^\d{7,8}-[\dkK]$/;
-    if (!rutPattern.test(value.trim())) {
-      return 'Debe ser formato XXXXXXXX-X (sin puntos, con guion)';
-    }
-    return null;
-  };
-
-  // Validación para campo email
-  const validateEmail = (value: string): string | null => {
-    if (!value || value.trim() === '') return null; // No validar si está vacío
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(value.trim())) {
-      return 'Debe ser un email válido (ejemplo@dominio.com)';
-    }
-    return null;
-  };
-
-  // Validación para campo teléfono (formato chileno)
-  const validatePhone = (value: string): string | null => {
-    if (!value || value.trim() === '') return 'Teléfono es requerido';
-    
-    const cleaned = value.replace(/\s/g, '');
-    const phonePattern = /^(\+?56)?9\d{8}$/;
-    
-    if (!phonePattern.test(cleaned)) {
-      return 'Formato: +56912345678 o 912345678';
-    }
-    return null;
-  };
-
   // Función para obtener el error de validación de un campo
   const getFieldError = (variable: string): string | null => {
     const value = formData[variable] || '';
@@ -137,7 +78,7 @@ export function FieldsForm({
     }
     
     if (isRutField(variable)) {
-      return validateRut(value);
+      return validateRutFormat(value);
     }
     
     if (isEmailField(variable)) {

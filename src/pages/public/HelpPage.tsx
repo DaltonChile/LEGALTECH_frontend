@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../../components/landing/Navbar';
+import { PageFooter } from '../../components/shared/PageFooter';
 import { 
   HelpCircle, 
   FileText, 
@@ -442,6 +443,8 @@ export function HelpPage() {
         </div>
 
       </main>
+
+      <PageFooter />
 
       {/* Policy Modal */}
       {selectedPolicy && (

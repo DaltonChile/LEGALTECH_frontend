@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Package, XCircle, FileText, Users, AlertCircle, Scale, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
 import { Navbar } from '../../components/landing/Navbar';
+import { PageFooter } from '../../components/shared/PageFooter';
+import { formatRut, isValidRut } from '../../utils/validators';
 
 interface Signer {
   id: number;
@@ -79,37 +81,6 @@ export function TrackingPage() {
   const [rutError, setRutError] = useState('');
   const [showDetails, setShowDetails] = useState(true);
   const [copied, setCopied] = useState(false);
-
-  const formatRut = (value: string) => {
-    let rut = value.replace(/[^0-9kK]/g, '').toUpperCase();
-    if (rut.length > 1) {
-      const dv = rut.slice(-1);
-      let body = rut.slice(0, -1);
-      body = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      rut = body + '-' + dv;
-    }
-    return rut;
-  };
-
-  const isValidRut = (rut: string) => {
-    if (!rut || rut.length < 3) return false;
-    const cleanRut = rut.replace(/[.-]/g, '').toUpperCase();
-    const body = cleanRut.slice(0, -1);
-    const dv = cleanRut.slice(-1);
-    
-    if (!/^\d+$/.test(body)) return false;
-    
-    let sum = 0;
-    let multiplier = 2;
-    for (let i = body.length - 1; i >= 0; i--) {
-      sum += parseInt(body[i]) * multiplier;
-      multiplier = multiplier === 7 ? 2 : multiplier + 1;
-    }
-    const expectedDv = 11 - (sum % 11);
-    const dvChar = expectedDv === 11 ? '0' : expectedDv === 10 ? 'K' : expectedDv.toString();
-    
-    return dv === dvChar;
-  };
 
   const handleContinueEditing = () => {
     if (!contractData) return;
@@ -384,6 +355,8 @@ export function TrackingPage() {
         </div>
 
       </main>
+
+      <PageFooter />
 
       {/* RUT Modal */}
       {showRutForm && (
