@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Scale, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 import { Navbar } from '../../components/landing';
+import { PageFooter } from '../../components/shared/PageFooter';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -113,14 +114,9 @@ export function LoginPage() {
                 </p>
              </div>
           </div>
-          
-           <p className="mt-8 text-center text-sm text-slate-400">
-            © 2025 Contrato Seguro. Plataforma segura.
-          </p>
-           <p className="text-center text-xs text-slate-400 mt-1">
-            powered by Dalton
-          </p>
         </div>
+
+      <PageFooter />
     </div>
   );
 }

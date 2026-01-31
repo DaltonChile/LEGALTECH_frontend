@@ -126,7 +126,7 @@ export function isValidPhone(phone: string): boolean {
  * Validate phone for form field display
  */
 export function validatePhone(value: string): string | null {
-  if (!value || value.trim() === '') return 'Teléfono es requerido';
+  if (!value || value.trim() === '') return null; // Empty is ok (will be caught by completion check)
   
   const cleaned = value.replace(/\s/g, '');
   const phonePattern = /^(\+?56)?9\d{8}$/;
