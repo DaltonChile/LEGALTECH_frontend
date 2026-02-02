@@ -48,6 +48,18 @@ export function FileUploadStep({
   const [error, setError] = useState<string | null>(null);
 
   const loadFiles = useCallback(async () => {
+    // Validar que tenemos los datos necesarios antes de hacer la llamada
+    if (!trackingCode || !buyerRut) {
+      console.warn('📁 FileUploadStep: Missing trackingCode or buyerRut, skipping file load');
+      console.warn('  trackingCode:', trackingCode);
+      console.warn('  buyerRut:', buyerRut);
+      // Si no hay datos, asumir que no hay archivos requeridos
+      setLoading(false);
+      onFilesStatusChange?.(true);
+      onAllFilesUploaded();
+      return;
+    }
+
     try {
       setError(null);
       const apiUrl = import.meta.env.VITE_API_URL;
@@ -75,7 +87,19 @@ export function FileUploadStep({
         }
       }
     } catch (err: any) {
-      console.error('Error loading files:', err);
+      console.error('❌ Error loading files:', err);
+      
+      // Manejar error de red (backend no disponible)
+      if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        console.warn('📁 FileUploadStep: Network error - backend might not be running');
+        // En caso de error de red, asumir que no hay archivos requeridos
+        // para no bloquear el flujo del usuario
+        setError('No se pudo conectar con el servidor. Intentando continuar...');
+        onFilesStatusChange?.(true);
+        onAllFilesUploaded();
+        return;
+      }
+      
       // Si el error es 404, probablemente no hay archivos requeridos para este template
       // Marcar como completado y no mostrar error
       if (err.response?.status === 404) {
@@ -84,6 +108,7 @@ export function FileUploadStep({
         onAllFilesUploaded();
         return;
       }
+      
       const errorData = err.response?.data?.error;
       if (typeof errorData === 'object' && errorData !== null) {
         setError(errorData.message || 'Error al cargar los archivos');
@@ -126,6 +151,13 @@ export function FileUploadStep({
       }
     } catch (err: any) {
       console.error('Error uploading file:', err);
+      
+      // Manejar error de red
+      if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        setError('Error de conexión. Por favor verifica tu conexión a internet e intenta de nuevo.');
+        return;
+      }
+      
       const errorData = err.response?.data?.error;
       if (typeof errorData === 'object' && errorData !== null) {
         setError(errorData.message || 'Error al subir el archivo');
@@ -153,6 +185,13 @@ export function FileUploadStep({
       await loadFiles();
     } catch (err: any) {
       console.error('Error deleting file:', err);
+      
+      // Manejar error de red
+      if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        setError('Error de conexión. Por favor verifica tu conexión a internet e intenta de nuevo.');
+        return;
+      }
+      
       const errorData = err.response?.data?.error;
       if (typeof errorData === 'object' && errorData !== null) {
         setError(errorData.message || 'Error al eliminar el archivo');
