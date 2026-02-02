@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Package, XCircle, FileText, Users, AlertCircle, Scale, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Package, XCircle, FileText, Users, AlertCircle, Scale, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp, Upload } from 'lucide-react';
 import axios from 'axios';
 import { Navbar } from '../../components/landing/Navbar';
 import { PageFooter } from '../../components/shared/PageFooter';
@@ -21,6 +21,7 @@ interface ContractStatus {
   requires_notary: boolean;
   signers: Signer[];
   created_at: string;
+  is_custom_document?: boolean;
 }
 
 const STEPS = [
@@ -117,10 +118,36 @@ export function TrackingPage() {
       if (response.data.success) {
         setContractData(response.data.data);
       } else {
+        // Try searching in custom documents
+        try {
+          const customResponse = await axios.get(
+            `${import.meta.env.VITE_API_URL}/custom-documents/${trackingCode.trim().toUpperCase()}/status`
+          );
+          if (customResponse.data.success) {
+            // Redirect to custom document status page
+            navigate(`/documento-personalizado/estado/${trackingCode.trim().toUpperCase()}`);
+            return;
+          }
+        } catch {
+          // If custom document not found either, show error
+        }
         setError('No se encontró el contrato');
       }
     } catch (err: any) {
       if (err.response?.status === 404) {
+        // Try searching in custom documents
+        try {
+          const customResponse = await axios.get(
+            `${import.meta.env.VITE_API_URL}/custom-documents/${trackingCode.trim().toUpperCase()}/status`
+          );
+          if (customResponse.data.success) {
+            // Redirect to custom document status page
+            navigate(`/documento-personalizado/estado/${trackingCode.trim().toUpperCase()}`);
+            return;
+          }
+        } catch {
+          // If custom document not found either, show error
+        }
         setError('No se encontró ningún contrato con ese código de seguimiento');
       } else {
         setError('Error al buscar el contrato. Por favor intenta nuevamente.');

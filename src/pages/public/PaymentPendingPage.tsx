@@ -12,8 +12,18 @@ const PaymentPendingPage: React.FC = () => {
   const trackingCode = searchParams.get('tracking_code') || '';
   const rut = searchParams.get('rut') || '';
   const hasSigners = searchParams.get('hasSigners') || 'true';
+  
+  // Custom document params
+  const isCustomDocument = searchParams.get('isCustom') === 'true';
+  const signatureType = searchParams.get('signatureType') || 'simple';
+  const customNotary = searchParams.get('customNotary') || 'false';
 
   const [checking, setChecking] = useState(true);
+  
+  // Build custom params for redirect
+  const customParams = isCustomDocument 
+    ? `&isCustom=true&signatureType=${signatureType}&customNotary=${customNotary}`
+    : '';
 
   useEffect(() => {
     if (!contractId || !trackingCode || !rut) {
@@ -28,8 +38,8 @@ const PaymentPendingPage: React.FC = () => {
           maxAttempts: 30,  // 1 minuto total
         });
 
-        if (result.contract_status === 'draft') {
-          navigate(`/payment/success?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}`);
+        if (result.contract_status === 'draft' || result.contract_status === 'waiting_signatures' || result.contract_status === 'waiting_notary') {
+          navigate(`/payment/success?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
         }
       } catch {
         setChecking(false);

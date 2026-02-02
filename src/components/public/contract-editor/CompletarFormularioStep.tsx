@@ -172,7 +172,12 @@ export function CompletarFormularioStep({
       }
     } catch (err: any) {
       console.error('Error completing form:', err);
-      setError(err.response?.data?.error || 'Error al procesar la solicitud');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al procesar la solicitud');
+      } else {
+        setError(errorData || 'Error al procesar la solicitud');
+      }
     } finally {
       setIsSubmitting(false);
     }

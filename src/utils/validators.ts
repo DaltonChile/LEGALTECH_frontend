@@ -91,7 +91,8 @@ export function validateRut(value: string): string | null {
  */
 export function isValidEmail(email: string): boolean {
   if (!email || email.trim() === '') return false;
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // More strict email pattern - domain must end with 2-6 letter TLD
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,6}$/;
   return emailPattern.test(email.trim());
 }
 
@@ -100,7 +101,8 @@ export function isValidEmail(email: string): boolean {
  */
 export function validateEmail(value: string): string | null {
   if (!value || value.trim() === '') return null; // Empty is ok (will be caught by completion check)
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // More strict email pattern - domain must end with 2-6 letter TLD
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,6}$/;
   if (!emailPattern.test(value.trim())) {
     return 'Debe ser un email válido (ejemplo@dominio.com)';
   }
@@ -230,4 +232,20 @@ export function getFieldValidationError(variable: string, value: string): string
     return validatePhone(value);
   }
   return null;
+}
+
+// ============================================================================
+// Error Message Extraction
+// ============================================================================
+
+/**
+ * Extract error message from API error response
+ * Handles both string and object error formats
+ */
+export function getErrorMessage(err: any, defaultMessage: string = 'Ha ocurrido un error'): string {
+  const errorData = err?.response?.data?.error;
+  if (typeof errorData === 'object' && errorData !== null) {
+    return errorData.message || defaultMessage;
+  }
+  return errorData || err?.message || defaultMessage;
 }

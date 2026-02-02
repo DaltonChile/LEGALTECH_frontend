@@ -26,7 +26,9 @@ export const NotaryContractRow: React.FC<NotaryContractRowProps> = ({
             <FileText className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">{contract.templateVersion.template.title}</h3>
+            <h3 className="text-sm font-bold text-slate-900">
+              {contract.templateVersion?.template?.title || 'Documento personalizado'}
+            </h3>
             <p className="text-xs text-slate-500 font-mono mt-0.5">{contract.tracking_code}</p>
           </div>
         </div>

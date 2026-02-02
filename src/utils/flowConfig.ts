@@ -52,6 +52,41 @@ export const STEPS_WITH_SIGNATURES: FlowStep[] = [
   { id: 'signatures', label: 'Firmar' },
 ];
 
+// ============================================================================
+// CUSTOM DOCUMENT STEPS (Separate flow - no templates)
+// ============================================================================
+
+/** Pasos para documentos personalizados con firmas */
+export const CUSTOM_DOC_STEPS_WITH_SIGNATURES: FlowStep[] = [
+  { id: 'upload', label: 'Subir PDF' },
+  { id: 'options', label: 'Opciones' },
+  { id: 'signers', label: 'Firmantes' },
+  { id: 'payment', label: 'Pago' },
+];
+
+/** Pasos para documentos personalizados sin firmas (solo notario) */
+export const CUSTOM_DOC_STEPS_WITHOUT_SIGNATURES: FlowStep[] = [
+  { id: 'upload', label: 'Subir PDF' },
+  { id: 'options', label: 'Opciones' },
+  { id: 'payment', label: 'Pago' },
+];
+
+/**
+ * Obtiene los pasos del flujo para documentos personalizados
+ */
+export function getCustomDocumentSteps(hasSigners: boolean): FlowStep[] {
+  return hasSigners ? CUSTOM_DOC_STEPS_WITH_SIGNATURES : CUSTOM_DOC_STEPS_WITHOUT_SIGNATURES;
+}
+
+/**
+ * Obtiene los pasos del flujo para documentos personalizados
+ * Wrapper con nombre más descriptivo para PaymentSuccessPage
+ */
+export function getStepsForCustomDocument(signatureType: 'none' | 'simple' | 'fea', _customNotary: boolean): FlowStep[] {
+  const hasSigners = signatureType !== 'none';
+  return hasSigners ? CUSTOM_DOC_STEPS_WITH_SIGNATURES : CUSTOM_DOC_STEPS_WITHOUT_SIGNATURES;
+}
+
 /**
  * Obtiene los pasos del flujo basándose en si hay firmantes
  * Esta es la función más simple para obtener los pasos cuando solo se conoce hasSigners

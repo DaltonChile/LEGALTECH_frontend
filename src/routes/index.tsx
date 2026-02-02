@@ -6,7 +6,6 @@ import { AdminLayout } from '../components/layout/AdminLayout';
 // Public pages - lazy loaded
 const HomePage = lazy(() => import('../pages/public/HomePage').then(m => ({ default: m.HomePage })));
 const LoginPage = lazy(() => import('../pages/public/LoginPage').then(m => ({ default: m.LoginPage })));
-const ContractCatalogPage = lazy(() => import('../pages/public/ContractCatalogPage').then(m => ({ default: m.ContractCatalogPage })));
 const ContractEditorPage = lazy(() => import('../pages/public/ContractEditorPage').then(m => ({ default: m.ContractEditorPage })));
 const TrackingPage = lazy(() => import('../pages/public/TrackingPage').then(m => ({ default: m.TrackingPage })));
 const HelpPage = lazy(() => import('../pages/public/HelpPage').then(m => ({ default: m.HelpPage })));
@@ -18,6 +17,10 @@ const PaymentPage = lazy(() => import('../pages/public/PaymentPage'));
 const PaymentSuccessPage = lazy(() => import('../pages/public/PaymentSuccessPage'));
 const PaymentFailurePage = lazy(() => import('../pages/public/PaymentFailurePage'));
 const PaymentPendingPage = lazy(() => import('../pages/public/PaymentPendingPage'));
+
+// Custom document pages - lazy loaded
+const CustomDocumentUploadPage = lazy(() => import('../pages/public/CustomDocumentUploadPage'));
+const CustomDocumentStatusPage = lazy(() => import('../pages/public/CustomDocumentStatusPage'));
 
 // Admin pages - lazy loaded
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
@@ -50,7 +53,6 @@ export function AppRoutes() {
         <Route path="/retomar" element={<ResumeContractPage />} />
         <Route path="/contracts/resume" element={<ResumeContractPage />} />
         <Route path="/contracts/success" element={<ContractSuccessPage />} />
-        <Route path="/catalogo" element={<ContractCatalogPage />} />
         
         {/* Payment routes */}
         <Route path="/payment/:contractId" element={<PaymentPage />} />
@@ -58,6 +60,14 @@ export function AppRoutes() {
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
         <Route path="/payment/pending" element={<PaymentPendingPage />} />
         
+        {/* Custom document routes */}
+        <Route path="/documento-personalizado" element={<CustomDocumentUploadPage />} />
+        <Route path="/documento-personalizado/estado/:trackingCode" element={<CustomDocumentStatusPage />} />
+        
+        {/* Catalog route - redirect to home with catalog section */}
+        <Route path="/catalogo" element={<HomePage />} />
+        
+        {/* Template editor - must be last to catch slugs */}
         <Route path="/:slug" element={<ContractEditorPage />} />
 
       {/* Admin Routes with Layout */}

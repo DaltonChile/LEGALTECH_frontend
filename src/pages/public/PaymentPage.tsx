@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Payment } from '@mercadopago/sdk-react';
-import { CreditCard, Shield, AlertTriangle, Loader2, FileText, PenTool, Package } from 'lucide-react';
+import { CreditCard, Shield, AlertTriangle, Loader2, FileText, PenTool, Package, Users, CheckCircle2, Upload } from 'lucide-react';
 import paymentService from '../../services/paymentService';
 import mercadoPagoConfig from '../../config/mercadopago';
 import { Navbar } from '../../components/landing/Navbar';
 import { EditorHeader } from '../../components/public/contract-editor/EditorHeader';
-import { getStepsForFlow } from '../../utils/flowConfig';
+import { getStepsForFlow, getCustomDocumentSteps } from '../../utils/flowConfig';
 import { getContractDetails } from '../../services/api';
+
+interface Signer {
+  id: string;
+  full_name: string;
+  email: string;
+  rut: string;
+  role: string;
+}
 
 interface ContractDetails {
   template_title: string;
@@ -19,6 +27,11 @@ interface ContractDetails {
     title: string;
     price: number;
   }>;
+  // Custom document fields
+  is_custom_document?: boolean;
+  custom_notary?: boolean;
+  signer_count?: number;
+  signers?: Signer[];
 }
 
 const PaymentPage: React.FC = () => {
@@ -31,14 +44,20 @@ const PaymentPage: React.FC = () => {
   // hasSigners determina si el flujo tiene paso de firmas (5 pasos) o no (4 pasos)
   const hasSigners = searchParams.get('hasSigners') === 'true';
 
-  // Calcular los pasos basándose en si hay firmantes (usando función centralizada)
-  const PROGRESS_STEPS = useMemo(() => getStepsForFlow(hasSigners), [hasSigners]);
-
   const [preferenceId, setPreferenceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [amount, setAmount] = useState<number>(0);
   const [contractDetails, setContractDetails] = useState<ContractDetails | null>(null);
+
+  // Calcular los pasos basándose en el tipo de documento y si hay firmantes
+  const PROGRESS_STEPS = useMemo(() => {
+    if (contractDetails?.is_custom_document) {
+      const signerCount = contractDetails?.signer_count || contractDetails?.signers?.length || 0;
+      return getCustomDocumentSteps(signerCount > 0);
+    }
+    return getStepsForFlow(hasSigners);
+  }, [hasSigners, contractDetails?.is_custom_document, contractDetails?.signer_count, contractDetails?.signers?.length]);
 
   useEffect(() => {
     if (!contractId || !trackingCode || !rut) {
@@ -69,26 +88,40 @@ const PaymentPage: React.FC = () => {
         const contract = contractResponse.data.data;
         console.log('📄 Contract details:', contract);
         
-        // Obtener precio base del templateVersion
-        const basePrice = contract.templateVersion?.base_price || contract.total_amount - (contract.signature_price || 0);
-        
-        // El título del template está dentro de templateVersion.template o directamente en template
-        const templateTitle = contract.template?.title || contract.templateVersion?.template?.title || 'Contrato';
-        
-        // Mapear cápsulas seleccionadas
-        const capsules = (contract.selectedCapsules || []).map((c: any) => ({
-          id: c.id,
-          title: c.title,
-          price: c.SelectedCapsule?.price_at_moment || c.price || 0
-        }));
-        
-        setContractDetails({
-          template_title: templateTitle,
-          signature_type: contract.signature_type || 'none',
-          base_price: parseFloat(basePrice) || 0,
-          signature_price: parseFloat(contract.signature_price) || 0,
-          capsules
-        });
+        // Check if it's a custom document
+        if (contract.is_custom_document) {
+          // Custom document - different data structure
+          setContractDetails({
+            template_title: 'Documento personalizado',
+            signature_type: contract.signature_type || 'simple',
+            base_price: 0,
+            signature_price: parseFloat(contract.signature_price) || contract.total_amount,
+            capsules: [],
+            is_custom_document: true,
+            custom_notary: contract.custom_notary || false,
+            signer_count: contract.signers?.length || 0,
+            signers: contract.signers || []
+          });
+        } else {
+          // Template-based contract
+          const basePrice = contract.templateVersion?.base_price || contract.total_amount - (contract.signature_price || 0);
+          const templateTitle = contract.template?.title || contract.templateVersion?.template?.title || 'Contrato';
+          
+          const capsules = (contract.selectedCapsules || []).map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            price: c.SelectedCapsule?.price_at_moment || c.price || 0
+          }));
+          
+          setContractDetails({
+            template_title: templateTitle,
+            signature_type: contract.signature_type || 'none',
+            base_price: parseFloat(basePrice) || 0,
+            signature_price: parseFloat(contract.signature_price) || 0,
+            capsules,
+            is_custom_document: false
+          });
+        }
       }
 
       // Procesar respuesta de preferencia
@@ -102,7 +135,12 @@ const PaymentPage: React.FC = () => {
       setLoading(false);
     } catch (err: any) {
       console.error('Error cargando datos:', err);
-      setError(err.response?.data?.error || err.message || 'Error al iniciar el pago');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al iniciar el pago');
+      } else {
+        setError(errorData || err.message || 'Error al iniciar el pago');
+      }
       setLoading(false);
     }
   };
@@ -216,12 +254,19 @@ const PaymentPage: React.FC = () => {
                   </h3>
                   
                   <div className="space-y-4">
-                    {/* Nombre del contrato */}
+                    {/* Document/Contract title */}
                     {contractDetails && (
                       <div className="pb-3 border-b border-slate-200">
-                        <p className="text-xs text-slate-500 font-sans mb-1">Contrato</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          {contractDetails.is_custom_document ? (
+                            <Upload className="w-4 h-4 text-slate-400" />
+                          ) : null}
+                          <p className="text-xs text-slate-500 font-sans">
+                            {contractDetails.is_custom_document ? 'Documento' : 'Contrato'}
+                          </p>
+                        </div>
                         <p className="font-medium text-navy-900 font-sans">{contractDetails.template_title}</p>
-                        {contractDetails.base_price > 0 && (
+                        {!contractDetails.is_custom_document && contractDetails.base_price > 0 && (
                           <div className="flex justify-between mt-1">
                             <span className="text-sm text-slate-500 font-sans">Precio base</span>
                             <span className="text-sm font-medium text-slate-700 font-sans">{formatPrice(contractDetails.base_price)}</span>
@@ -230,8 +275,26 @@ const PaymentPage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Cláusulas adicionales */}
-                    {contractDetails && contractDetails.capsules && contractDetails.capsules.length > 0 && (
+                    {/* Signers (for custom documents) */}
+                    {contractDetails?.is_custom_document && contractDetails.signers && contractDetails.signers.length > 0 && (
+                      <div className="pb-3 border-b border-slate-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          <p className="text-xs text-slate-500 font-sans">Firmantes ({contractDetails.signers.length})</p>
+                        </div>
+                        <div className="space-y-1.5 pl-6">
+                          {contractDetails.signers.map((signer) => (
+                            <div key={signer.id} className="flex justify-between text-sm">
+                              <span className="text-slate-600 font-sans">{signer.full_name}</span>
+                              <span className="text-xs text-slate-500 font-sans">{signer.role}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Cláusulas adicionales (for template contracts) */}
+                    {!contractDetails?.is_custom_document && contractDetails?.capsules && contractDetails.capsules.length > 0 && (
                       <div className="pb-3 border-b border-slate-200">
                         <div className="flex items-center gap-2 mb-2">
                           <Package className="w-4 h-4 text-slate-400" />
@@ -257,7 +320,19 @@ const PaymentPage: React.FC = () => {
                         </div>
                         <div className="flex justify-between pl-6">
                           <span className="text-sm text-slate-600 font-sans">{getSignatureLabel(contractDetails.signature_type)}</span>
-                          <span className="text-sm font-medium text-slate-700 font-sans">{formatPrice(contractDetails.signature_price)}</span>
+                          {!contractDetails.is_custom_document && (
+                            <span className="text-sm font-medium text-slate-700 font-sans">{formatPrice(contractDetails.signature_price)}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Notary option (for custom documents) */}
+                    {contractDetails?.is_custom_document && contractDetails.custom_notary && (
+                      <div className="pb-3 border-b border-slate-200">
+                        <div className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-slate-400" />
+                          <p className="text-sm text-slate-600 font-sans">Visación notarial incluida</p>
                         </div>
                       </div>
                     )}
@@ -304,6 +379,21 @@ const PaymentPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* What happens next (for custom documents) */}
+                {contractDetails?.is_custom_document && (
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-blue-800 text-sm font-sans">¿Qué sigue después del pago?</p>
+                        <p className="text-xs text-blue-700 mt-1 font-sans">
+                          Cada firmante recibirá un email con instrucciones para firmar el documento electrónicamente.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
              </div>
 
              {/* Right Column: Payment Brick */}
@@ -352,21 +442,27 @@ const PaymentPage: React.FC = () => {
                                 
                                 // Verificar el estado real del pago
                                 const paymentStatus = result.data?.status;
+                                const isCustomDoc = contractDetails?.is_custom_document;
+                                
+                                // Build URL params for custom documents
+                                const customParams = isCustomDoc 
+                                  ? `&isCustom=true&signatureType=${contractDetails?.signature_type || 'simple'}&customNotary=${contractDetails?.custom_notary || false}`
+                                  : '';
                                 
                                 if (paymentStatus === 'approved') {
-                                  // Pago aprobado - redirigir a página de éxito
-                                  navigate(`/payment/success?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}`);
+                                  // Pago aprobado - unified redirect to success page
+                                  navigate(`/payment/success?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
                                 } else if (paymentStatus === 'pending' || paymentStatus === 'in_process') {
                                   // Pago pendiente - redirigir a página de espera
                                   console.log(`⏳ Pago en estado: ${paymentStatus}, redirigiendo a página de pendiente`);
-                                  navigate(`/payment/pending?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}`);
+                                  navigate(`/payment/pending?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
                                 } else if (paymentStatus === 'rejected') {
                                   // Pago rechazado
-                                  navigate(`/payment/failure?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}`);
+                                  navigate(`/payment/failure?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
                                 } else {
                                   // Estado desconocido - ir a página de pendiente por seguridad
                                   console.log(`⚠️ Estado de pago desconocido: ${paymentStatus}, redirigiendo a página de pendiente`);
-                                  navigate(`/payment/pending?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}`);
+                                  navigate(`/payment/pending?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
                                 }
                               } else {
                                 reject();

@@ -96,8 +96,9 @@ export const NotaryInboxPage: React.FC = () => {
 
   const filteredContracts = contractsToShow.filter(contract => {
     const searchLower = searchQuery.toLowerCase();
+    const title = contract.templateVersion?.template?.title || 'Documento personalizado';
     return (
-      contract.templateVersion.template.title.toLowerCase().includes(searchLower) ||
+      title.toLowerCase().includes(searchLower) ||
       contract.tracking_code.toLowerCase().includes(searchLower) ||
       contract.buyer_email.toLowerCase().includes(searchLower) ||
       contract.buyer_rut.toLowerCase().includes(searchLower)

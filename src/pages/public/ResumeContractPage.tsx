@@ -84,7 +84,12 @@ export function ResumeContractPage() {
       }
     } catch (err: any) {
       console.error('Error loading contract:', err);
-      setError(err.response?.data?.error || 'Error cargando contrato. Verifica los datos ingresados.');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error cargando contrato. Verifica los datos ingresados.');
+      } else {
+        setError(errorData || 'Error cargando contrato. Verifica los datos ingresados.');
+      }
       setLoading(false);
     }
   };

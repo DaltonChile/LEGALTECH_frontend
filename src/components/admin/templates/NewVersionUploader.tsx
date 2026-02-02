@@ -63,7 +63,12 @@ const NewVersionUploader: React.FC<NewVersionUploaderProps> = ({ templateId, onS
         onSuccess();
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al subir el archivo');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al subir el archivo');
+      } else {
+        setError(errorData || 'Error al subir el archivo');
+      }
     } finally {
       setUploading(false);
     }
@@ -77,7 +82,12 @@ const NewVersionUploader: React.FC<NewVersionUploaderProps> = ({ templateId, onS
       await setCapsulePrices(versionId, capsulesPending);
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al asignar precios');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al asignar precios');
+      } else {
+        setError(errorData || 'Error al asignar precios');
+      }
     } finally {
       setUploading(false);
     }

@@ -15,7 +15,8 @@ import {
   Gavel,
   FileSignature,
   X,
-  Info
+  Info,
+  Upload
 } from 'lucide-react';
 import { templatesApi, getTemplateCategories, type Template } from '../../../services/api';
 import { RichDescription } from './RichDescription';
@@ -443,6 +444,44 @@ export function ContractCatalog() {
           </div>
         </div>
       )}
+
+      {/* Custom Document CTA */}
+      <div className="mt-16 bg-gradient-to-br from-navy-900 to-navy-800 rounded-2xl p-8 md:p-12 text-white relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-legal-emerald-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-legal-emerald-600/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+          <div className="shrink-0">
+            <div className="w-20 h-20 bg-legal-emerald-600/20 rounded-2xl flex items-center justify-center">
+              <Upload className="w-10 h-10 text-legal-emerald-400" />
+            </div>
+          </div>
+          
+          <div className="flex-1 text-center md:text-left">
+            <h2 className="text-2xl md:text-3xl font-serif font-bold mb-3">
+              ¿No encontraste lo que buscas?
+            </h2>
+            <p className="text-slate-300 text-lg mb-2">
+              Sube tu propio documento PDF y firma electrónicamente con validez legal.
+            </p>
+            <p className="text-slate-400 text-sm">
+              Perfecto para contratos personalizados, acuerdos específicos o documentos que ya tienes preparados.
+            </p>
+          </div>
+          
+          <div className="shrink-0">
+            <button
+              onClick={() => navigate('/documento-personalizado')}
+              className="group bg-legal-emerald-600 hover:bg-legal-emerald-500 text-white px-8 py-4 rounded-xl font-medium transition-all flex items-center gap-3 shadow-lg hover:shadow-xl"
+            >
+              <FileText className="w-5 h-5" />
+              Subir mi documento
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

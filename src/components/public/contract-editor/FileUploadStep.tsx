@@ -65,13 +65,31 @@ export function FileUploadStep({
         const allUploaded = response.data.data.progress.all_required_uploaded;
         onFilesStatusChange?.(allUploaded);
         
-        if (allUploaded && response.data.data.files.length > 0) {
+        // Si no hay archivos requeridos, marcar como completado
+        if (response.data.data.files.length === 0) {
+          console.log('📁 FileUploadStep: No files required, marking as complete');
+          onFilesStatusChange?.(true);
+          onAllFilesUploaded();
+        } else if (allUploaded) {
           onAllFilesUploaded();
         }
       }
     } catch (err: any) {
       console.error('Error loading files:', err);
-      setError(err.response?.data?.error || 'Error al cargar los archivos');
+      // Si el error es 404, probablemente no hay archivos requeridos para este template
+      // Marcar como completado y no mostrar error
+      if (err.response?.status === 404) {
+        console.log('📁 FileUploadStep: No files endpoint or contract not found, assuming no files required');
+        onFilesStatusChange?.(true);
+        onAllFilesUploaded();
+        return;
+      }
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al cargar los archivos');
+      } else {
+        setError(errorData || 'Error al cargar los archivos');
+      }
     } finally {
       setLoading(false);
     }
@@ -108,7 +126,12 @@ export function FileUploadStep({
       }
     } catch (err: any) {
       console.error('Error uploading file:', err);
-      setError(err.response?.data?.error || 'Error al subir el archivo');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al subir el archivo');
+      } else {
+        setError(errorData || 'Error al subir el archivo');
+      }
     } finally {
       setUploadingSlug(null);
     }
@@ -130,7 +153,12 @@ export function FileUploadStep({
       await loadFiles();
     } catch (err: any) {
       console.error('Error deleting file:', err);
-      setError(err.response?.data?.error || 'Error al eliminar el archivo');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al eliminar el archivo');
+      } else {
+        setError(errorData || 'Error al eliminar el archivo');
+      }
     } finally {
       setUploadingSlug(null);
     }
