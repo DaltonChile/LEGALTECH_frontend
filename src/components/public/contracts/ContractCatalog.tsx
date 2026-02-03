@@ -15,8 +15,7 @@ import {
   Gavel,
   FileSignature,
   X,
-  Info,
-  Upload
+  Info
 } from 'lucide-react';
 import { templatesApi, getTemplateCategories, type Template } from '../../../services/api';
 import { RichDescription } from './RichDescription';
