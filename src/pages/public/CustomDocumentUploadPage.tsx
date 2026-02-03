@@ -11,9 +11,9 @@ import {
   Trash2,
   AlertCircle,
   Loader2,
-  Eye,
   ChevronRight,
   Shield,
+  User,
   PenTool
 } from 'lucide-react';
 import { Navbar } from '../../components/landing/Navbar';
@@ -33,13 +33,20 @@ interface Signer {
   role: string;
 }
 
-type Step = 'upload' | 'options' | 'signers' | 'review';
+type Step = 'upload' | 'signers' | 'review';
 
 const STEPS: { key: Step; label: string; icon: React.ReactNode }[] = [
-  { key: 'upload', label: 'Subir PDF', icon: <Upload className="w-5 h-5" /> },
-  { key: 'options', label: 'Opciones', icon: <PenTool className="w-5 h-5" /> },
+  { key: 'upload', label: 'Documento', icon: <Upload className="w-5 h-5" /> },
   { key: 'signers', label: 'Firmantes', icon: <Users className="w-5 h-5" /> },
   { key: 'review', label: 'Confirmar', icon: <Check className="w-5 h-5" /> },
+];
+
+// Steps shown in progress bar (includes payment which happens after form submission)
+const PROGRESS_STEPS: { key: string; label: string; icon: React.ReactNode }[] = [
+  { key: 'upload', label: 'Documento', icon: <Upload className="w-5 h-5" /> },
+  { key: 'signers', label: 'Firmantes', icon: <Users className="w-5 h-5" /> },
+  { key: 'review', label: 'Confirmar', icon: <Check className="w-5 h-5" /> },
+  { key: 'payment', label: 'Pago', icon: <CreditCard className="w-5 h-5" /> },
 ];
 
 export function CustomDocumentUploadPage() {
@@ -67,6 +74,7 @@ export function CustomDocumentUploadPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   // Load pricing options on mount
   useEffect(() => {
@@ -83,8 +91,7 @@ export function CustomDocumentUploadPage() {
   // Handle signature type changes
   useEffect(() => {
     if (signatureType === 'none') {
-      // For already-signed documents, notary is required and no signers needed
-      setCustomNotary(true);
+      // No signatures selected - clear signers
       setSigners([]);
     } else if (signers.length === 0) {
       // Ensure at least one signer exists for signature types that need it
@@ -166,16 +173,21 @@ export function CustomDocumentUploadPage() {
     ));
   };
 
+  // Validation for upload step (PDF + options selected)
+  // Must have PDF and at least one service selected (signatures or notary)
+  const hasServiceSelected = signatureType !== 'none' || customNotary;
+  const canProceedFromUpload = !!pdfFile && hasServiceSelected;
+  
+  // Validation for contact info (used in modal)
+  const hasValidContactInfo = buyerEmail.trim() !== '' && 
+    buyerRut.trim() !== '' &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail);
+
   // Validation
   const validateStep = (step: Step): boolean => {
     switch (step) {
       case 'upload':
-        return !!pdfFile;
-      case 'options':
-        return !!signatureType && 
-          buyerEmail.trim() !== '' && 
-          buyerRut.trim() !== '' &&
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail);
+        return canProceedFromUpload && hasValidContactInfo;
       case 'signers':
         // If signature_type is 'none', signers are not required
         if (signatureType === 'none') {
@@ -199,6 +211,19 @@ export function CustomDocumentUploadPage() {
 
   // Navigation
   const goToNextStep = () => {
+    // Show contact modal at the appropriate time:
+    // - If no signatures needed (none): after 'upload' step
+    // - If signatures needed: after 'signers' step
+    const shouldShowModal = !hasValidContactInfo && (
+      (currentStep === 'upload' && signatureType === 'none') ||
+      (currentStep === 'signers' && signatureType !== 'none')
+    );
+    
+    if (shouldShowModal) {
+      setShowContactModal(true);
+      return;
+    }
+    
     const currentIndex = STEPS.findIndex(s => s.key === currentStep);
     if (currentIndex < STEPS.length - 1) {
       let nextIndex = currentIndex + 1;
@@ -213,6 +238,14 @@ export function CustomDocumentUploadPage() {
       if (nextIndex < STEPS.length) {
         setCurrentStep(STEPS[nextIndex].key);
       }
+    }
+  };
+  
+  // Handle contact modal confirmation
+  const handleContactModalConfirm = () => {
+    if (hasValidContactInfo) {
+      setShowContactModal(false);
+      goToNextStep();
     }
   };
 
@@ -302,95 +335,273 @@ export function CustomDocumentUploadPage() {
 
   // Render steps
   const renderUploadStep = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-serif font-bold text-navy-900 mb-2">
-          Sube tu documento PDF
-        </h2>
-        <p className="text-slate-600 font-sans">
-          Sube el documento que necesitas firmar. Solo aceptamos archivos PDF.
-        </p>
-      </div>
-
-      {/* Drop zone */}
-      <div
-        className={`
-          border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer
-          ${dragOver 
-            ? 'border-legal-emerald-500 bg-legal-emerald-50' 
-            : 'border-slate-300 hover:border-slate-400 bg-slate-50'
-          }
-          ${pdfFile ? 'border-legal-emerald-500 bg-legal-emerald-50' : ''}
-        `}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf"
-          className="hidden"
-          onChange={handleFileInputChange}
-        />
-        
-        {pdfFile ? (
-          <div className="space-y-4">
-            <div className="w-16 h-16 bg-legal-emerald-100 rounded-full flex items-center justify-center mx-auto">
-              <FileText className="w-8 h-8 text-legal-emerald-600" />
+    <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[600px]">
+      {/* Left column - PDF Preview (half screen) */}
+      <div className="flex-1 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden flex flex-col min-h-[400px] lg:min-h-0">
+        {/* Header */}
+        <div className="border-b border-slate-200 p-4 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-navy-900 rounded-lg flex items-center justify-center">
+              <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-lg font-medium text-navy-900">{pdfFile.name}</p>
-              <p className="text-sm text-slate-500">
-                {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
+              <h2 className="text-lg font-serif font-semibold text-navy-900">
+                {pdfFile ? pdfFile.name : 'Tu documento'}
+              </h2>
+              <p className="text-sm text-slate-500 font-sans">
+                {pdfFile 
+                  ? `${(pdfFile.size / 1024 / 1024).toFixed(2)} MB` 
+                  : 'Sube un archivo PDF para continuar'
+                }
               </p>
             </div>
+          </div>
+          {pdfFile && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setPdfFile(null);
                 setPdfPreviewUrl(null);
               }}
-              className="text-sm text-red-600 hover:text-red-700 font-medium"
+              className="text-sm text-red-600 hover:text-red-700 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
             >
-              Cambiar archivo
+              Cambiar
             </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto">
-              <Upload className="w-8 h-8 text-slate-500" />
-            </div>
-            <div>
-              <p className="text-lg font-medium text-navy-900">
-                Arrastra tu PDF aquí
+          )}
+        </div>
+
+        {/* PDF Content */}
+        <div className="flex-1 overflow-hidden relative bg-slate-50">
+          {!pdfFile ? (
+            <div
+              className={`
+                absolute inset-0 flex flex-col items-center justify-center cursor-pointer transition-all
+                ${dragOver ? 'bg-legal-emerald-50' : 'hover:bg-slate-100'}
+              `}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={handleFileInputChange}
+              />
+              <div className={`
+                w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-colors
+                ${dragOver ? 'bg-legal-emerald-100' : 'bg-slate-200'}
+              `}>
+                <Upload className={`w-10 h-10 ${dragOver ? 'text-legal-emerald-600' : 'text-slate-400'}`} />
+              </div>
+              <p className="text-lg font-medium text-navy-900 mb-1">
+                {dragOver ? 'Suelta el archivo aquí' : 'Arrastra tu PDF aquí'}
               </p>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 mb-4">
                 o haz clic para seleccionar un archivo
               </p>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <FileText className="w-4 h-4" />
+                <span>Solo archivos PDF • Máximo 10MB</span>
+              </div>
             </div>
-            <p className="text-xs text-slate-400">Máximo 10MB</p>
-          </div>
-        )}
+          ) : pdfPreviewUrl ? (
+            <iframe
+              src={pdfPreviewUrl}
+              className="w-full h-full border-0"
+              title="Vista previa del PDF"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Preview */}
-      {pdfPreviewUrl && (
-        <div className="border border-slate-200 rounded-lg overflow-hidden">
-          <div className="bg-slate-100 px-4 py-2 flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              Vista previa
-            </span>
+      {/* Right column - Options (scrollable) */}
+      <div className="w-full lg:w-96 flex flex-col gap-4 lg:order-last overflow-y-auto max-h-[calc(100vh-280px)] lg:max-h-none custom-scrollbar">
+        
+        {/* Base service info */}
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-navy-900">Servicio base</h3>
+            <span className="text-lg font-bold text-navy-900">{formatPrice(pricingOptions?.base_price || 10000)}</span>
           </div>
-          <iframe
-            src={pdfPreviewUrl}
-            className="w-full h-[400px]"
-            title="Vista previa del PDF"
-          />
+          <p className="text-xs text-slate-500">Incluye gestión documental, procesamiento y almacenamiento seguro.</p>
         </div>
-      )}
+
+        {/* Signature options */}
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
+          <h3 className="font-semibold text-navy-900 mb-4">¿Necesitas firmas electrónicas?</h3>
+          <p className="text-xs p-1 text-slate-500">Podras elegir quienes deben firmar el documento electrónicamente.</p>
+          
+          <div className="space-y-3">
+            {/* Firma Simple option */}
+            <div
+              onClick={() => setSignatureType(signatureType === 'simple' ? 'none' : 'simple')}
+              className={`
+                p-4 rounded-lg border-2 cursor-pointer transition-all
+                ${signatureType === 'simple' 
+                  ? 'border-legal-emerald-500 bg-legal-emerald-50' 
+                  : 'border-slate-200 hover:border-slate-300'
+                }
+              `}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`
+                  w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
+                  ${signatureType === 'simple' 
+                    ? 'border-legal-emerald-500 bg-legal-emerald-500' 
+                    : 'border-slate-300'
+                  }
+                `}>
+                  {signatureType === 'simple' && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-navy-900 text-sm">Agregar Firma Simple</h4>
+                    <div className="group relative">
+                      <AlertCircle className="w-4 h-4 text-slate-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-navy-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity w-48 pointer-events-none z-10">
+                        Firma electrónica con validez legal para documentos civiles y comerciales.
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">Validez legal para contratos</p>
+                </div>
+                <span className="text-sm font-bold text-legal-emerald-600 shrink-0">
+                  +{formatPrice(pricingOptions?.simple?.price_per_signer || 0)}/firma
+                </span>
+              </div>
+            </div>
+
+            {/* FEA option */}
+            <div
+              onClick={() => setSignatureType(signatureType === 'fea' ? 'none' : 'fea')}
+              className={`
+                p-4 rounded-lg border-2 cursor-pointer transition-all
+                ${signatureType === 'fea' 
+                  ? 'border-legal-emerald-500 bg-legal-emerald-50' 
+                  : 'border-slate-200 hover:border-slate-300'
+                }
+              `}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`
+                  w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
+                  ${signatureType === 'fea' 
+                    ? 'border-legal-emerald-500 bg-legal-emerald-500' 
+                    : 'border-slate-300'
+                  }
+                `}>
+                  {signatureType === 'fea' && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-navy-900 text-sm">Agregar FEA</h4>
+                    <div className="group relative">
+                      <AlertCircle className="w-4 h-4 text-slate-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-navy-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity w-48 pointer-events-none z-10">
+                        Firma Electrónica Avanzada con verificación de identidad mediante clave única.
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">Firma Electrónica Avanzada</p>
+                </div>
+                <span className="text-sm font-bold text-legal-emerald-600 shrink-0">
+                  +{formatPrice(pricingOptions?.fea?.price_per_signer || 0)}/firma
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Notary option - always visible */}
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
+          <h3 className="font-semibold text-navy-900 mb-4">¿Necesitas revisión de un notario?</h3>
+          <div
+            onClick={() => setCustomNotary(!customNotary)}
+            className={`
+              p-4 rounded-lg border-2 cursor-pointer transition-all
+              ${customNotary 
+                ? 'border-legal-emerald-500 bg-legal-emerald-50' 
+                : 'border-slate-200 hover:border-slate-300'
+              }
+            `}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`
+                w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
+                ${customNotary 
+                  ? 'border-legal-emerald-500 bg-legal-emerald-500' 
+                  : 'border-slate-300'
+                }
+              `}>
+                {customNotary && <Check className="w-3 h-3 text-white" />}
+              </div>
+              
+              <div className="flex-1">
+                <h4 className="font-medium text-navy-900 text-sm">Agregar visación notarial</h4>
+                <p className="text-xs text-slate-500">Un notario revisará y visará tu documento</p>
+              </div>
+              <Shield className="w-5 h-5 text-slate-400 shrink-0" />
+            </div>
+          </div>
+        </div>
+
+        {/* Price summary */}
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-600">Servicio base</span>
+              <span className="font-medium text-navy-900">{formatPrice(pricingOptions?.base_price || 0)}</span>
+            </div>
+            
+            {signatureType !== 'none' && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600">
+                  {signatureType === 'fea' ? 'FEA' : 'Firma Simple'} ({signers.length} firma{signers.length > 1 ? 's' : ''})
+                </span>
+                <span className="font-medium text-legal-emerald-600">
+                  +{formatPrice(signers.length * (pricingOptions?.[signatureType]?.price_per_signer || 0))}
+                </span>
+              </div>
+            )}
+            
+            {customNotary && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600">Visación notarial</span>
+                <span className="font-medium text-slate-500">Incluido</span>
+              </div>
+            )}
+            
+            {/* Warning when nothing selected */}
+            {!hasServiceSelected && (
+              <div className="pt-2 border-t border-slate-100">
+                <p className="text-xs text-amber-600 text-center">
+                  Selecciona al menos un servicio para continuar
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <div className="bg-navy-900 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-white text-sm font-medium">Total</span>
+              <span className="text-xl font-bold text-white">
+                {loadingPrice ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  formatPrice(totalPrice)
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -489,164 +700,6 @@ export function CustomDocumentUploadPage() {
         <Plus className="w-5 h-5" />
         Agregar otro firmante
       </button>
-    </div>
-  );
-
-  const renderOptionsStep = () => (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-serif font-bold text-navy-900 mb-2">
-          ¿Qué necesitas hacer con tu documento?
-        </h2>
-        <p className="text-slate-600 font-sans">
-          Elige el tipo de firma electrónica que necesitas.
-        </p>
-      </div>
-
-      {/* Base price info */}
-      {pricingOptions && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-          <strong>Precio base del servicio:</strong> {formatPrice(pricingOptions.base_price)}
-          <span className="text-blue-600 ml-1">(incluido en el total)</span>
-        </div>
-      )}
-
-      {/* Signature type selection */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {pricingOptions && (['none', 'simple', 'fea'] as const).map((key) => {
-          const option = pricingOptions[key];
-          return (
-            <div
-              key={key}
-              onClick={() => setSignatureType(key)}
-              className={`
-                p-6 rounded-xl border-2 cursor-pointer transition-all
-                ${signatureType === key 
-                  ? 'border-legal-emerald-500 bg-legal-emerald-50' 
-                  : 'border-slate-200 hover:border-slate-300'
-                }
-              `}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`
-                  w-6 h-6 rounded-full border-2 flex items-center justify-center
-                  ${signatureType === key 
-                    ? 'border-legal-emerald-500 bg-legal-emerald-500' 
-                    : 'border-slate-300'
-                  }
-                `}>
-                  {signatureType === key && <Check className="w-4 h-4 text-white" />}
-                </div>
-                <span className="text-lg font-bold text-navy-900">
-                  {key === 'none' ? 'Solo notario' : `+${formatPrice(option.price_per_signer)}/firmante`}
-                </span>
-              </div>
-              <h3 className="font-medium text-navy-900 mb-1">{option.label}</h3>
-              <p className="text-sm text-slate-600">{option.description}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Notary option - only show for signature types that don't require it */}
-      {signatureType !== 'none' && (
-        <div
-          onClick={() => setCustomNotary(!customNotary)}
-          className={`
-            p-6 rounded-xl border-2 cursor-pointer transition-all
-            ${customNotary 
-              ? 'border-legal-emerald-500 bg-legal-emerald-50' 
-              : 'border-slate-200 hover:border-slate-300'
-            }
-          `}
-        >
-          <div className="flex items-center gap-4">
-            <div className={`
-              w-6 h-6 rounded border-2 flex items-center justify-center
-              ${customNotary 
-                ? 'border-legal-emerald-500 bg-legal-emerald-500' 
-                : 'border-slate-300'
-              }
-            `}>
-              {customNotary && <Check className="w-4 h-4 text-white" />}
-            </div>
-            <div className="flex-1">
-              <h3 className="font-medium text-navy-900">Agregar visación notarial</h3>
-              <p className="text-sm text-slate-600">
-                El documento pasará por revisión de un notario antes de completarse.
-              </p>
-            </div>
-            <Shield className="w-8 h-8 text-slate-400" />
-          </div>
-        </div>
-      )}
-
-      {/* Info banner when 'none' is selected */}
-      {signatureType === 'none' && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-          <Shield className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm text-amber-800 font-medium">Visación notarial incluida</p>
-            <p className="text-sm text-amber-700">
-              Tu documento ya firmado será enviado a un notario para su visación oficial.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Buyer information */}
-      <div className="bg-slate-50 rounded-xl p-6">
-        <h3 className="font-medium text-navy-900 mb-4">Tus datos de contacto</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Tu email *
-            </label>
-            <input
-              type="email"
-              value={buyerEmail}
-              onChange={(e) => setBuyerEmail(e.target.value)}
-              placeholder="tu@email.com"
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-legal-emerald-500 focus:border-transparent bg-white"
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              Te enviaremos el código de seguimiento aquí
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Tu RUT *
-            </label>
-            <input
-              type="text"
-              value={buyerRut}
-              onChange={(e) => setBuyerRut(formatRut(e.target.value))}
-              placeholder="12.345.678-9"
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-legal-emerald-500 focus:border-transparent bg-white"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Price summary */}
-      <div className="bg-navy-900 rounded-xl p-6 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-slate-300 text-sm">Total a pagar</p>
-            <p className="text-3xl font-bold">
-              {loadingPrice ? (
-                <Loader2 className="w-6 h-6 animate-spin" />
-              ) : (
-                formatPrice(totalPrice)
-              )}
-            </p>
-          </div>
-          <div className="text-right text-sm text-slate-300">
-            <p>{signers.length} firmante{signers.length > 1 ? 's' : ''}</p>
-            <p>{signatureType === 'fea' ? 'Firma Avanzada' : 'Firma Simple'}</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 
@@ -792,8 +845,6 @@ export function CustomDocumentUploadPage() {
         return renderUploadStep();
       case 'signers':
         return renderSignersStep();
-      case 'options':
-        return renderOptionsStep();
       case 'review':
         return renderReviewStep();
       default:
@@ -801,8 +852,8 @@ export function CustomDocumentUploadPage() {
     }
   };
 
-  // Get filtered steps based on signature type
-  const filteredSteps = STEPS.filter(step => !(step.key === 'signers' && signatureType === 'none'));
+  // Get filtered steps based on signature type (for progress bar display)
+  const filteredSteps = PROGRESS_STEPS.filter(step => !(step.key === 'signers' && signatureType === 'none'));
   const currentStepIndex = filteredSteps.findIndex(s => s.key === currentStep);
 
   return (
@@ -884,7 +935,7 @@ export function CustomDocumentUploadPage() {
               ) : (
                 <button
                   onClick={goToNextStep}
-                  disabled={!canProceed}
+                  disabled={currentStep === 'upload' ? !canProceedFromUpload : !canProceed}
                   className="px-4 md:px-6 py-2 md:py-2.5 bg-navy-900 hover:bg-navy-800 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
                   <span>Siguiente</span>
@@ -896,11 +947,74 @@ export function CustomDocumentUploadPage() {
         </div>
       </div>
 
+      {/* Contact Data Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-fade-in-up border border-slate-200">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg bg-legal-emerald-600 flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-serif font-bold text-navy-900">Datos de contacto</h3>
+              </div>
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center justify-center"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-slate-600 mb-6 text-sm font-sans leading-relaxed">
+              Ingresa tus datos para enviarte el código de seguimiento y el acceso a tu documento.
+            </p>
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-navy-900 mb-2 font-sans">
+                  Tu RUT <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={buyerRut}
+                  onChange={(e) => setBuyerRut(formatRut(e.target.value))}
+                  placeholder="12.345.678-9"
+                  maxLength={12}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-legal-emerald-500 focus:border-legal-emerald-500 transition-all font-mono text-navy-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-navy-900 mb-2 font-sans">
+                  Tu Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={buyerEmail}
+                  onChange={(e) => setBuyerEmail(e.target.value)}
+                  placeholder="nombre@ejemplo.com"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-legal-emerald-500 focus:border-legal-emerald-500 transition-all font-sans text-navy-900"
+                />
+              </div>
+
+              <button
+                onClick={handleContactModalConfirm}
+                disabled={!hasValidContactInfo}
+                className="w-full px-4 py-3.5 bg-navy-900 text-white font-semibold rounded-lg hover:bg-navy-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-sans shadow-lg"
+              >
+                <span>Continuar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main content */}
-      <div className="flex-1 py-6 md:py-8">
-        <div className="max-w-2xl mx-auto px-4 md:px-6">
+      <div className={`flex-1 ${currentStep === 'upload' ? 'py-4 md:py-6' : 'py-6 md:py-8'}`}>
+        <div className={`mx-auto px-4 md:px-6 h-full ${currentStep === 'upload' ? 'max-w-[1400px]' : 'max-w-2xl'}`}>
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <span>{error}</span>
               <button onClick={() => setError(null)} className="ml-auto">
