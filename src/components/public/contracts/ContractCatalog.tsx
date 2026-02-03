@@ -45,10 +45,10 @@ const getIconForTemplate = (slug: string): any => {
 
 // Iconos y colores para categorías
 const categoryConfig: Record<string, { icon: any; color: string; bgColor: string }> = {
-  'laboral': { icon: Briefcase, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-  'arrendamiento': { icon: Home, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-  'compraventa': { icon: HandshakeIcon, color: 'text-legal-emerald-600', bgColor: 'bg-legal-emerald-50' },
-  'servicios': { icon: Building2, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+  'laboral': { icon: Briefcase, color: 'text-slate-600', bgColor: 'bg-slate-100' },
+  'arrendamiento': { icon: Home, color: 'text-slate-600', bgColor: 'bg-slate-100' },
+  'compraventa': { icon: HandshakeIcon, color: 'text-slate-600', bgColor: 'bg-slate-100' },
+  'servicios': { icon: Building2, color: 'text-slate-600', bgColor: 'bg-slate-100' },
   'otros': { icon: FileText, color: 'text-slate-600', bgColor: 'bg-slate-100' },
 };
 
@@ -115,11 +115,7 @@ export function ContractCatalog() {
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
-  // Contar documentos por categoría
-  const getCategoryCount = (category: string) => {
-    if (category === 'all') return templates.length;
-    return templates.filter(t => t.category === category).length;
-  };
+
 
   if (loading) {
     return (
@@ -188,7 +184,7 @@ export function ContractCatalog() {
 
         {/* Filters Bar */}
         <div className="bg-slate-50 rounded-lg p-4 mb-8 border border-slate-200">
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-4 items-end">
             
             {/* Search */}
             <div className="flex-1">
@@ -212,39 +208,19 @@ export function ContractCatalog() {
               </div>
             </div>
 
-            {/* Category Tabs */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedCategory('all')}
-                className={`px-4 py-2 rounded-md text-sm font-medium font-sans transition-colors ${
-                  selectedCategory === 'all'
-                    ? 'bg-navy-900 text-white'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-navy-200 hover:text-navy-900'
-                }`}
-              >
-                Todos ({getCategoryCount('all')})
-              </button>
-              {categories.map((category) => {
-                const config = categoryConfig[category] || categoryConfig['otros'];
-                const count = getCategoryCount(category);
-                if (count === 0) return null;
-                
-                return (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium font-sans transition-colors flex items-center gap-2 ${
-                      selectedCategory === category
-                        ? 'bg-navy-900 text-white'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:border-navy-200 hover:text-navy-900'
-                    }`}
-                  >
-                    <config.icon className="w-4 h-4" />
-                    {formatCategoryTitle(category)} ({count})
-                  </button>
-                );
-              })}
-            </div>
+            {/* Category Selector */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-navy-900 font-sans focus:outline-none focus:border-navy-900 transition-colors cursor-pointer hover:border-navy-200"
+            >
+              <option value="all">Todas las categorías</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {formatCategoryTitle(category)}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -379,10 +355,7 @@ export function ContractCatalog() {
           </div>
         )}
 
-        {/* Help text */}
-        <p className="text-center text-sm text-slate-500 mt-6 font-sans">
-          ¿No encuentras lo que buscas? <a href="mailto:soporte@contratoseguro.cl" className="text-navy-900 hover:underline">Contáctanos</a> para solicitar un documento personalizado
-        </p>
+
 
       </div>
 
@@ -446,38 +419,18 @@ export function ContractCatalog() {
       )}
 
       {/* Custom Document CTA */}
-      <div className="mt-16 bg-gradient-to-br from-navy-900 to-navy-800 rounded-2xl p-8 md:p-12 text-white relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-legal-emerald-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-legal-emerald-600/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-          <div className="shrink-0">
-            <div className="w-20 h-20 bg-legal-emerald-600/20 rounded-2xl flex items-center justify-center">
-              <Upload className="w-10 h-10 text-legal-emerald-400" />
-            </div>
+      <div className="max-w-6xl mx-auto">
+        <div className="mt-16 bg-white rounded-lg shadow-document border border-slate-200 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h3 className="font-serif font-bold text-navy-900 mb-1">¿No encontraste lo que buscas?</h3>
+            <p className="text-slate-500 text-sm font-sans">Sube tu propio documento PDF y firma electrónicamente con validez legal</p>
           </div>
-          
-          <div className="flex-1 text-center md:text-left">
-            <h2 className="text-2xl md:text-3xl font-serif font-bold mb-3">
-              ¿No encontraste lo que buscas?
-            </h2>
-            <p className="text-slate-300 text-lg mb-2">
-              Sube tu propio documento PDF y firma electrónicamente con validez legal.
-            </p>
-            <p className="text-slate-400 text-sm">
-              Perfecto para contratos personalizados, acuerdos específicos o documentos que ya tienes preparados.
-            </p>
-          </div>
-          
-          <div className="shrink-0">
+          <div className="flex gap-3">
             <button
               onClick={() => navigate('/documento-personalizado')}
-              className="group bg-legal-emerald-600 hover:bg-legal-emerald-500 text-white px-8 py-4 rounded-xl font-medium transition-all flex items-center gap-3 shadow-lg hover:shadow-xl"
+              className="px-4 py-2 text-sm font-medium font-sans text-navy-900 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
             >
-              <FileText className="w-5 h-5" />
               Subir mi documento
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>

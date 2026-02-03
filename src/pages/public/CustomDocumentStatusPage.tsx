@@ -282,7 +282,7 @@ export function CustomDocumentStatusPage() {
       <Navbar />
 
       <div className="flex-1 py-6 md:py-10">
-        <div className="max-w-xl mx-auto px-4 md:px-6 space-y-4">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-4">
           
           {/* Success message from payment */}
           {fromPayment && (
@@ -474,10 +474,10 @@ export function CustomDocumentStatusPage() {
               )}
               
               <button
-                onClick={() => navigate('/catalogo')}
+                onClick={() => navigate('/')}
                 className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-3 px-4 rounded-xl transition-all"
               >
-                Volver al catálogo
+                Volver al inicio
               </button>
             </div>
           </div>

@@ -10,14 +10,10 @@ export const contractEditorStyles = `
     font-size: 1.05em;
   }
   .filled-var {
-    background-color: #dbeafe;
-    padding: 1px 4px;
-    border-radius: 3px;
-    font-weight: 600;
-    color: #1e40af;
+    font-weight: 700;
+    color: #111827;
     transition: all 0.3s ease;
-    display: inline-block;
-    white-space: nowrap;
+    display: inline;
   }
   .empty-var {
     background-color: #e5e7eb;
@@ -30,9 +26,11 @@ export const contractEditorStyles = `
     white-space: nowrap;
   }
   .active-var {
-    animation: pulse-highlight 1s ease-in-out infinite;
-    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.4);
-    transform: scale(1.05);
+    background-color: rgba(16, 185, 129, 0.08);
+    border-bottom: 2px solid rgba(16, 185, 129, 0.3);
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: all 0.2s ease;
   }
   @keyframes pulse-highlight {
     0%, 100% { box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.4); }

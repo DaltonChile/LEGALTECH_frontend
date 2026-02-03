@@ -169,14 +169,14 @@ export function TrackingPage() {
     <div className="flex flex-col bg-slate-50">
       <Navbar />
 
-      <main className="min-h-screen w-full max-w-3xl mx-auto px-6 py-12">
+      <main className="min-h-screen w-full max-w-6xl mx-auto px-6 py-12">
 
         {/* Page Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-serif font-bold text-navy-900 mb-3">
             Rastrear Contrato
           </h1>
-          <p className="text-slate-600 text-lg font-sans max-w-xl mx-auto">
+          <p className="text-slate-600 text-lg font-sans max-w-2xl mx-auto">
             Consulta el estado de tu documento legal en tiempo real
           </p>
         </div>

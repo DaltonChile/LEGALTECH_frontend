@@ -147,8 +147,8 @@ export function ContractEditorPage() {
       console.error('Error al cargar template:', error);
       console.error('Error details:', error.response?.data);
       console.error('Slug que se intentó cargar:', slug);
-      alert(`Error al cargar el contrato: ${error.response?.data?.error || error.message}`);
-      navigate('/');
+      // Silently redirect to home if template not found
+      navigate('/', { replace: true });
     } finally {
       setLoading(false);
     }

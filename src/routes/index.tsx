@@ -5,6 +5,7 @@ import { AdminLayout } from '../components/layout/AdminLayout';
 
 // Public pages - lazy loaded
 const HomePage = lazy(() => import('../pages/public/HomePage').then(m => ({ default: m.HomePage })));
+const ValidezLegalPage = lazy(() => import('../pages/public/ValidezLegalPage').then(m => ({ default: m.ValidezLegalPage })));
 const LoginPage = lazy(() => import('../pages/public/LoginPage').then(m => ({ default: m.LoginPage })));
 const ContractEditorPage = lazy(() => import('../pages/public/ContractEditorPage').then(m => ({ default: m.ContractEditorPage })));
 const TrackingPage = lazy(() => import('../pages/public/TrackingPage').then(m => ({ default: m.TrackingPage })));
@@ -46,6 +47,7 @@ export function AppRoutes() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/validez-legal" element={<ValidezLegalPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/seguimiento" element={<TrackingPage />} />
         <Route path="/ayuda" element={<HelpPage />} />
@@ -64,12 +66,6 @@ export function AppRoutes() {
         <Route path="/documento-personalizado" element={<CustomDocumentUploadPage />} />
         <Route path="/documento-personalizado/estado/:trackingCode" element={<CustomDocumentStatusPage />} />
         
-        {/* Catalog route - redirect to home with catalog section */}
-        <Route path="/catalogo" element={<HomePage />} />
-        
-        {/* Template editor - must be last to catch slugs */}
-        <Route path="/:slug" element={<ContractEditorPage />} />
-
       {/* Admin Routes with Layout */}
       <Route
         element={
@@ -98,8 +94,11 @@ export function AppRoutes() {
         <Route path="/notary/inbox" element={<NotaryInboxPage />} />
       </Route>
 
-      {/* Default Redirect */}
-      <Route path="*" element={<Navigate to="/" />} />
+        {/* Template editor - must be before catch-all */}
+        <Route path="/:slug" element={<ContractEditorPage />} />
+
+      {/* Catch-all 404 - must be last */}
+      <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );
