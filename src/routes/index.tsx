@@ -5,8 +5,8 @@ import { AdminLayout } from '../components/layout/AdminLayout';
 
 // Public pages - lazy loaded
 const HomePage = lazy(() => import('../pages/public/HomePage').then(m => ({ default: m.HomePage })));
+const ValidezLegalPage = lazy(() => import('../pages/public/ValidezLegalPage').then(m => ({ default: m.ValidezLegalPage })));
 const LoginPage = lazy(() => import('../pages/public/LoginPage').then(m => ({ default: m.LoginPage })));
-const ContractCatalogPage = lazy(() => import('../pages/public/ContractCatalogPage').then(m => ({ default: m.ContractCatalogPage })));
 const ContractEditorPage = lazy(() => import('../pages/public/ContractEditorPage').then(m => ({ default: m.ContractEditorPage })));
 const TrackingPage = lazy(() => import('../pages/public/TrackingPage').then(m => ({ default: m.TrackingPage })));
 const HelpPage = lazy(() => import('../pages/public/HelpPage').then(m => ({ default: m.HelpPage })));
@@ -18,6 +18,10 @@ const PaymentPage = lazy(() => import('../pages/public/PaymentPage'));
 const PaymentSuccessPage = lazy(() => import('../pages/public/PaymentSuccessPage'));
 const PaymentFailurePage = lazy(() => import('../pages/public/PaymentFailurePage'));
 const PaymentPendingPage = lazy(() => import('../pages/public/PaymentPendingPage'));
+
+// Custom document pages - lazy loaded
+const CustomDocumentUploadPage = lazy(() => import('../pages/public/CustomDocumentUploadPage'));
+const CustomDocumentStatusPage = lazy(() => import('../pages/public/CustomDocumentStatusPage'));
 
 // Admin pages - lazy loaded
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
@@ -43,6 +47,7 @@ export function AppRoutes() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/validez-legal" element={<ValidezLegalPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/seguimiento" element={<TrackingPage />} />
         <Route path="/ayuda" element={<HelpPage />} />
@@ -50,7 +55,6 @@ export function AppRoutes() {
         <Route path="/retomar" element={<ResumeContractPage />} />
         <Route path="/contracts/resume" element={<ResumeContractPage />} />
         <Route path="/contracts/success" element={<ContractSuccessPage />} />
-        <Route path="/catalogo" element={<ContractCatalogPage />} />
         
         {/* Payment routes */}
         <Route path="/payment/:contractId" element={<PaymentPage />} />
@@ -58,8 +62,10 @@ export function AppRoutes() {
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
         <Route path="/payment/pending" element={<PaymentPendingPage />} />
         
-        <Route path="/:slug" element={<ContractEditorPage />} />
-
+        {/* Custom document routes */}
+        <Route path="/documento-personalizado" element={<CustomDocumentUploadPage />} />
+        <Route path="/documento-personalizado/estado/:trackingCode" element={<CustomDocumentStatusPage />} />
+        
       {/* Admin Routes with Layout */}
       <Route
         element={
@@ -88,8 +94,11 @@ export function AppRoutes() {
         <Route path="/notary/inbox" element={<NotaryInboxPage />} />
       </Route>
 
-      {/* Default Redirect */}
-      <Route path="*" element={<Navigate to="/" />} />
+        {/* Template editor - must be before catch-all */}
+        <Route path="/:slug" element={<ContractEditorPage />} />
+
+      {/* Catch-all 404 - must be last */}
+      <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

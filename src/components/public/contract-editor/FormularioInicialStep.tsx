@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import axios from 'axios';
-import { Lock, Shield, Check, Plus, ArrowRight, AlertCircle, Edit3, User, ChevronDown, ChevronUp } from 'lucide-react';
+import { Lock, Shield, Check, Plus, ArrowRight, AlertCircle, Edit3, User, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { EditorHeader } from './EditorHeader';
@@ -195,7 +195,12 @@ export function FormularioInicialStep({
       }
     } catch (err: any) {
       console.error('Error creating initial contract:', err);
-      setError(err.response?.data?.error || 'Error al procesar la solicitud');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al procesar la solicitud');
+      } else {
+        setError(errorData || 'Error al procesar la solicitud');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -265,6 +270,13 @@ export function FormularioInicialStep({
                     <Plus className="w-4 h-4 text-legal-emerald-600" />
                   </div>
                   Cláusulas adicionales
+                  <div className="group relative">
+                    <Info className="w-4 h-4 text-slate-400 cursor-help" />
+                    <div className="hidden group-hover:block absolute left-0 top-6 z-50 w-64 p-3 bg-navy-900 text-white text-xs rounded-lg shadow-lg">
+                      Agrega protecciones adicionales a tu contrato. Cada cláusula tiene un costo adicional.
+                      <div className="absolute -top-1 left-4 w-2 h-2 bg-navy-900 transform rotate-45"></div>
+                    </div>
+                  </div>
                 </h3>
                 <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-md border border-slate-200 font-sans">{selectedCapsules.length} seleccionadas</span>
               </div>
@@ -318,6 +330,14 @@ export function FormularioInicialStep({
                   <Shield className="w-4 h-4 text-amber-600" />
                 </div>
                 Tipo de Firma
+                <div className="group relative">
+                  <Info className="w-4 h-4 text-slate-400 cursor-help" />
+                  <div className="hidden group-hover:block absolute left-0 top-6 z-50 w-72 p-3 bg-navy-900 text-white text-xs rounded-lg shadow-lg">
+                    <strong>FES:</strong> Firma electrónica simple, rápida y válida para la mayoría de contratos.<br/>
+                    <strong>FEA:</strong> Firma electrónica avanzada con validación de identidad, máxima seguridad legal.
+                    <div className="absolute -top-1 left-4 w-2 h-2 bg-navy-900 transform rotate-45"></div>
+                  </div>
+                </div>
               </h3>
 
               <div className="space-y-3">
@@ -386,8 +406,8 @@ export function FormularioInicialStep({
       </div>
       {/* Contact Data Modal */}
       {showContactModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-lg shadow-document max-w-md w-full p-8 animate-fade-in-up border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-fade-in-up border border-slate-200">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-legal-emerald-600 flex items-center justify-center">

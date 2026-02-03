@@ -144,20 +144,24 @@ export function DocumentPreview({
         {/* Paper Sheet */}
         <div className="flex-1 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.08)] border border-slate-200 overflow-hidden flex flex-col mx-auto w-full max-w-3xl">
 
-          {/* Description Banner - Fixed at top */}
-          {currentDescription && currentFieldName && (
-            <div className="bg-navy-900 text-white px-6 py-3 border-b border-navy-800 flex items-start gap-3 animate-fade-in">
-              <div className="w-6 h-6 bg-legal-emerald-600 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-white text-xs font-bold">i</span>
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium text-legal-emerald-400 mb-1 font-sans">
-                  {formatVariableName(currentFieldName)}
-                </p>
-                <p className="text-sm leading-relaxed font-sans">{currentDescription}</p>
-              </div>
+          {/* Description Banner - Fixed at top with smooth transition */}
+          <div 
+            className={`bg-navy-900 text-white border-b border-navy-800 flex items-start gap-3 overflow-hidden transition-all duration-500 ease-out ${
+              currentDescription && currentFieldName 
+                ? 'h-24 opacity-100 px-6 py-3' 
+                : 'h-0 opacity-0 px-6 py-0'
+            }`}
+          >
+            <div className="w-6 h-6 bg-legal-emerald-600 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-xs font-bold">i</span>
             </div>
-          )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-legal-emerald-400 mb-1 font-sans">
+                {currentFieldName ? formatVariableName(currentFieldName) : ''}
+              </p>
+              <p className="text-sm leading-relaxed font-sans line-clamp-3">{currentDescription || ''}</p>
+            </div>
+          </div>
 
           {/* Content */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-12 py-10 relative scroll-smooth">
@@ -209,19 +213,6 @@ export function DocumentPreview({
       </div>
 
       <style>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.2s ease-out;
-        }
         ${contractEditorStyles}
       `}</style>
     </>

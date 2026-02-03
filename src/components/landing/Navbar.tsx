@@ -1,13 +1,37 @@
-import { Scale } from 'lucide-react';
+import { Scale, ChevronDown } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
 import { Text } from '../ui/primitives/Text';
 import { Button } from '../ui/primitives/Button';
 
 export function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleMouseEnter = (dropdown: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setOpenDropdown(dropdown);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setOpenDropdown(null);
+    }, 150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -25,14 +49,66 @@ export function Navbar() {
             </button>
             
             <div className="hidden md:flex items-center gap-2">
+              {/* Documentos Dropdown */}
+              <div 
+                className="relative"
+                onMouseEnter={() => handleMouseEnter('documentos')}
+                onMouseLeave={handleMouseLeave}
+              >
+                <Button 
+                  variant="ghost"
+                  size="sm"
+                  className={`flex items-center gap-1 ${isActive('/') ? 'text-navy-900 bg-slate-100' : ''}`}
+                >
+                  Documentos
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+                
+                {openDropdown === 'documentos' && (
+                  <div 
+                    className="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-2 animate-fade-in z-50"
+                    onMouseEnter={() => handleMouseEnter('documentos')}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <button
+                      onClick={() => {
+                        if (location.pathname !== '/') {
+                          navigate('/');
+                          setTimeout(() => {
+                            document.getElementById('documentos')?.scrollIntoView({ behavior: 'smooth' });
+                          }, 100);
+                        } else {
+                          document.getElementById('documentos')?.scrollIntoView({ behavior: 'smooth' });
+                        }
+                        setOpenDropdown(null);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Ver catálogo completo
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/documento-personalizado');
+                        setOpenDropdown(null);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Subir mi documento
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Validez Legal */}
               <Button 
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/')}
-                className={isActive('/') ? 'text-navy-900 bg-slate-100' : ''}
+                onClick={() => navigate('/validez-legal')}
+                className={isActive('/validez-legal') ? 'text-navy-900 bg-slate-100' : ''}
               >
-                Catálogo
+                Validez legal
               </Button>
+
               <Button 
                 variant="ghost"
                 size="sm"
@@ -41,13 +117,15 @@ export function Navbar() {
               >
                 Seguimiento
               </Button>
+
+              {/* Ayuda */}
               <Button 
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/ayuda')}
                 className={isActive('/ayuda') ? 'text-navy-900 bg-slate-100' : ''}
               >
-                Ayuda y Políticas
+                Ayuda
               </Button>
             </div>
           </div>

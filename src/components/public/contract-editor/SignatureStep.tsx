@@ -74,7 +74,12 @@ export function SignatureStep({
       setLoading(false);
     } catch (err: any) {
       console.error('Error loading contract status:', err);
-      setError(err.response?.data?.error || 'Error al cargar estado del contrato');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al cargar estado del contrato');
+      } else {
+        setError(errorData || 'Error al cargar estado del contrato');
+      }
       setLoading(false);
     }
   };

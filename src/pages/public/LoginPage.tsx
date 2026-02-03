@@ -29,7 +29,13 @@ export function LoginPage() {
         navigate('/notary');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al iniciar sesión');
+      // Handle both string and object error formats
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al iniciar sesión');
+      } else {
+        setError(errorData || 'Error al iniciar sesión');
+      }
     } finally {
       setLoading(false);
     }

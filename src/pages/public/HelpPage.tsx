@@ -241,14 +241,14 @@ export function HelpPage() {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
 
-      <main className="max-w-5xl mx-auto px-6 py-12">
+      <main className="max-w-6xl mx-auto px-6 py-12">
         
         {/* Page Header */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-serif font-bold text-navy-900 mb-3">
             Centro de Ayuda
           </h1>
-          <p className="text-slate-600 text-lg font-sans max-w-xl mx-auto">
+          <p className="text-slate-600 text-lg font-sans max-w-2xl mx-auto">
             Encuentra respuestas a tus preguntas y conoce nuestras políticas
           </p>
         </div>
@@ -402,22 +402,16 @@ export function HelpPage() {
         )}
 
         {/* Contact Section */}
-        <div className="mt-12 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden">
-          <div className="border-t-4 border-t-legal-emerald-500 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-legal-emerald-50 rounded-lg flex items-center justify-center">
-                <Mail className="w-7 h-7 text-legal-emerald-600" />
-              </div>
-              <div>
-                <h3 className="font-serif font-bold text-navy-900 text-lg">¿No encontraste lo que buscabas?</h3>
-                <p className="text-slate-500 font-sans">Nuestro equipo de soporte está listo para ayudarte</p>
-              </div>
-            </div>
+        <div className="mt-12 bg-white rounded-lg shadow-document border border-slate-200 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h3 className="font-serif font-bold text-navy-900 mb-1">¿No encontraste lo que buscabas?</h3>
+            <p className="text-slate-500 text-sm font-sans">Nuestro equipo de soporte está listo para ayudarte</p>
+          </div>
+          <div className="flex gap-3">
             <a 
               href="mailto:soporte@contratoseguro.cl"
-              className="bg-legal-emerald-600 text-white px-6 py-3 rounded-md font-medium font-sans hover:bg-legal-emerald-700 transition-colors inline-flex items-center gap-2"
+              className="px-4 py-2 text-sm font-medium font-sans text-navy-900 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors inline-flex items-center gap-2"
             >
-              <Mail className="w-4 h-4" />
               Contactar soporte
             </a>
           </div>

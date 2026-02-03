@@ -85,7 +85,7 @@ export function useContractRenderer({
             if (value) {
               processedContent = processedContent.replace(regex, `<span class="filled-var${isActive ? ' active-var' : ''}" data-variable="${variable}">${value}</span>`);
             } else {
-              processedContent = processedContent.replace(regex, `<span class="empty-var${isActive ? ' active-var' : ''}" data-variable="${variable}">[${formatVariableName(variable)}]</span>`);
+              processedContent = processedContent.replace(regex, `<span class="empty-var${isActive ? ' active-var' : ''}" data-variable="${variable}">${formatVariableName(variable)}</span>`);
             }
           });
           
@@ -122,7 +122,7 @@ export function useContractRenderer({
       if (value) {
         result = result.replace(regex, `<span class="filled-var${isActive ? ' active-var' : ''}" data-variable="${variable}">${value}</span>`);
       } else {
-        result = result.replace(regex, `<span class="empty-var${isActive ? ' active-var' : ''}" data-variable="${variable}">[${formatVariableName(variable)}]</span>`);
+        result = result.replace(regex, `<span class="empty-var${isActive ? ' active-var' : ''}" data-variable="${variable}">${formatVariableName(variable)}</span>`);
       }
     });
 

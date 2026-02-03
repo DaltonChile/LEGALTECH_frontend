@@ -131,7 +131,12 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
         onSuccess();
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al crear el template');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al crear el template');
+      } else {
+        setError(errorData || 'Error al crear el template');
+      }
     } finally {
       setUploading(false);
     }
@@ -153,7 +158,12 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({ onClose, onSu
       await setCapsulePrices(versionId, capsulesPending);
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al asignar precios');
+      const errorData2 = err.response?.data?.error;
+      if (typeof errorData2 === 'object' && errorData2 !== null) {
+        setError(errorData2.message || 'Error al asignar precios');
+      } else {
+        setError(errorData2 || 'Error al asignar precios');
+      }
     } finally {
       setUploading(false);
     }

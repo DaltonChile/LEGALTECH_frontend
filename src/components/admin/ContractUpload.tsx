@@ -86,7 +86,12 @@ export const ContractUploader: React.FC<ContractUploaderProps> = ({
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al subir el archivo');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al subir el archivo');
+      } else {
+        setError(errorData || 'Error al subir el archivo');
+      }
     } finally {
       setUploading(false);
     }
@@ -132,7 +137,12 @@ export const ContractUploader: React.FC<ContractUploaderProps> = ({
         onUploadSuccess({ versionId, capsules: capsulesWithPrices });
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al asignar precios a las cápsulas');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al asignar precios a las cápsulas');
+      } else {
+        setError(errorData || 'Error al asignar precios a las cápsulas');
+      }
     } finally {
       setAssigningPrices(false);
     }

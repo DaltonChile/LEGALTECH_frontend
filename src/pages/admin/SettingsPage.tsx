@@ -28,7 +28,12 @@ export const SettingsPage = () => {
       });
       setEditedValues(initialValues);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al cargar configuración');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al cargar configuración');
+      } else {
+        setError(errorData || 'Error al cargar configuración');
+      }
     } finally {
       setLoading(false);
     }
@@ -51,7 +56,12 @@ export const SettingsPage = () => {
       setSuccess('Configuración actualizada correctamente');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al guardar configuración');
+      const errorData2 = err.response?.data?.error;
+      if (typeof errorData2 === 'object' && errorData2 !== null) {
+        setError(errorData2.message || 'Error al guardar configuración');
+      } else {
+        setError(errorData2 || 'Error al guardar configuración');
+      }
     } finally {
       setSaving(false);
     }

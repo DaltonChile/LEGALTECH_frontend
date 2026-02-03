@@ -50,6 +50,12 @@ export function CompletarFormularioStep({
   // Debug: Log variables metadata
   console.log('📋 Template variables_metadata:', template.variables_metadata);
   console.log('📋 Template:', template);
+  console.log('📋 ContractData:', {
+    id: contractData.id,
+    tracking_code: contractData.tracking_code,
+    buyer_rut: contractData.buyer_rut,
+    status: contractData.status
+  });
   
   // Inicializar formData con los datos existentes del contrato
   const [formData, setFormData] = useState<Record<string, string>>(contractData.form_data || {});
@@ -172,7 +178,12 @@ export function CompletarFormularioStep({
       }
     } catch (err: any) {
       console.error('Error completing form:', err);
-      setError(err.response?.data?.error || 'Error al procesar la solicitud');
+      const errorData = err.response?.data?.error;
+      if (typeof errorData === 'object' && errorData !== null) {
+        setError(errorData.message || 'Error al procesar la solicitud');
+      } else {
+        setError(errorData || 'Error al procesar la solicitud');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -246,14 +257,16 @@ export function CompletarFormularioStep({
                />
            </div>
 
-           {/* File Upload Section */}
-           <FileUploadStep
-             contractId={contractData.id}
-             trackingCode={contractData.tracking_code}
-             buyerRut={contractData.buyer_rut}
-             onAllFilesUploaded={() => setAllFilesUploaded(true)}
-             onFilesStatusChange={(allUploaded) => setAllFilesUploaded(allUploaded)}
-           />
+           {/* File Upload Section - Solo mostrar si tenemos los datos necesarios */}
+           {contractData.tracking_code && contractData.buyer_rut && (
+             <FileUploadStep
+               contractId={contractData.id}
+               trackingCode={contractData.tracking_code}
+               buyerRut={contractData.buyer_rut}
+               onAllFilesUploaded={() => setAllFilesUploaded(true)}
+               onFilesStatusChange={(allUploaded) => setAllFilesUploaded(allUploaded)}
+             />
+           )}
 
            {/* Validation Errors */}
            {(error || (completionPercentage < 100) || !allFilesUploaded) && (
