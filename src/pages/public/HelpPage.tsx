@@ -12,7 +12,6 @@ import {
   CreditCard, 
   PenTool, 
   Clock, 
-  Mail, 
   CheckCircle2,
   Users,
   ArrowRight,

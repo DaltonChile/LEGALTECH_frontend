@@ -1,7 +1,6 @@
 import { Navbar } from '../../components/landing/Navbar';
 import { PageFooter } from '../../components/shared/PageFooter';
-import { Scale, ShieldCheck, FileText, CheckCircle, UserCheck, Clock, Lock, Award } from 'lucide-react';
-import { Text } from '../../components/ui/primitives/Text';
+import { Scale, FileText, CheckCircle, UserCheck, Clock, Lock, Award } from 'lucide-react';
 
 export function ValidezLegalPage() {
   return (

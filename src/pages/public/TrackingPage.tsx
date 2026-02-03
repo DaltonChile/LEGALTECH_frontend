@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Package, XCircle, FileText, Users, AlertCircle, Scale, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp, Upload } from 'lucide-react';
+import { Search, Package, XCircle, FileText, Users, AlertCircle, Scale, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
 import { Navbar } from '../../components/landing/Navbar';
 import { PageFooter } from '../../components/shared/PageFooter';
