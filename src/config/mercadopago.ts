@@ -37,6 +37,19 @@ export const initMP = () => {
   }
 };
 
+// Inicializar SDK con una public key especifica (por ejemplo, desde backend)
+export const initMPWithKey = (publicKey: string) => {
+  if (!publicKey) {
+    console.warn('⚠️  initMPWithKey llamado sin publicKey');
+    return false;
+  }
+
+  initMercadoPago(publicKey, {
+    locale: 'es-CL',
+  });
+  return true;
+};
+
 export const mercadoPagoConfig = {
   publicKey: PUBLIC_KEY,
   isProduction,

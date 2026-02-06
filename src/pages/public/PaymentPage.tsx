@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Payment } from '@mercadopago/sdk-react';
 import { CreditCard, Shield, AlertTriangle, Loader2, FileText, PenTool, Package, Users, CheckCircle2, Upload } from 'lucide-react';
 import paymentService from '../../services/paymentService';
-import mercadoPagoConfig from '../../config/mercadopago';
+import mercadoPagoConfig, { initMPWithKey } from '../../config/mercadopago';
 import { Navbar } from '../../components/landing/Navbar';
 import { EditorHeader } from '../../components/public/contract-editor/EditorHeader';
 import { getStepsForFlow, getCustomDocumentSteps } from '../../utils/flowConfig';
@@ -49,6 +49,13 @@ const PaymentPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [amount, setAmount] = useState<number>(0);
   const [contractDetails, setContractDetails] = useState<ContractDetails | null>(null);
+  const [mpPublicKey, setMpPublicKey] = useState<string | null>(null);
+  const [isMpReady, setIsMpReady] = useState(false);
+  const [brickKey, setBrickKey] = useState(0);
+  const brickReady = useRef(false);
+  const preferenceCreated = useRef(false);
+  const mpKeyInitialized = useRef<string | null>(null);
+  const brickRetryCount = useRef(0);
 
   // Calcular los pasos basándose en el tipo de documento y si hay firmantes
   const PROGRESS_STEPS = useMemo(() => {
@@ -68,12 +75,40 @@ const PaymentPage: React.FC = () => {
     loadContractAndPreference();
   }, [contractId, trackingCode, rut]);
 
+  useEffect(() => {
+    const keyToUse = mpPublicKey || mercadoPagoConfig.publicKey;
+    if (!keyToUse || mpKeyInitialized.current === keyToUse) {
+      return;
+    }
+
+    console.log('🔧 Inicializando MercadoPago SDK con clave:', keyToUse.substring(0, 20) + '...');
+    initMPWithKey(keyToUse);
+    mpKeyInitialized.current = keyToUse;
+
+    // Give SDK extra time to fully initialize before marking as ready
+    setTimeout(() => {
+      setIsMpReady(true);
+      console.log('✅ MercadoPago SDK listo');
+    }, 300);
+  }, [mpPublicKey, mercadoPagoConfig.publicKey]);
+
   const loadContractAndPreference = async () => {
+    // Prevent duplicate calls (React Strict Mode or re-renders)
+    if (preferenceCreated.current) {
+      console.log('⚠️  Preference already created, skipping duplicate call');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      brickReady.current = false;
+      preferenceCreated.current = true;
 
       // Cargar detalles del contrato y preferencia en paralelo
+      console.log('📞 Calling getContractDetails:', { contractId, trackingCode, rut });
+      console.log('📞 Calling createPreference:', { contractId, trackingCode, rut });
+
       const [contractResponse, preferenceResponse] = await Promise.all([
         getContractDetails(contractId!, trackingCode, rut),
         paymentService.createPreference({
@@ -82,6 +117,9 @@ const PaymentPage: React.FC = () => {
           rut: rut
         })
       ]);
+
+      console.log('✅ Contract details response:', contractResponse.data);
+      console.log('✅ Preference response:', preferenceResponse);
 
       // Procesar respuesta del contrato
       if (contractResponse.data?.success && contractResponse.data?.data) {
@@ -128,6 +166,9 @@ const PaymentPage: React.FC = () => {
       if (preferenceResponse.success && preferenceResponse.data) {
         setPreferenceId(preferenceResponse.data.preference_id);
         setAmount(preferenceResponse.data.amount);
+        if (preferenceResponse.data.public_key) {
+          setMpPublicKey(preferenceResponse.data.public_key);
+        }
       } else {
         throw new Error('Error al crear preferencia de pago');
       }
@@ -135,6 +176,7 @@ const PaymentPage: React.FC = () => {
       setLoading(false);
     } catch (err: any) {
       console.error('Error cargando datos:', err);
+      preferenceCreated.current = false; // Reset flag to allow retry
       const errorData = err.response?.data?.error;
       if (typeof errorData === 'object' && errorData !== null) {
         setError(errorData.message || 'Error al iniciar el pago');
@@ -198,7 +240,10 @@ const PaymentPage: React.FC = () => {
             <p className="text-slate-600 mb-6 font-sans">{error}</p>
             <div className="space-y-3">
               <button
-                onClick={() => loadContractAndPreference()}
+                onClick={() => {
+                  preferenceCreated.current = false; // Reset flag before retry
+                  loadContractAndPreference();
+                }}
                 className="w-full bg-navy-900 hover:bg-navy-800 text-white font-medium py-3 px-4 rounded-lg transition-colors font-sans"
               >
                 Reintentar
@@ -398,9 +443,10 @@ const PaymentPage: React.FC = () => {
 
              {/* Right Column: Payment Brick */}
              <div>
-                {preferenceId && amount ? (
+                {preferenceId && amount && isMpReady ? (
                    <div className="payment-brick-container">
                     <Payment
+                        key={`${preferenceId}-${brickKey}`}
                         initialization={{ 
                           amount: amount,
                           preferenceId: preferenceId
@@ -409,7 +455,7 @@ const PaymentPage: React.FC = () => {
                           paymentMethods: {
                             creditCard: 'all',
                             debitCard: 'all',
-                            mercadoPago: 'all'
+                            mercadoPago: 'all',
                           },
                           visual: {
                             style: {
@@ -475,10 +521,44 @@ const PaymentPage: React.FC = () => {
                             }
                           });
                         }}
-                        onReady={() => console.log('✅ Payment Brick listo')}
+                        onReady={() => {
+                           brickReady.current = true;
+                           console.log('✅ Payment Brick listo');
+                        }}
                         onError={(error) => {
-                           console.error('❌ Error en Payment Brick:', error);
-                           setError('Error al cargar el método de pago');
+                           const errorText = typeof error === 'string' ? error : JSON.stringify(error || {});
+                           const isIdentificationError = /identification|indetification|installment/i.test(errorText);
+
+                           if (!isIdentificationError) {
+                             console.error('❌ Error en Payment Brick:', error);
+                           } else {
+                             console.log('⚠️  Identificación/cuotas error detectado (común en primera carga), reintentando...');
+                           }
+
+                           // Auto-retry on first identification/installments error (SDK timing issue)
+                           if (isIdentificationError && brickRetryCount.current < 2) {
+                             brickRetryCount.current += 1;
+                             console.log(`🔄 Retry ${brickRetryCount.current}/2 del brick...`);
+                             setError(null);
+                             setIsMpReady(false);
+                             setTimeout(() => {
+                               const keyToUse = mpPublicKey || mercadoPagoConfig.publicKey;
+                               if (keyToUse) {
+                                 initMPWithKey(keyToUse);
+                                 mpKeyInitialized.current = keyToUse;
+                               }
+                               setBrickKey((prev) => prev + 1);
+                               setTimeout(() => {
+                                 setIsMpReady(true);
+                               }, 300);
+                             }, 200); // Wait before reinitializing
+                             return;
+                           }
+
+                           // Only show error UI if brick hasn't loaded yet
+                           if (!brickReady.current) {
+                             setError('Error al cargar el método de pago');
+                           }
                         }}
                     />
                    </div>
