@@ -1,23 +1,24 @@
 // LEGALTECH_frontend/src/pages/admin/AdminDashboard.tsx
-import React, { useEffect, useState, useMemo } from 'react';
-import { 
-  FileText, Clock, CheckCircle, XCircle, AlertCircle, 
-  X, Eye, TrendingUp, TrendingDown, DollarSign, 
-  BarChart3, PieChart as PieChartIcon, Loader2,
-  Calendar, Filter, RefreshCw
+import { useEffect, useState, useMemo, useRef } from 'react';
+import {
+  FileText, Clock, CheckCircle, XCircle, AlertCircle,
+  X, Eye, TrendingUp, TrendingDown, DollarSign,
+  BarChart3, PieChart as PieChartIcon, Loader2, Receipt, Calculator, Calendar
 } from 'lucide-react';
 import { Text } from '../../components/ui/primitives/Text';
 import { Box } from '../../components/ui/primitives/Box';
 import { Button } from '../../components/ui/primitives/Button';
 import { Badge } from '../../components/ui/primitives/Badge';
-import { 
-  getDashboardStats, 
-  getDashboardWeeklyActivity, 
+import { Link } from 'react-router-dom';
+import {
+  getDashboardStats,
+  getDashboardWeeklyActivity,
   getDashboardMonthlyActivity,
   getDashboardRecentContracts,
   getDashboardPopularTemplates
 } from '../../services/api';
-import type { DateRangeParams } from '../../services/api';
+import { useAdminDateRange, DATE_PRESETS, getPresetDates, type DatePreset } from '../../context/AdminDateContext';
+import { StatusBadge } from '../../components/ui/composed/StatusBadge';
 import {
   XAxis,
   YAxis,
@@ -44,6 +45,15 @@ interface SalesByCategory {
 interface DashboardStats {
   totalRevenue: number;
   revenueChange: number;
+  // IVA calculations
+  netRevenue: number;
+  totalIVA: number;
+  // Cost tracking
+  totalSignatureCosts: number;
+  totalProcessorFees: number;
+  totalCosts: number;
+  profit: number;
+  // Contract metrics
   totalContracts: number;
   contractsChange: number;
   activeUsers: number;
@@ -62,7 +72,7 @@ interface DashboardStats {
     completed: number;
     failed: number;
   };
-  // Nuevas métricas de ventas
+  // Sales metrics
   totalSales: number;
   totalSalesRevenue: number;
   salesByCategory: SalesByCategory[];
@@ -113,7 +123,7 @@ interface Contract {
 // pending_payment → draft → waiting_signatures → waiting_notary → completed
 const STATUS_CONFIG = {
   pending_payment: { label: 'Pend. Pago', color: 'bg-amber-50 text-amber-700', dotColor: 'bg-amber-600', chartColor: '#d97706' },
-  draft: { label: 'Completando', color: 'bg-slate-100 text-slate-700', dotColor: 'bg-slate-600', chartColor: '#475569' },
+  draft: { label: 'Borrador', color: 'bg-slate-100 text-slate-700', dotColor: 'bg-slate-600', chartColor: '#475569' },
   waiting_signatures: { label: 'Esp. Firmas', color: 'bg-blue-50 text-blue-700', dotColor: 'bg-blue-600', chartColor: '#2563eb' },
   waiting_notary: { label: 'Esp. Notario', color: 'bg-navy-100 text-navy-700', dotColor: 'bg-navy-600', chartColor: '#486581' },
   completed: { label: 'Completado', color: 'bg-legal-emerald-50 text-legal-emerald-700', dotColor: 'bg-legal-emerald-600', chartColor: '#047857' },
@@ -123,195 +133,131 @@ const STATUS_CONFIG = {
 const CHART_COLORS = ['#047857', '#486581', '#2563eb', '#d97706', '#dc2626', '#475569', '#64748b'];
 
 // ============================================
-// Date Range Filter Types & Constants
+// DateRangeFilter Component (Dashboard Version)
 // ============================================
-type DatePreset = 'all' | 'today' | 'last7days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'custom';
+function DateRangeFilter() {
+  const { dateRange, setDateRange, isFiltered } = useAdminDateRange();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-interface DateRangeState {
-  preset: DatePreset;
-  startDate: string;
-  endDate: string;
-}
-
-const DATE_PRESETS: { value: DatePreset; label: string }[] = [
-  { value: 'all', label: 'Todo el período' },
-  { value: 'today', label: 'Hoy' },
-  { value: 'last7days', label: 'Últimos 7 días' },
-  { value: 'thisMonth', label: 'Este mes' },
-  { value: 'lastMonth', label: 'Último mes' },
-  { value: 'thisYear', label: 'Este año' },
-  { value: 'custom', label: 'Personalizado' },
-];
-
-const STORAGE_KEY = 'admin_dashboard_date_range';
-
-const getPresetDates = (preset: DatePreset): { startDate: string; endDate: string } => {
-  const today = new Date();
-  const formatDate = (d: Date) => d.toISOString().split('T')[0];
-  
-  switch (preset) {
-    case 'today':
-      return { startDate: formatDate(today), endDate: formatDate(today) };
-    case 'last7days': {
-      const start = new Date(today);
-      start.setDate(start.getDate() - 6);
-      return { startDate: formatDate(start), endDate: formatDate(today) };
-    }
-    case 'thisMonth': {
-      const start = new Date(today.getFullYear(), today.getMonth(), 1);
-      return { startDate: formatDate(start), endDate: formatDate(today) };
-    }
-    case 'lastMonth': {
-      const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const end = new Date(today.getFullYear(), today.getMonth(), 0);
-      return { startDate: formatDate(start), endDate: formatDate(end) };
-    }
-    case 'thisYear': {
-      const start = new Date(today.getFullYear(), 0, 1);
-      return { startDate: formatDate(start), endDate: formatDate(today) };
-    }
-    case 'all':
-    default:
-      return { startDate: '', endDate: '' };
-  }
-};
-
-const loadStoredDateRange = (): DateRangeState => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Si es un preset dinámico (no 'custom' ni 'all'), recalcular fechas
-      if (parsed.preset && parsed.preset !== 'custom' && parsed.preset !== 'all') {
-        const dates = getPresetDates(parsed.preset);
-        return { preset: parsed.preset, ...dates };
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
       }
-      return parsed;
-    }
-  } catch (e) {
-    console.warn('Error loading date range from localStorage', e);
-  }
-  return { preset: 'all', startDate: '', endDate: '' };
-};
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-const saveDateRange = (dateRange: DateRangeState) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dateRange));
-  } catch (e) {
-    console.warn('Error saving date range to localStorage', e);
-  }
-};
-
-// ============================================
-// DateRangeFilter Component
-// ============================================
-interface DateRangeFilterProps {
-  dateRange: DateRangeState;
-  onDateRangeChange: (dateRange: DateRangeState) => void;
-  onRefresh: () => void;
-  isLoading: boolean;
-}
-
-const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ 
-  dateRange, 
-  onDateRangeChange, 
-  onRefresh,
-  isLoading 
-}) => {
   const handlePresetChange = (preset: DatePreset) => {
     if (preset === 'custom') {
-      onDateRangeChange({ preset, startDate: dateRange.startDate, endDate: dateRange.endDate });
+      setDateRange({ preset, startDate: dateRange.startDate, endDate: dateRange.endDate });
     } else {
       const dates = getPresetDates(preset);
-      onDateRangeChange({ preset, ...dates });
+      setDateRange({ preset, ...dates });
+    }
+    if (preset !== 'custom') {
+      setIsOpen(false);
     }
   };
 
   const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
-    onDateRangeChange({ ...dateRange, preset: 'custom', [field]: value });
+    setDateRange({ ...dateRange, preset: 'custom', [field]: value });
   };
 
-  const isFiltered = dateRange.preset !== 'all';
   const currentPresetLabel = DATE_PRESETS.find(p => p.value === dateRange.preset)?.label || 'Todo el período';
 
-  // Format dates for display
   const formatDisplayDate = (dateStr: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
+  };
+
+  const getDisplayLabel = () => {
+    if (dateRange.preset === 'custom' && dateRange.startDate && dateRange.endDate) {
+      return `${formatDisplayDate(dateRange.startDate)} — ${formatDisplayDate(dateRange.endDate)}`;
+    }
+    return currentPresetLabel;
   };
 
   return (
-    <Box variant="document" padding="md" className="mb-6">
-      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        {/* Filter Icon & Label */}
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${isFiltered ? 'bg-legal-emerald-100' : 'bg-slate-100'}`}>
-            <Calendar className={`w-5 h-5 ${isFiltered ? 'text-legal-emerald-700' : 'text-slate-500'}`} />
-          </div>
-          <div>
-            <Text variant="body-sm" weight="medium" color="primary">Período de datos</Text>
-            {isFiltered && (
-              <Text variant="caption" className="text-legal-emerald-700 font-medium flex items-center gap-1 mt-0.5">
-                <Filter className="w-3 h-3" />
-                Filtro activo: {dateRange.preset === 'custom' 
-                  ? `${formatDisplayDate(dateRange.startDate)} - ${formatDisplayDate(dateRange.endDate)}`
-                  : currentPresetLabel}
-              </Text>
-            )}
-          </div>
-        </div>
+    <div className="relative" ref={dropdownRef}>
+      {/* Trigger Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium font-sans ${isFiltered
+          ? 'bg-legal-emerald-50 border-legal-emerald-200 text-legal-emerald-700 hover:bg-legal-emerald-100'
+          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+          }`}
+      >
+        <Calendar className="w-4 h-4" />
+        <span>{getDisplayLabel()}</span>
+        <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-        {/* Preset Buttons */}
-        <div className="flex flex-wrap gap-2 flex-1">
-          {DATE_PRESETS.filter(p => p.value !== 'custom').map((preset) => (
-            <button
-              key={preset.value}
-              onClick={() => handlePresetChange(preset.value)}
-              className={`px-3 py-1.5 text-xs font-medium font-sans rounded-md transition-all ${
-                dateRange.preset === preset.value
+      {/* Dropdown Panel */}
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <span className="text-sm font-semibold text-slate-900">Período de datos</span>
+          </div>
+
+          {/* Preset Grid */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {DATE_PRESETS.filter(p => p.value !== 'custom').map((preset) => (
+              <button
+                key={preset.value}
+                onClick={() => handlePresetChange(preset.value)}
+                className={`px-3 py-2 text-xs font-medium font-sans rounded-lg transition-all ${dateRange.preset === preset.value
                   ? 'bg-navy-900 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Date Range */}
+          <div className="pt-3 border-t border-slate-100">
+            <span className="text-xs text-slate-500 block mb-2">Rango personalizado</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => handleDateChange('startDate', e.target.value)}
+                className="flex-1 px-2.5 py-1.5 text-xs font-sans border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent bg-slate-50"
+              />
+              <span className="text-slate-300">—</span>
+              <input
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => handleDateChange('endDate', e.target.value)}
+                className="flex-1 px-2.5 py-1.5 text-xs font-sans border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent bg-slate-50"
+              />
+            </div>
+          </div>
+
+          {/* Clear Filter */}
+          {isFiltered && (
+            <button
+              onClick={() => handlePresetChange('all')}
+              className="mt-3 w-full py-2 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-all flex items-center justify-center gap-1"
             >
-              {preset.label}
+              <X className="w-3 h-3" />
+              Limpiar filtro
             </button>
-          ))}
+          )}
         </div>
-
-        {/* Custom Date Inputs */}
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={dateRange.startDate}
-            onChange={(e) => handleDateChange('startDate', e.target.value)}
-            className="px-3 py-1.5 text-sm font-sans border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
-            placeholder="Desde"
-          />
-          <span className="text-slate-400">—</span>
-          <input
-            type="date"
-            value={dateRange.endDate}
-            onChange={(e) => handleDateChange('endDate', e.target.value)}
-            className="px-3 py-1.5 text-sm font-sans border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
-            placeholder="Hasta"
-          />
-        </div>
-
-        {/* Refresh Button */}
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={onRefresh}
-          disabled={isLoading}
-          leftIcon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />}
-        >
-          Actualizar
-        </Button>
-      </div>
-    </Box>
+      )}
+    </div>
   );
-};
+}
 
 // ============================================
 // Helper Functions
@@ -347,61 +293,56 @@ export function AdminDashboard() {
   const [recentContracts, setRecentContracts] = useState<Contract[]>([]);
   const [popularTemplates, setPopularTemplates] = useState<PopularTemplate[]>([]);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-  
-  // Date Range Filter State
-  const [dateRange, setDateRange] = useState<DateRangeState>(() => loadStoredDateRange());
 
-  // Memoized date range params for API calls
-  const dateRangeParams: DateRangeParams | undefined = useMemo(() => {
-    if (dateRange.preset === 'all' || (!dateRange.startDate && !dateRange.endDate)) {
-      return undefined;
-    }
-    return {
-      startDate: dateRange.startDate || undefined,
-      endDate: dateRange.endDate || undefined
-    };
-  }, [dateRange]);
+  // Get date range from shared context (filter is in dashboard)
+  const { dateRange, dateRangeParams } = useAdminDateRange();
 
-  const loadDashboard = async () => {
-    try {
-      setLoading(true);
-      
-      const [statsRes, weeklyRes, monthlyRes, contractsRes, templatesRes] = await Promise.all([
-        getDashboardStats(dateRangeParams),
-        getDashboardWeeklyActivity(dateRangeParams),
-        getDashboardMonthlyActivity(dateRangeParams),
-        getDashboardRecentContracts(5, dateRangeParams),
-        getDashboardPopularTemplates(5, dateRangeParams)
-      ]);
-
-      setStats(statsRes.data.data);
-      setWeeklyData(weeklyRes.data.data);
-      setMonthlyData(monthlyRes.data.data);
-      setRecentContracts(contractsRes.data.data);
-      setPopularTemplates(templatesRes.data.data);
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle date range changes
-  const handleDateRangeChange = (newDateRange: DateRangeState) => {
-    setDateRange(newDateRange);
-    saveDateRange(newDateRange);
-  };
-
+  // Reload dashboard when date range changes
   useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        setLoading(true);
+
+        const [statsRes, weeklyRes, monthlyRes, contractsRes, templatesRes] = await Promise.all([
+          getDashboardStats(dateRangeParams),
+          getDashboardWeeklyActivity(dateRangeParams),
+          getDashboardMonthlyActivity(dateRangeParams),
+          getDashboardRecentContracts(5, dateRangeParams),
+          getDashboardPopularTemplates(5, dateRangeParams)
+        ]);
+
+        setStats(statsRes.data.data);
+        setWeeklyData(weeklyRes.data.data);
+        setMonthlyData(monthlyRes.data.data);
+        setRecentContracts(contractsRes.data.data);
+        setPopularTemplates(templatesRes.data.data);
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadDashboard();
-  }, [dateRangeParams]);
+  }, [JSON.stringify(dateRangeParams)]);
+
+  // IVA and cost data from backend
+  const financialData = useMemo(() => ({
+    grossRevenue: stats?.totalRevenue || 0,
+    netRevenue: stats?.netRevenue || 0,
+    ivaAmount: stats?.totalIVA || 0,
+    totalCosts: stats?.totalCosts || 0,
+    profit: stats?.profit || 0,
+    signatureCosts: stats?.totalSignatureCosts || 0,
+    processorFees: stats?.totalProcessorFees || 0
+  }), [stats]);
 
   // Datos para el gráfico de estados - mostrar todos los estados
   const statusChartData = stats ? Object.entries(STATUS_CONFIG).map(([status, config]) => ({
-      name: config.label,
-      value: stats.contractsByStatus[status as keyof typeof stats.contractsByStatus] || 0,
-      color: config.chartColor
-    })) : [];
+    name: config.label,
+    value: stats.contractsByStatus[status as keyof typeof stats.contractsByStatus] || 0,
+    color: config.chartColor
+  })) : [];
 
   // Formateador de fecha para el eje X del gráfico
   const formatDateLabel = (dateStr: string, showYear: boolean = false) => {
@@ -425,16 +366,16 @@ export function AdminDashboard() {
         ingresos: m.ingresos
       }));
     }
-    
+
     const start = new Date(dateRange.startDate);
     const end = new Date(dateRange.endDate);
     const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     // Si el rango es menor a 8 días, usar nombre de día (Lun, Mar, etc.)
     if (diffDays <= 7) {
       return weeklyData;
     }
-    
+
     // Si el rango es menor a 45 días, usar datos diarios con fecha formateada
     if (diffDays <= 45) {
       return weeklyData.map(d => ({
@@ -442,10 +383,10 @@ export function AdminDashboard() {
         day: formatDateLabel(d.date)
       }));
     }
-    
+
     // Si el rango cruza años, incluir el año
     const crossesYears = start.getFullYear() !== end.getFullYear();
-    
+
     // Si no, usar datos mensuales
     return monthlyData.map(m => ({
       day: crossesYears ? `${m.month} ${m.year.toString().slice(-2)}` : m.month,
@@ -469,74 +410,137 @@ export function AdminDashboard() {
     <div className="min-h-screen bg-slate-50">
       <div className="p-6 md:p-8">
         <div className="space-y-6">
-          
+
           {/* Header */}
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
             <div>
               <Text variant="h2">Dashboard Administrativo</Text>
               <Text variant="body-sm" color="muted" className="mt-1">Resumen de actividad y métricas</Text>
             </div>
-            <div className="text-right">
-              <Text variant="caption" color="muted" className="block">Última actualización</Text>
-              <Text variant="body-sm" weight="medium" color="secondary" className="mt-0.5">
-                {new Date().toLocaleDateString('es-CL', { 
-                  day: '2-digit', 
-                  month: 'short', 
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </Text>
+            <div className="flex items-center gap-4">
+              <DateRangeFilter />
+              <div className="text-right hidden sm:block">
+                <Text variant="caption" color="muted" className="block">Última actualización</Text>
+                <Text variant="body-sm" weight="medium" color="secondary" className="mt-0.5">
+                  {new Date().toLocaleDateString('es-CL', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Text>
+              </div>
             </div>
           </div>
 
-          {/* Date Range Filter */}
-          <DateRangeFilter
-            dateRange={dateRange}
-            onDateRangeChange={handleDateRangeChange}
-            onRefresh={loadDashboard}
-            isLoading={loading}
-          />
+          {/* ================= FINANCIAL OVERVIEW ================= */}
+          {/* Row 1: Revenue and IVA */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Ingresos Brutos */}
+            <StatCard
+              icon={<DollarSign className="w-5 h-5" />}
+              iconBg="bg-emerald-100"
+              iconColor="text-emerald-700"
+              title="Ingresos Brutos"
+              value={formatCurrency(financialData.grossRevenue)}
+              subtitle="Total con IVA"
+              change={stats?.revenueChange}
+            />
 
-          {/* ================= KPI CARDS - VENTAS ================= */}
+            {/* Ingresos Netos */}
+            <StatCard
+              icon={<Receipt className="w-5 h-5" />}
+              iconBg="bg-blue-100"
+              iconColor="text-blue-700"
+              title="Ingresos Netos"
+              value={formatCurrency(financialData.netRevenue)}
+              subtitle="Sin IVA (÷ 1.19)"
+            />
+
+            {/* IVA Recaudado */}
+            <StatCard
+              icon={<Calculator className="w-5 h-5" />}
+              iconBg="bg-amber-100"
+              iconColor="text-amber-700"
+              title="IVA Recaudado"
+              value={formatCurrency(financialData.ivaAmount)}
+              subtitle="19% del neto"
+            />
+          </div>
+
+          {/* Row 2: Costs and Profit */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Costos Totales */}
+            <StatCard
+              icon={<TrendingDown className="w-5 h-5" />}
+              iconBg="bg-red-100"
+              iconColor="text-red-600"
+              title="Costos Totales"
+              value={formatCurrency(financialData.totalCosts)}
+              subtitle={`Firmas: ${formatCurrency(financialData.signatureCosts)} | Comisiones: ${formatCurrency(financialData.processorFees)}`}
+            />
+
+            {/* Utilidad Neta */}
+            <StatCard
+              icon={<TrendingUp className="w-5 h-5" />}
+              iconBg={financialData.profit >= 0 ? "bg-legal-emerald-100" : "bg-red-100"}
+              iconColor={financialData.profit >= 0 ? "text-legal-emerald-700" : "text-red-600"}
+              title="Utilidad Neta"
+              value={formatCurrency(financialData.profit)}
+              subtitle="Neto - Costos"
+            />
+
+            {/* Margen de Utilidad */}
+            <StatCard
+              icon={<BarChart3 className="w-5 h-5" />}
+              iconBg="bg-indigo-100"
+              iconColor="text-indigo-700"
+              title="Margen de Utilidad"
+              value={financialData.netRevenue > 0
+                ? `${((financialData.profit / financialData.netRevenue) * 100).toFixed(1)}%`
+                : '0%'}
+              subtitle="Utilidad / Ingresos Netos"
+            />
+          </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Ventas Completadas (contratos con status completed) */}
-            <StatCard 
+            <StatCard
               icon={<CheckCircle className="w-5 h-5" />}
               iconBg="bg-legal-emerald-100"
               iconColor="text-legal-emerald-700"
-              title="Ventas Completadas" 
-              value={formatNumber(stats?.totalSales || 0)} 
+              title="Ventas Completadas"
+              value={formatNumber(stats?.totalSales || 0)}
               subtitle="contratos finalizados"
             />
 
             {/* Ingresos de Ventas */}
-            <StatCard 
+            <StatCard
               icon={<DollarSign className="w-5 h-5" />}
               iconBg="bg-navy-100"
               iconColor="text-navy-700"
-              title="Ingresos por Ventas" 
-              value={formatCurrency(stats?.totalSalesRevenue || 0)} 
+              title="Ingresos por Ventas"
+              value={formatCurrency(stats?.totalSalesRevenue || 0)}
               subtitle="de contratos completados"
             />
 
             {/* Total Solicitudes */}
-            <StatCard 
+            <StatCard
               icon={<FileText className="w-5 h-5" />}
               iconBg="bg-blue-100"
               iconColor="text-blue-700"
-              title="Total Solicitudes" 
-              value={formatNumber(stats?.totalContracts || 0)} 
+              title="Total Solicitudes"
+              value={formatNumber(stats?.totalContracts || 0)}
               subtitle="todos los estados"
             />
 
             {/* Tasa de Completación */}
-            <StatCard 
+            <StatCard
               icon={<TrendingUp className="w-5 h-5" />}
               iconBg="bg-slate-100"
               iconColor="text-slate-700"
-              title="Tasa de Completación" 
-              value={`${stats && stats.totalContracts > 0 ? ((stats.totalSales / stats.totalContracts) * 100).toFixed(1) : 0}%`} 
+              title="Tasa de Completación"
+              value={`${stats && stats.totalContracts > 0 ? ((stats.totalSales / stats.totalContracts) * 100).toFixed(1) : 0}%`}
               subtitle="completados / total"
             />
           </div>
@@ -555,8 +559,8 @@ export function AdminDashboard() {
                 {stats.salesByCategory.map((cat, index) => (
                   <div key={cat.category} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
+                      <div
+                        className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                       />
                       <Text variant="body-sm" weight="medium" color="secondary" className="truncate">{cat.category}</Text>
@@ -571,7 +575,7 @@ export function AdminDashboard() {
 
           {/* ================= CHARTS ROW ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            
+
             {/* Chart: Actividad (8 cols) */}
             <Box variant="document" padding="md" className="lg:col-span-8">
               <div className="mb-6">
@@ -581,47 +585,47 @@ export function AdminDashboard() {
                 </Text>
                 <Text variant="caption" color="muted" className="mt-1">Contratos e ingresos por período seleccionado</Text>
               </div>
-              
+
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={activityData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorContratos" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#047857" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#047857" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#047857" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#047857" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#486581" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#486581" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#486581" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#486581" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis 
-                      dataKey="day" 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fontSize: 12, fill: '#64748b' }}
                       dy={10}
                     />
-                    <YAxis 
+                    <YAxis
                       yAxisId="left"
-                      axisLine={false} 
-                      tickLine={false} 
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fontSize: 12, fill: '#64748b' }}
                       label={{ value: 'Contratos', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11 }}
                     />
-                    <YAxis 
+                    <YAxis
                       yAxisId="right"
                       orientation="right"
-                      axisLine={false} 
-                      tickLine={false} 
+                      axisLine={false}
+                      tickLine={false}
                       tick={{ fontSize: 12, fill: '#64748b' }}
                       label={{ value: 'Ingresos (K)', angle: 90, position: 'insideRight', fill: '#64748b', fontSize: 11 }}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        borderRadius: '12px', 
-                        border: 'none', 
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '12px',
+                        border: 'none',
                         boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.1)',
                         padding: '12px 16px'
                       }}
@@ -630,28 +634,28 @@ export function AdminDashboard() {
                         name === 'ingresos' ? 'Ingresos' : 'Contratos'
                       ]}
                     />
-                    <Legend 
-                      verticalAlign="top" 
+                    <Legend
+                      verticalAlign="top"
                       height={36}
                       formatter={(value) => value === 'contratos' ? 'Contratos' : 'Ingresos'}
                     />
-                    <Area 
+                    <Area
                       yAxisId="left"
-                      type="monotone" 
-                      dataKey="contratos" 
-                      stroke="#047857" 
+                      type="monotone"
+                      dataKey="contratos"
+                      stroke="#047857"
                       strokeWidth={2}
-                      fillOpacity={1} 
-                      fill="url(#colorContratos)" 
+                      fillOpacity={1}
+                      fill="url(#colorContratos)"
                     />
-                    <Area 
+                    <Area
                       yAxisId="right"
-                      type="monotone" 
-                      dataKey="ingresos" 
-                      stroke="#486581" 
+                      type="monotone"
+                      dataKey="ingresos"
+                      stroke="#486581"
                       strokeWidth={2}
-                      fillOpacity={1} 
-                      fill="url(#colorIngresos)" 
+                      fillOpacity={1}
+                      fill="url(#colorIngresos)"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -677,7 +681,7 @@ export function AdminDashboard() {
                           data={statusChartData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
+                          innerRadius={0}
                           outerRadius={75}
                           paddingAngle={3}
                           dataKey="value"
@@ -686,28 +690,23 @@ export function AdminDashboard() {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            borderRadius: '8px', 
-                            border: 'none', 
-                            boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)' 
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: '8px',
+                            border: 'none',
+                            boxShadow: '0 4px 12px rgb(0 0 0 / 0.1)'
                           }}
                           formatter={(value) => [`${value} contratos`, '']}
                         />
                       </PieChart>
                     </ResponsiveContainer>
-                    {/* Center Text */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <Text variant="h3" className="text-2xl font-sans">{stats?.totalContracts || 0}</Text>
-                      <Text variant="caption" color="muted">Total</Text>
-                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 mt-4">
                     {statusChartData.slice(0, 6).map((item, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <span 
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                           style={{ backgroundColor: item.color }}
                         />
                         <Text variant="caption" color="secondary" className="truncate flex-1">{item.name}</Text>
@@ -726,7 +725,7 @@ export function AdminDashboard() {
 
           {/* ================= TABLES ROW ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            
+
             {/* Recent Contracts (8 cols) */}
             <Box variant="document" padding="none" className="lg:col-span-8 overflow-hidden">
               <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
@@ -734,9 +733,11 @@ export function AdminDashboard() {
                   <Text variant="h4">Contratos Recientes</Text>
                   <Text variant="caption" color="muted" className="mt-1">Últimos movimientos registrados</Text>
                 </div>
-                <Button variant="ghost" size="sm" rightIcon={<span>→</span>}>
-                  Ver todos
-                </Button>
+                <Link to="/admin/contracts">
+                  <Button variant="ghost" size="sm" rightIcon={<span>→</span>}>
+                    Ver todos
+                  </Button>
+                </Link>
               </div>
 
               <div className="overflow-x-auto">
@@ -770,8 +771,8 @@ export function AdminDashboard() {
                       </tr>
                     ) : (
                       recentContracts.map(contract => (
-                        <ContractRow 
-                          key={contract.id} 
+                        <ContractRow
+                          key={contract.id}
                           contract={contract}
                           onView={() => setSelectedContract(contract)}
                         />
@@ -850,8 +851,8 @@ interface StatCardProps {
   showChange?: boolean;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ 
-  icon, iconBg, iconColor, title, value, change, subtitle, showChange = false 
+const StatCard: React.FC<StatCardProps> = ({
+  icon, iconBg, iconColor, title, value, change, subtitle, showChange = false
 }) => {
   const isPositive = change !== undefined && change >= 0;
 
@@ -862,7 +863,7 @@ const StatCard: React.FC<StatCardProps> = ({
           <span className={iconColor}>{icon}</span>
         </div>
         {showChange && change !== undefined && (
-          <Badge 
+          <Badge
             variant={isPositive ? 'success' : 'error'}
             size="sm"
             dot={false}
@@ -886,25 +887,6 @@ interface ContractRowProps {
 }
 
 const ContractRow: React.FC<ContractRowProps> = ({ contract, onView }) => {
-  const status = STATUS_CONFIG[contract.status] || { 
-    label: contract.status, 
-    color: 'bg-slate-100 text-slate-700', 
-    dotColor: 'bg-slate-400' 
-  };
-
-  // Map status to Badge variant
-  const getBadgeVariant = (status: string): 'draft' | 'pending' | 'success' | 'error' | 'info' | 'warning' => {
-    switch(status) {
-      case 'completed': return 'success';
-      case 'failed': return 'error';
-      case 'pending_payment': return 'warning';
-      case 'draft': return 'draft';
-      case 'waiting_signatures':
-      case 'waiting_notary': return 'info';
-      default: return 'draft';
-    }
-  };
-
   return (
     <tr className="hover:bg-slate-50/80 transition-colors group">
       <td className="px-6 py-4">
@@ -933,9 +915,7 @@ const ContractRow: React.FC<ContractRowProps> = ({ contract, onView }) => {
         </div>
       </td>
       <td className="px-6 py-4">
-        <Badge variant={getBadgeVariant(contract.status)} size="sm">
-          {status.label}
-        </Badge>
+        <StatusBadge status={contract.status as any} size="sm" />
       </td>
       <td className="px-6 py-4">
         <Text variant="body-sm" weight="bold" color="primary">
@@ -960,10 +940,10 @@ interface ContractDetailModalProps {
 }
 
 const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onClose }) => {
-  const status = STATUS_CONFIG[contract.status] || { 
-    label: contract.status, 
-    color: 'bg-slate-100 text-slate-700', 
-    dotColor: 'bg-slate-400' 
+  const status = STATUS_CONFIG[contract.status] || {
+    label: contract.status,
+    color: 'bg-slate-100 text-slate-700',
+    dotColor: 'bg-slate-400'
   };
   const statusIcons: Record<string, typeof FileText> = {
     draft: FileText, pending_payment: Clock, completed: CheckCircle,
@@ -976,7 +956,7 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
       <Box variant="elevated" padding="none" className="max-w-lg w-full overflow-hidden shadow-document-hover">
         {/* Navy top accent stripe */}
         <div className="border-t-4 border-navy-900"></div>
-        
+
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
           <div>
             <Text variant="h4">Detalle del Contrato</Text>
@@ -986,7 +966,7 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
             <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
-        
+
         <div className="p-6 space-y-6">
           <div className={`flex items-start gap-4 p-4 rounded-lg border ${status.color} border-current border-opacity-20`}>
             <div className="p-2 rounded-lg bg-white border border-slate-200">
@@ -1003,37 +983,37 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
               <Text variant="caption" color="muted" className="block mb-1">MONTO</Text>
               <Text variant="h4" className="text-xl font-sans">${(contract.total_amount || 0).toLocaleString()}</Text>
             </div>
-             <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
               <Text variant="caption" color="muted" className="block mb-1">RUT CLIENTE</Text>
               <Text variant="body-sm" weight="bold" className="font-mono">{contract.buyer_rut}</Text>
             </div>
           </div>
 
           <div className="space-y-3">
-             <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                <Text variant="body-sm" color="muted">Template</Text>
-                <Text variant="body-sm" weight="medium" color="primary">{contract.templateVersion?.template?.title || 'N/A'}</Text>
-             </div>
-             <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                <Text variant="body-sm" color="muted">Email Cliente</Text>
-                <Text variant="body-sm" weight="medium" color="primary">{contract.buyer_email}</Text>
-             </div>
-             <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                <Text variant="body-sm" color="muted">Requiere Notario</Text>
-                <Text variant="body-sm" weight="medium" color="primary">{contract.requires_notary ? 'Sí' : 'No'}</Text>
-             </div>
-             <div className="flex items-center justify-between py-2">
-                <Text variant="body-sm" color="muted">Fecha Creación</Text>
-                <Text variant="body-sm" weight="medium" color="primary">
-                  {new Date(contract.created_at).toLocaleDateString('es-CL', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </Text>
-             </div>
+            <div className="flex items-center justify-between py-2 border-b border-slate-200">
+              <Text variant="body-sm" color="muted">Template</Text>
+              <Text variant="body-sm" weight="medium" color="primary">{contract.templateVersion?.template?.title || 'N/A'}</Text>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-slate-200">
+              <Text variant="body-sm" color="muted">Email Cliente</Text>
+              <Text variant="body-sm" weight="medium" color="primary">{contract.buyer_email}</Text>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-slate-200">
+              <Text variant="body-sm" color="muted">Requiere Notario</Text>
+              <Text variant="body-sm" weight="medium" color="primary">{contract.requires_notary ? 'Sí' : 'No'}</Text>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <Text variant="body-sm" color="muted">Fecha Creación</Text>
+              <Text variant="body-sm" weight="medium" color="primary">
+                {new Date(contract.created_at).toLocaleDateString('es-CL', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Text>
+            </div>
           </div>
         </div>
 
