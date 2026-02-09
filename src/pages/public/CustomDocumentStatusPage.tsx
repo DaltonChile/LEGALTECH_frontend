@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { formatPrice } from '../../components/public/contract-editor/utils/formatPrice';
+import { getErrorMessage, formatRut } from '../../utils/validators';
 import { 
   FileText, 
   Users, 
@@ -68,15 +70,15 @@ export function CustomDocumentStatusPage() {
   // Check if redirected from payment
   const fromPayment = searchParams.get('payment') === 'success';
   
-  // Get RUT from query params or localStorage
+  // Get RUT from query params or sessionStorage (session-only for privacy)
   const rutFromQuery = searchParams.get('rut');
   const [buyerRut, setBuyerRut] = useState<string | null>(
-    rutFromQuery || localStorage.getItem(`custom_doc_rut_${trackingCode}`)
+    rutFromQuery || sessionStorage.getItem(`custom_doc_rut_${trackingCode}`)
   );
 
   useEffect(() => {
     if (trackingCode && buyerRut) {
-      localStorage.setItem(`custom_doc_rut_${trackingCode}`, buyerRut);
+      sessionStorage.setItem(`custom_doc_rut_${trackingCode}`, buyerRut);
       loadDocumentStatus();
     } else if (trackingCode && !buyerRut) {
       setShowRutForm(true);
@@ -97,12 +99,7 @@ export function CustomDocumentStatusPage() {
       setDocument(data);
     } catch (err: any) {
       console.error('Error loading document status:', err);
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'No se pudo cargar el estado del documento');
-      } else {
-        setError(errorData || 'No se pudo cargar el estado del documento');
-      }
+      setError(getErrorMessage(err, 'No se pudo cargar el estado del documento'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -112,14 +109,6 @@ export function CustomDocumentStatusPage() {
   const handleRefresh = () => {
     setRefreshing(true);
     loadDocumentStatus();
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-    }).format(price);
   };
 
   const formatDate = (dateString: string) => {
@@ -152,16 +141,6 @@ export function CustomDocumentStatusPage() {
       setShowRutForm(false);
       setLoading(true);
     }
-  };
-
-  const formatRutInput = (value: string) => {
-    let rut = value.replace(/[^0-9kK]/g, '').toUpperCase();
-    if (rut.length > 1) {
-      const dv = rut.slice(-1);
-      const body = rut.slice(0, -1);
-      rut = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
-    }
-    return rut;
   };
 
   // Loading state
@@ -205,7 +184,7 @@ export function CustomDocumentStatusPage() {
                 <input
                   type="text"
                   value={rutInput}
-                  onChange={(e) => setRutInput(formatRutInput(e.target.value))}
+                  onChange={(e) => setRutInput(formatRut(e.target.value))}
                   placeholder="12.345.678-9"
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   autoFocus

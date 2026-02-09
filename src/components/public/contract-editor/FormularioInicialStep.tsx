@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import axios from 'axios';
+import api from '../../../services/api';
 import { Lock, Shield, Check, Plus, ArrowRight, AlertCircle, Edit3, User, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
@@ -7,7 +7,7 @@ import { EditorHeader } from './EditorHeader';
 import { useContractRenderer } from './hooks/useContractRenderer';
 import { extractVariables, formatVariableName } from './utils/templateParser';
 import { contractEditorStyles } from './styles';
-import { formatRut, isValidRut, isValidEmail } from '../../../utils/validators';
+import { formatRut, isValidRut, isValidEmail, getErrorMessage } from '../../../utils/validators';
 import type { InitialFormResponse } from '../../../types/contract';
 import type { Capsule } from './types';
 
@@ -166,8 +166,8 @@ export function FormularioInicialStep({
         return;
       }
 
-      const response = await axios.post<{ success: boolean; data: InitialFormResponse; error?: string }>(
-        `${import.meta.env.VITE_API_URL}/contracts/initial`,
+      const response = await api.post<{ success: boolean; data: InitialFormResponse; error?: string }>(
+        `/contracts/initial`,
         {
           template_version_id: template.version_id,
           buyer_rut: contactRut.replace(/[.-]/g, ''), // Enviar sin formato
@@ -195,12 +195,7 @@ export function FormularioInicialStep({
       }
     } catch (err: any) {
       console.error('Error creating initial contract:', err);
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al procesar la solicitud');
-      } else {
-        setError(errorData || 'Error al procesar la solicitud');
-      }
+      setError(getErrorMessage(err, 'Error al procesar la solicitud'));
     } finally {
       setIsSubmitting(false);
     }

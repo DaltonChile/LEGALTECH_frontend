@@ -14,14 +14,13 @@ const validateConfig = () => {
   const isProdKey = PUBLIC_KEY.startsWith('APP_USR-');
 
   if (isProduction && isTestKey) {
-    console.error('❌ ERROR: Usando credenciales TEST en producción');
+    console.error('ERROR: Usando credenciales TEST en producción');
   }
 
   if (!isProduction && isProdKey) {
-    console.warn('⚠️  Usando credenciales de PRODUCCIÓN en desarrollo');
+    console.warn('Usando credenciales de PRODUCCIÓN en desarrollo');
   }
 
-  console.log(`💳 Mercado Pago: ${isTestKey ? 'SANDBOX' : 'PRODUCCIÓN'}`);
   return true;
 };
 

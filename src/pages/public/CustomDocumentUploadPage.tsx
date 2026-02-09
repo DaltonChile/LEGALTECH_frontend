@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatPrice } from '../../components/public/contract-editor/utils/formatPrice';
+import { getErrorMessage, formatRut } from '../../utils/validators';
 import { 
   Upload, 
   FileText, 
@@ -299,38 +301,10 @@ export function CustomDocumentUploadPage() {
     } catch (err: any) {
       console.error('Error creating custom document:', err);
       // Handle both string and object error formats
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al crear el documento');
-      } else {
-        setError(errorData || 'Error al crear el documento');
-      }
+      setError(getErrorMessage(err, 'Error al crear el documento'));
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatPrice = (price: number | undefined | null) => {
-    const numPrice = typeof price === 'number' && !isNaN(price) ? price : 0;
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-    }).format(numPrice);
-  };
-
-  const formatRut = (value: string) => {
-    // Remove non-alphanumeric characters
-    let rut = value.replace(/[^0-9kK]/g, '');
-    
-    if (rut.length > 1) {
-      // Add dots and dash
-      const dv = rut.slice(-1);
-      const body = rut.slice(0, -1);
-      rut = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
-    }
-    
-    return rut.toUpperCase();
   };
 
   // Render steps

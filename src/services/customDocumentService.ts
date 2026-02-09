@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-});
+import api from './api';
 
 // ============================================
 // Types
@@ -218,7 +211,8 @@ export const replacePdf = async (
  * Get PDF preview URL
  */
 export const getPreviewUrl = (trackingCode: string, rut: string): string => {
-  return `${API_BASE_URL}/custom-documents/${trackingCode}/preview?rut=${encodeURIComponent(rut)}`;
+  const baseUrl = import.meta.env.VITE_API_URL || '/api/v1';
+  return `${baseUrl}/custom-documents/${trackingCode}/preview?rut=${encodeURIComponent(rut)}`;
 };
 
 export default {

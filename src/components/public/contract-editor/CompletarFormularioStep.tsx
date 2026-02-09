@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import axios from 'axios';
+import api from '../../../services/api';
 import { ArrowRight, Edit3, AlertCircle } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
@@ -15,6 +15,7 @@ import {
   validateRutFormat,
   validateEmail,
   validatePhone,
+  getErrorMessage,
 } from '../../../utils/validators';
 import type { ContractData } from '../../../types/contract';
 import type { Capsule } from './types';
@@ -65,6 +66,7 @@ export function CompletarFormularioStep({
   const [error, setError] = useState<string | null>(null);
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
   const [allFilesUploaded, setAllFilesUploaded] = useState(true); // True by default if no files required
+  const [attemptedContinue, setAttemptedContinue] = useState(false); // Track si el usuario intentó continuar
   const documentRef = useRef<HTMLDivElement>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -144,6 +146,13 @@ export function CompletarFormularioStep({
 
   const handleContinueToReview = async () => {
     setError(null);
+    setAttemptedContinue(true); // Marcar que el usuario intentó continuar
+
+    // Validar que todos los archivos estén subidos
+    if (!allFilesUploaded) {
+      setError('Por favor sube todos los documentos requeridos antes de continuar.');
+      return;
+    }
 
     // Validar que todos los campos estén completos
     const emptyFields = extractedVariables.filter(v => !formData[v] || formData[v].trim() === '');
@@ -162,8 +171,8 @@ export function CompletarFormularioStep({
 
     try {
       // Guardar formulario completo en el backend
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/contracts/${contractData.id}/complete`,
+      const response = await api.put(
+        `/contracts/${contractData.id}/complete`,
         {
           tracking_code: contractData.tracking_code,
           rut: contractData.buyer_rut,
@@ -178,12 +187,7 @@ export function CompletarFormularioStep({
       }
     } catch (err: any) {
       console.error('Error completing form:', err);
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al procesar la solicitud');
-      } else {
-        setError(errorData || 'Error al procesar la solicitud');
-      }
+      setError(getErrorMessage(err, 'Error al procesar la solicitud'));
     } finally {
       setIsSubmitting(false);
     }
@@ -218,9 +222,9 @@ export function CompletarFormularioStep({
          }
       />
       
-      <div className="relative z-10 flex-1 w-full max-w-[1920px] mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 overflow-hidden min-h-0" ref={documentRef}>  
+      <div className="relative z-10 flex-1 w-full max-w-480 mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 overflow-hidden min-h-0" ref={documentRef}>  
         {/* Vista previa del documento */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0 min-h-[400px] lg:min-h-0">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0 min-h-100 lg:min-h-0">
           <DocumentPreview
             templateText={template.template_content}
             renderedContract={renderedContract}
@@ -268,18 +272,12 @@ export function CompletarFormularioStep({
              />
            )}
 
-           {/* Validation Errors */}
-           {(error || (completionPercentage < 100) || !allFilesUploaded) && (
-             <div className={`p-4 rounded-xl border flex items-start gap-3 ${error ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                   {error ? (
-                     <p className="font-medium">{error}</p>
-                   ) : !allFilesUploaded ? (
-                     <p>Sube todos los documentos requeridos para continuar.</p>
-                   ) : (
-                     <p>Completa todos los campos obligatorios marcados con * para continuar.</p>
-                   )}
+           {/* Validation Errors - Solo mostrar si se intentó continuar */}
+           {attemptedContinue && error && (
+             <div className="p-4 rounded-lg border bg-red-50 border-red-200 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
+                <div className="text-sm text-red-700">
+                   <p className="font-medium">{error}</p>
                 </div>
              </div>
            )}

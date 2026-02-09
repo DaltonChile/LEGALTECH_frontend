@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getErrorMessage } from '../../utils/validators';
 import { Save, Settings as SettingsIcon, DollarSign, AlertCircle, CheckCircle, Tag, Plus, X } from 'lucide-react';
 import { getPlatformConfig, updatePlatformConfig } from '../../services/api';
 import type { PlatformConfig } from '../../services/api';
@@ -28,12 +29,7 @@ export const SettingsPage = () => {
       });
       setEditedValues(initialValues);
     } catch (err: any) {
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al cargar configuración');
-      } else {
-        setError(errorData || 'Error al cargar configuración');
-      }
+      setError(getErrorMessage(err, 'Error al cargar configuración'));
     } finally {
       setLoading(false);
     }
@@ -56,12 +52,7 @@ export const SettingsPage = () => {
       setSuccess('Configuración actualizada correctamente');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      const errorData2 = err.response?.data?.error;
-      if (typeof errorData2 === 'object' && errorData2 !== null) {
-        setError(errorData2.message || 'Error al guardar configuración');
-      } else {
-        setError(errorData2 || 'Error al guardar configuración');
-      }
+      setError(getErrorMessage(err, 'Error al guardar configuración'));
     } finally {
       setSaving(false);
     }

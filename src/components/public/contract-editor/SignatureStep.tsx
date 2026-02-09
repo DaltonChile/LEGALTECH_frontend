@@ -11,7 +11,8 @@ import {
   AlertCircle,
   Gavel
 } from 'lucide-react';
-import axios from 'axios';
+import api from '../../../services/api';
+import { getErrorMessage } from '../../../utils/validators';
 import { EditorHeader } from './EditorHeader';
 import { getWaitingState, type SignatureType } from '../../../utils/flowConfig';
 
@@ -67,19 +68,14 @@ export function SignatureStep({
 
   const loadContractStatus = async () => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/contracts/${contractId}/status`
+      const response = await api.get(
+        `/contracts/${contractId}/status`
       );
       setContractStatus(response.data.data);
       setLoading(false);
     } catch (err: any) {
       console.error('Error loading contract status:', err);
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al cargar estado del contrato');
-      } else {
-        setError(errorData || 'Error al cargar estado del contrato');
-      }
+      setError(getErrorMessage(err, 'Error al cargar estado del contrato'));
       setLoading(false);
     }
   };
