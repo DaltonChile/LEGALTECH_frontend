@@ -19,6 +19,9 @@ import {
 } from '../../services/api';
 import { useAdminDateRange, DATE_PRESETS, getPresetDates, type DatePreset } from '../../context/AdminDateContext';
 import { StatusBadge } from '../../components/ui/composed/StatusBadge';
+import { PaymentStatusBadge } from '../../components/ui/composed/PaymentStatusBadge';
+import { DTEStatusBadge } from '../../components/ui/composed/DTEStatusBadge';
+import type { PaymentInfo } from '../../types/history';
 import {
   XAxis,
   YAxis,
@@ -36,34 +39,17 @@ import {
 // ============================================
 // Types
 // ============================================
-interface SalesByCategory {
-  category: string;
-  count: number;
-  revenue: number;
-}
-
 interface DashboardStats {
   totalRevenue: number;
   revenueChange: number;
-  // IVA calculations
   netRevenue: number;
   totalIVA: number;
-  // Cost tracking
   totalSignatureCosts: number;
   totalProcessorFees: number;
   totalCosts: number;
   profit: number;
-  // Contract metrics
   totalContracts: number;
-  contractsChange: number;
-  activeUsers: number;
-  totalUsers: number;
   completedContracts: number;
-  signatureStats: {
-    simple: number;
-    fea: number;
-    none: number;
-  };
   contractsByStatus: {
     pending_payment: number;
     draft: number;
@@ -72,10 +58,6 @@ interface DashboardStats {
     completed: number;
     failed: number;
   };
-  // Sales metrics
-  totalSales: number;
-  totalSalesRevenue: number;
-  salesByCategory: SalesByCategory[];
 }
 
 interface WeeklyData {
@@ -117,6 +99,7 @@ interface Contract {
       slug: string;
     };
   };
+  payments?: PaymentInfo[];
 }
 
 // Estados reales del flujo:
@@ -263,13 +246,7 @@ function DateRangeFilter() {
 // Helper Functions
 // ============================================
 const formatCurrency = (value: number): string => {
-  if (value >= 1000000) {
-    return `$${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `$${(value / 1000).toFixed(0)}K`;
-  }
-  return `$${value.toLocaleString()}`;
+  return `$${Math.round(value).toLocaleString('es-CL')}`;
 };
 
 const formatNumber = (value: number): string => {
@@ -435,8 +412,8 @@ export function AdminDashboard() {
           </div>
 
           {/* ================= FINANCIAL OVERVIEW ================= */}
-          {/* Row 1: Revenue and IVA */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Row 1: Revenue, IVA, Contracts */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Ingresos Brutos */}
             <StatCard
               icon={<DollarSign className="w-5 h-5" />}
@@ -455,7 +432,7 @@ export function AdminDashboard() {
               iconColor="text-blue-700"
               title="Ingresos Netos"
               value={formatCurrency(financialData.netRevenue)}
-              subtitle="Sin IVA (÷ 1.19)"
+              subtitle="Sin IVA"
             />
 
             {/* IVA Recaudado */}
@@ -466,6 +443,16 @@ export function AdminDashboard() {
               title="IVA Recaudado"
               value={formatCurrency(financialData.ivaAmount)}
               subtitle="19% del neto"
+            />
+
+            {/* Total Solicitudes */}
+            <StatCard
+              icon={<FileText className="w-5 h-5" />}
+              iconBg="bg-slate-100"
+              iconColor="text-slate-700"
+              title="Total Solicitudes"
+              value={formatNumber(stats?.totalContracts || 0)}
+              subtitle={`${stats?.completedContracts || 0} completados`}
             />
           </div>
 
@@ -503,75 +490,6 @@ export function AdminDashboard() {
               subtitle="Utilidad / Ingresos Netos"
             />
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Ventas Completadas (contratos con status completed) */}
-            <StatCard
-              icon={<CheckCircle className="w-5 h-5" />}
-              iconBg="bg-legal-emerald-100"
-              iconColor="text-legal-emerald-700"
-              title="Ventas Completadas"
-              value={formatNumber(stats?.totalSales || 0)}
-              subtitle="contratos finalizados"
-            />
-
-            {/* Ingresos de Ventas */}
-            <StatCard
-              icon={<DollarSign className="w-5 h-5" />}
-              iconBg="bg-navy-100"
-              iconColor="text-navy-700"
-              title="Ingresos por Ventas"
-              value={formatCurrency(stats?.totalSalesRevenue || 0)}
-              subtitle="de contratos completados"
-            />
-
-            {/* Total Solicitudes */}
-            <StatCard
-              icon={<FileText className="w-5 h-5" />}
-              iconBg="bg-blue-100"
-              iconColor="text-blue-700"
-              title="Total Solicitudes"
-              value={formatNumber(stats?.totalContracts || 0)}
-              subtitle="todos los estados"
-            />
-
-            {/* Tasa de Completación */}
-            <StatCard
-              icon={<TrendingUp className="w-5 h-5" />}
-              iconBg="bg-slate-100"
-              iconColor="text-slate-700"
-              title="Tasa de Completación"
-              value={`${stats && stats.totalContracts > 0 ? ((stats.totalSales / stats.totalContracts) * 100).toFixed(1) : 0}%`}
-              subtitle="completados / total"
-            />
-          </div>
-
-          {/* ================= VENTAS POR CATEGORÍA ================= */}
-          {stats?.salesByCategory && stats.salesByCategory.length > 0 && (
-            <Box variant="document" padding="md">
-              <div className="mb-4">
-                <Text variant="h4" className="flex items-center gap-2">
-                  <PieChartIcon className="w-5 h-5 text-legal-emerald-700" />
-                  Ventas por Categoría
-                </Text>
-                <Text variant="caption" color="muted" className="mt-1">Contratos completados agrupados por categoría</Text>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {stats.salesByCategory.map((cat, index) => (
-                  <div key={cat.category} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-                      />
-                      <Text variant="body-sm" weight="medium" color="secondary" className="truncate">{cat.category}</Text>
-                    </div>
-                    <Text variant="h3" className="text-2xl font-sans">{cat.count}</Text>
-                    <Text variant="caption" color="muted">{formatCurrency(cat.revenue)}</Text>
-                  </div>
-                ))}
-              </div>
-            </Box>
-          )}
 
           {/* ================= CHARTS ROW ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -730,10 +648,10 @@ export function AdminDashboard() {
             <Box variant="document" padding="none" className="lg:col-span-8 overflow-hidden">
               <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
                 <div>
-                  <Text variant="h4">Contratos Recientes</Text>
+                  <Text variant="h4">Historial Reciente</Text>
                   <Text variant="caption" color="muted" className="mt-1">Últimos movimientos registrados</Text>
                 </div>
-                <Link to="/admin/contracts">
+                <Link to="/admin/history">
                   <Button variant="ghost" size="sm" rightIcon={<span>→</span>}>
                     Ver todos
                   </Button>
@@ -751,7 +669,7 @@ export function AdminDashboard() {
                         <Text variant="caption" color="muted">CONTRATO</Text>
                       </th>
                       <th className="text-left px-6 py-4">
-                        <Text variant="caption" color="muted">FECHA</Text>
+                        <Text variant="caption" color="muted">CLIENTE</Text>
                       </th>
                       <th className="text-left px-6 py-4">
                         <Text variant="caption" color="muted">ESTADO</Text>
@@ -759,13 +677,19 @@ export function AdminDashboard() {
                       <th className="text-left px-6 py-4">
                         <Text variant="caption" color="muted">MONTO</Text>
                       </th>
+                      <th className="text-left px-6 py-4">
+                        <Text variant="caption" color="muted">PAGO</Text>
+                      </th>
+                      <th className="text-left px-6 py-4">
+                        <Text variant="caption" color="muted">DOC</Text>
+                      </th>
                       <th className="px-6 py-4"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     {recentContracts.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center">
+                        <td colSpan={8} className="px-6 py-12 text-center">
                           <Text variant="body-sm" color="muted">No hay contratos recientes</Text>
                         </td>
                       </tr>
@@ -887,6 +811,7 @@ interface ContractRowProps {
 }
 
 const ContractRow: React.FC<ContractRowProps> = ({ contract, onView }) => {
+  const payment = contract.payments?.[0];
   return (
     <tr className="hover:bg-slate-50/80 transition-colors group">
       <td className="px-6 py-4">
@@ -905,14 +830,10 @@ const ContractRow: React.FC<ContractRowProps> = ({ contract, onView }) => {
         </div>
       </td>
       <td className="px-6 py-4">
-        <div className="flex flex-col">
-          <Text variant="body-sm" weight="medium" color="secondary">
-            {new Date(contract.created_at).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-          </Text>
-          <Text variant="caption" color="muted">
-            {new Date(contract.created_at).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-          </Text>
-        </div>
+        <Text variant="body-sm" weight="medium" color="primary" className="truncate max-w-[140px]" title={contract.buyer_email}>
+          {contract.buyer_email}
+        </Text>
+        <Text variant="caption" color="muted">{contract.buyer_rut}</Text>
       </td>
       <td className="px-6 py-4">
         <StatusBadge status={contract.status as any} size="sm" />
@@ -921,6 +842,18 @@ const ContractRow: React.FC<ContractRowProps> = ({ contract, onView }) => {
         <Text variant="body-sm" weight="bold" color="primary">
           ${(contract.total_amount || 0).toLocaleString()}
         </Text>
+      </td>
+      <td className="px-6 py-4">
+        <PaymentStatusBadge status={payment?.status} />
+      </td>
+      <td className="px-6 py-4">
+        {payment?.billing_type ? (
+          <Text variant="caption" weight="medium" color="secondary" className="capitalize">
+            {payment.billing_type}
+          </Text>
+        ) : (
+          <Text variant="caption" color="muted">—</Text>
+        )}
       </td>
       <td className="px-6 py-4 text-right">
         <button
@@ -940,6 +873,7 @@ interface ContractDetailModalProps {
 }
 
 const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onClose }) => {
+  const payment = contract.payments?.[0];
   const status = STATUS_CONFIG[contract.status] || {
     label: contract.status,
     color: 'bg-slate-100 text-slate-700',
@@ -953,13 +887,13 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <Box variant="elevated" padding="none" className="max-w-lg w-full overflow-hidden shadow-document-hover">
+      <Box variant="elevated" padding="none" className="max-w-lg w-full overflow-hidden shadow-document-hover max-h-[90vh] overflow-y-auto">
         {/* Navy top accent stripe */}
         <div className="border-t-4 border-navy-900"></div>
 
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
           <div>
-            <Text variant="h4">Detalle del Contrato</Text>
+            <Text variant="h4">Detalle del Registro</Text>
             <Text variant="caption" color="muted" className="font-mono mt-0.5">{contract.tracking_code}</Text>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -968,16 +902,26 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
         </div>
 
         <div className="p-6 space-y-6">
-          <div className={`flex items-start gap-4 p-4 rounded-lg border ${status.color} border-current border-opacity-20`}>
-            <div className="p-2 rounded-lg bg-white border border-slate-200">
-              <StatusIcon className="w-5 h-5" />
+          {/* Status row */}
+          <div className="flex items-center gap-4">
+            <div className={`flex items-start gap-4 p-4 rounded-lg border flex-1 ${status.color} border-current border-opacity-20`}>
+              <div className="p-2 rounded-lg bg-white border border-slate-200">
+                <StatusIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <Text variant="body-sm" weight="bold">{status.label}</Text>
+                <Text variant="caption" color="muted" className="mt-0.5">Estado solicitud</Text>
+              </div>
             </div>
-            <div>
-              <Text variant="body-sm" weight="bold">{status.label}</Text>
-              <Text variant="caption" color="muted" className="mt-0.5">Estado actual del proceso</Text>
-            </div>
+            {payment && (
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                <Text variant="caption" color="muted" className="block mb-1">PAGO</Text>
+                <PaymentStatusBadge status={payment.status} />
+              </div>
+            )}
           </div>
 
+          {/* Financial cards */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
               <Text variant="caption" color="muted" className="block mb-1">MONTO</Text>
@@ -987,6 +931,18 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
               <Text variant="caption" color="muted" className="block mb-1">RUT CLIENTE</Text>
               <Text variant="body-sm" weight="bold" className="font-mono">{contract.buyer_rut}</Text>
             </div>
+            {payment?.net_amount != null && (
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                <Text variant="caption" color="muted" className="block mb-1">NETO</Text>
+                <Text variant="h4" className="text-xl font-sans">${payment.net_amount.toLocaleString()}</Text>
+              </div>
+            )}
+            {payment?.iva_amount != null && (
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                <Text variant="caption" color="muted" className="block mb-1">IVA</Text>
+                <Text variant="h4" className="text-xl font-sans">${payment.iva_amount.toLocaleString()}</Text>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -1002,6 +958,52 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
               <Text variant="body-sm" color="muted">Requiere Notario</Text>
               <Text variant="body-sm" weight="medium" color="primary">{contract.requires_notary ? 'Sí' : 'No'}</Text>
             </div>
+
+            {/* Payment details */}
+            {payment && (
+              <>
+                <div className="pt-2">
+                  <Text variant="body-sm" weight="bold" color="primary" className="flex items-center gap-2 mb-1">
+                    <DollarSign className="w-4 h-4" />
+                    Información de Pago
+                  </Text>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-slate-200">
+                  <Text variant="body-sm" color="muted">Tipo Documento</Text>
+                  <Text variant="body-sm" weight="medium" color="primary" className="capitalize">{payment.billing_type || 'N/A'}</Text>
+                </div>
+                {payment.processor_fee != null && (
+                  <div className="flex items-center justify-between py-2 border-b border-slate-200">
+                    <Text variant="body-sm" color="muted">Fee Procesador</Text>
+                    <Text variant="body-sm" weight="medium" color="primary">${payment.processor_fee.toLocaleString()}</Text>
+                  </div>
+                )}
+                <div className="flex items-center justify-between py-2 border-b border-slate-200">
+                  <Text variant="body-sm" color="muted">DTE</Text>
+                  <div className="flex items-center gap-2">
+                    <DTEStatusBadge status={payment.dte_status} folio={payment.dte_folio} />
+                    {payment.dte_pdf_url && (
+                      <a
+                        href={payment.dte_pdf_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-navy-700 hover:text-navy-900 hover:underline"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        Ver PDF
+                      </a>
+                    )}
+                  </div>
+                </div>
+                {payment.external_transaction_id && (
+                  <div className="flex items-center justify-between py-2 border-b border-slate-200">
+                    <Text variant="body-sm" color="muted">ID Transacción</Text>
+                    <Text variant="body-sm" weight="medium" color="primary" className="font-mono text-xs">{payment.external_transaction_id}</Text>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="flex items-center justify-between py-2">
               <Text variant="body-sm" color="muted">Fecha Creación</Text>
               <Text variant="body-sm" weight="medium" color="primary">
@@ -1020,9 +1022,6 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ contract, onC
         <div className="px-6 py-5 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
           <Button variant="ghost" size="md" onClick={onClose}>
             Cerrar
-          </Button>
-          <Button variant="primary" size="md">
-            Ver Detalles Completos
           </Button>
         </div>
       </Box>

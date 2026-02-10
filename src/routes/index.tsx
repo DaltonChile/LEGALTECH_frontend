@@ -30,6 +30,7 @@ const TemplateEditPage = lazy(() => import('../pages/admin/TemplateEditPage').th
 const UsersPage = lazy(() => import('../pages/admin/UsersPage').then(m => ({ default: m.UsersPage })));
 const SettingsPage = lazy(() => import('../pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const ContractsPage = lazy(() => import('../pages/admin/ContractsPage').then(m => ({ default: m.ContractsPage })));
+const HistoryPage = lazy(() => import('../pages/admin/HistoryPage').then(m => ({ default: m.HistoryPage })));
 
 // Notary pages - lazy loaded
 const NotaryInboxPage = lazy(() => import('../pages/notary/NotaryInboxPage').then(m => ({ default: m.NotaryInboxPage })));
@@ -77,7 +78,8 @@ export function AppRoutes() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/templates" element={<TemplatesPage />} />
         <Route path="/admin/templates/:id/edit" element={<TemplateEditPage />} />
-        <Route path="/admin/contracts" element={<ContractsPage />} />
+        <Route path="/admin/contracts" element={<Navigate to="/admin/history" replace />} />
+        <Route path="/admin/history" element={<HistoryPage />} />
         <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/settings" element={<SettingsPage />} />
       </Route>
