@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Payment } from '@mercadopago/sdk-react';
 import { CreditCard, Shield, AlertTriangle, Loader2, FileText, PenTool, Package, Users, CheckCircle2, Upload } from 'lucide-react';
@@ -10,6 +10,8 @@ import { Navbar } from '../../components/landing/Navbar';
 import { EditorHeader } from '../../components/public/contract-editor/EditorHeader';
 import { getStepsForFlow, getCustomDocumentSteps } from '../../utils/flowConfig';
 import api, { getContractDetails } from '../../services/api';
+import BillingTypeSelector from '../../components/public/contract-editor/BillingTypeSelector';
+import type { BillingData } from '../../types/billing';
 
 interface Signer {
   id: string;
@@ -53,11 +55,16 @@ const PaymentPage: React.FC = () => {
   const [contractDetails, setContractDetails] = useState<ContractDetails | null>(null);
   const [mpPublicKey, setMpPublicKey] = useState<string | null>(null);
   const [isMpReady, setIsMpReady] = useState(false);
+  const billingDataRef = useRef<BillingData>({ billing_type: 'boleta' });
   const [brickKey, setBrickKey] = useState(0);
   const brickReady = useRef(false);
   const preferenceCreated = useRef(false);
   const mpKeyInitialized = useRef<string | null>(null);
   const brickRetryCount = useRef(0);
+
+  const handleBillingChange = useCallback((data: BillingData) => {
+    billingDataRef.current = data;
+  }, []);
 
   // Calcular los pasos basándose en el tipo de documento y si hay firmantes
   const PROGRESS_STEPS = useMemo(() => {
@@ -111,7 +118,8 @@ const PaymentPage: React.FC = () => {
         paymentService.createPreference({
           contract_id: contractId!,
           tracking_code: trackingCode,
-          rut: rut
+          rut: rut,
+          billing_data: billingDataRef.current
         })
       ]);
 
@@ -378,6 +386,12 @@ const PaymentPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Selector de tipo de documento tributario */}
+                <BillingTypeSelector
+                  buyerRut={rut}
+                  onChange={handleBillingChange}
+                />
+
                 {/* Advertencia de modo test */}
                 {mercadoPagoConfig.isTestMode && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -450,7 +464,8 @@ const PaymentPage: React.FC = () => {
                                 ...formData,
                                 contract_id: contractId,
                                 tracking_code: trackingCode,
-                                rut: rut
+                                rut: rut,
+                                billing_data: billingDataRef.current
                               }, { skipCsrf: true } as any);
                               
                               if (result.success) {

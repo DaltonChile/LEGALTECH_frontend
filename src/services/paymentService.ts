@@ -1,10 +1,12 @@
 import api from './api';
+import type { BillingData } from '../types/billing';
 
 // Interfaces
 export interface CreatePreferenceRequest {
   contract_id: string;
   tracking_code: string;
   rut: string;
+  billing_data?: BillingData;
 }
 
 export interface CreatePreferenceResponse {
