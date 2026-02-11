@@ -526,7 +526,7 @@ export function CustomDocumentUploadPage() {
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Servicio base</span>
+              <span className="text-slate-600">Valor documento</span>
               <span className="font-medium text-navy-900">{formatPrice(pricingOptions?.base_price || 0)}</span>
             </div>
 
