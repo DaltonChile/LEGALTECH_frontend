@@ -90,10 +90,7 @@ export function CustomDocumentInfoPage() {
                     <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
                         <div className="max-w-3xl mx-auto text-center space-y-8">
                             <div className="space-y-6">
-                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-legal-emerald-50 rounded-full text-sm font-medium text-legal-emerald-700 font-sans">
-                                    <Upload className="w-4 h-4" />
-                                    Documento personalizado
-                                </div>
+
                                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-navy-900 leading-tight text-balance">
                                     Firma tu propio documento{' '}
                                     <span className="text-legal-emerald-700">con validez legal</span>

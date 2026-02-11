@@ -10,14 +10,6 @@ import { PaymentStatusBadge } from '../../components/ui/composed/PaymentStatusBa
 import { DTEStatusBadge } from '../../components/ui/composed/DTEStatusBadge';
 import type { HistoryRecord } from '../../types/history';
 
-const STATUS_CONFIG = {
-  pending_payment: { label: 'Pend. Pago', icon: Clock },
-  draft: { label: 'Borrador', icon: FileText },
-  waiting_signatures: { label: 'Esp. Firmas', icon: Clock },
-  waiting_notary: { label: 'Esp. Notario', icon: AlertCircle },
-  completed: { label: 'Completado', icon: CheckCircle },
-  failed: { label: 'Fallido', icon: XCircle },
-};
 
 export function HistoryPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');

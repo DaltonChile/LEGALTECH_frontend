@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import api from '../../../services/api';
-import { ArrowRight, Edit3, AlertCircle } from 'lucide-react';
+import { ArrowRight, Edit3, AlertCircle, ChevronDown, FileText } from 'lucide-react';
 import { DocumentPreview } from './DocumentPreview';
 import { FieldsForm } from './FieldsForm';
 import { EditorHeader } from './EditorHeader';
@@ -57,7 +57,7 @@ export function CompletarFormularioStep({
     buyer_rut: contractData.buyer_rut,
     status: contractData.status
   });
-  
+
   // Inicializar formData con los datos existentes del contrato
   const [formData, setFormData] = useState<Record<string, string>>(contractData.form_data || {});
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,6 +67,7 @@ export function CompletarFormularioStep({
   const [renderedContractHtml, setRenderedContractHtml] = useState<string>('');
   const [allFilesUploaded, setAllFilesUploaded] = useState(true); // True by default if no files required
   const [attemptedContinue, setAttemptedContinue] = useState(false); // Track si el usuario intentó continuar
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
   const documentRef = useRef<HTMLDivElement>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -86,8 +87,8 @@ export function CompletarFormularioStep({
     const validVariables = extractedVariables.filter(v => v);
     if (!searchTerm) return validVariables;
     const term = searchTerm.toLowerCase();
-    return validVariables.filter((v) => 
-      v.toLowerCase().includes(term) || 
+    return validVariables.filter((v) =>
+      v.toLowerCase().includes(term) ||
       formatVariableName(v).toLowerCase().includes(term)
     );
   }, [extractedVariables, searchTerm]);
@@ -156,7 +157,7 @@ export function CompletarFormularioStep({
 
     // Validar que todos los campos estén completos
     const emptyFields = extractedVariables.filter(v => !formData[v] || formData[v].trim() === '');
-    
+
     if (emptyFields.length > 0) {
       setError(`Por favor completa todos los campos. Faltan: ${emptyFields.slice(0, 3).map(v => formatVariableName(v)).join(', ')}${emptyFields.length > 3 ? ` y ${emptyFields.length - 3} más` : ''}`);
       return;
@@ -197,34 +198,54 @@ export function CompletarFormularioStep({
     <div className="h-full bg-slate-100 flex flex-col">
       {/* Header */}
       <EditorHeader
-         steps={steps}
-         currentStep="completar"
-         rightAction={
-            <div className="flex items-center gap-6">
-                 <button
-                    onClick={handleContinueToReview}
-                    disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting || !allFilesUploaded}
-                    className="bg-slate-900 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap text-sm md:text-base"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
-                        <span>Guardando...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Continuar a Revisión</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-            </div>
-         }
+        steps={steps}
+        currentStep="completar"
+        rightAction={
+          <div className="flex items-center gap-6">
+            <button
+              onClick={handleContinueToReview}
+              disabled={completionPercentage < 100 || hasValidationErrors || isSubmitting || !allFilesUploaded}
+              className="bg-slate-900 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-slate-900/10 whitespace-nowrap text-sm md:text-base"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <span>Continuar a Revisión</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </div>
+        }
       />
-      
-      <div className="relative z-10 flex-1 w-full max-w-480 mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 overflow-hidden min-h-0" ref={documentRef}>  
+
+      <div className="relative z-10 flex-1 w-full max-w-480 mx-auto p-3 md:p-6 flex flex-col lg:flex-row gap-4 md:gap-6 overflow-hidden min-h-0" ref={documentRef}>
+
+        {/* Mobile Toggle Bar */}
+        <div
+          onClick={() => setShowMobilePreview(!showMobilePreview)}
+          className="lg:hidden bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between cursor-pointer active:bg-slate-50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-navy-900" />
+            <span className="font-medium text-navy-900 text-sm">Vista previa del documento</span>
+          </div>
+          <div className="flex items-center gap-1 text-legal-emerald-600 text-xs font-medium">
+            <span>{showMobilePreview ? 'Ocultar' : 'Ver'}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showMobilePreview ? 'rotate-180' : ''}`} />
+          </div>
+        </div>
+
         {/* Vista previa del documento */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0 min-h-100 lg:min-h-0">
+        <div className={`
+          bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-0 transition-all duration-300
+          lg:flex-1 lg:h-auto lg:min-h-0
+          ${showMobilePreview ? 'h-[50vh]' : 'h-0 border-0'} lg:border
+        `}>
           <DocumentPreview
             templateText={template.template_content}
             renderedContract={renderedContract}
@@ -237,50 +258,50 @@ export function CompletarFormularioStep({
 
         {/* Formulario */}
         <div className="flex-1 h-full overflow-y-auto pr-2 pb-20 custom-scrollbar space-y-4">
-           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
-               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <Edit3 className="w-4 h-4 text-emerald-600" />
-                 </div>
-                 Completar Contrato
-               </h3>
-               
-               <p className="text-xs text-slate-500 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                 Has completado el <strong>{completionPercentage}%</strong> del documento. Rellena los campos faltantes para continuar.
-               </p>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow hover:shadow-md">
+            <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <Edit3 className="w-4 h-4 text-emerald-600" />
+              </div>
+              Completar Contrato
+            </h3>
 
-               <FieldsForm
-                  variables={filteredVariables}
-                  formData={formData}
-                  onFormChange={handleFormChange}
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  activeField={activeField}
-                  onFieldFocus={handleFieldFocus}
-                  onFieldBlur={handleFieldBlur}
-               />
-           </div>
+            <p className="text-xs text-slate-500 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+              Has completado el <strong>{completionPercentage}%</strong> del documento. Rellena los campos faltantes para continuar.
+            </p>
 
-           {/* File Upload Section - Solo mostrar si tenemos los datos necesarios */}
-           {contractData.tracking_code && contractData.buyer_rut && (
-             <FileUploadStep
-               contractId={contractData.id}
-               trackingCode={contractData.tracking_code}
-               buyerRut={contractData.buyer_rut}
-               onAllFilesUploaded={() => setAllFilesUploaded(true)}
-               onFilesStatusChange={(allUploaded) => setAllFilesUploaded(allUploaded)}
-             />
-           )}
+            <FieldsForm
+              variables={filteredVariables}
+              formData={formData}
+              onFormChange={handleFormChange}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              activeField={activeField}
+              onFieldFocus={handleFieldFocus}
+              onFieldBlur={handleFieldBlur}
+            />
+          </div>
 
-           {/* Validation Errors - Solo mostrar si se intentó continuar */}
-           {attemptedContinue && error && (
-             <div className="p-4 rounded-lg border bg-red-50 border-red-200 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
-                <div className="text-sm text-red-700">
-                   <p className="font-medium">{error}</p>
-                </div>
-             </div>
-           )}
+          {/* File Upload Section - Solo mostrar si tenemos los datos necesarios */}
+          {contractData.tracking_code && contractData.buyer_rut && (
+            <FileUploadStep
+              contractId={contractData.id}
+              trackingCode={contractData.tracking_code}
+              buyerRut={contractData.buyer_rut}
+              onAllFilesUploaded={() => setAllFilesUploaded(true)}
+              onFilesStatusChange={(allUploaded) => setAllFilesUploaded(allUploaded)}
+            />
+          )}
+
+          {/* Validation Errors - Solo mostrar si se intentó continuar */}
+          {attemptedContinue && error && (
+            <div className="p-4 rounded-lg border bg-red-50 border-red-200 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
+              <div className="text-sm text-red-700">
+                <p className="font-medium">{error}</p>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

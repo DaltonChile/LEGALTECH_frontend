@@ -30,7 +30,6 @@ const TemplatesPage = lazy(() => import('../pages/admin/TemplatesPage').then(m =
 const TemplateEditPage = lazy(() => import('../pages/admin/TemplateEditPage').then(m => ({ default: m.TemplateEditPage })));
 const UsersPage = lazy(() => import('../pages/admin/UsersPage').then(m => ({ default: m.UsersPage })));
 const SettingsPage = lazy(() => import('../pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })));
-const ContractsPage = lazy(() => import('../pages/admin/ContractsPage').then(m => ({ default: m.ContractsPage })));
 const HistoryPage = lazy(() => import('../pages/admin/HistoryPage').then(m => ({ default: m.HistoryPage })));
 
 // Notary pages - lazy loaded
