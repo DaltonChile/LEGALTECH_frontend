@@ -15,6 +15,7 @@ export interface PricingOption {
 
 export interface PricingOptions {
   base_price: number;
+  notary_price: number;
   none: PricingOption;
   simple: PricingOption;
   fea: PricingOption;
