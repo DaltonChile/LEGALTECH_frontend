@@ -309,9 +309,9 @@ export function CustomDocumentUploadPage() {
 
   // Render steps
   const renderUploadStep = () => (
-    <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[600px]">
+    <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 lg:min-h-[600px]">
       {/* Left column - PDF Preview (hidden on mobile when file is selected, full on desktop) */}
-      <div className="flex-1 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden flex flex-col lg:min-h-0">
+      <div className="flex-1 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden flex flex-col min-h-[300px] lg:min-h-0">
         {/* Header */}
         <div className="border-b border-slate-200 p-4 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
@@ -346,7 +346,7 @@ export function CustomDocumentUploadPage() {
 
         {/* PDF Content - Upload zone always visible, preview only on desktop */}
         {!pdfFile ? (
-          <div className="flex-1 overflow-hidden relative bg-slate-50">
+          <div className="flex-1 overflow-hidden relative bg-slate-50 min-h-[200px]">
             <div
               className={`
                 absolute inset-0 flex flex-col items-center justify-center cursor-pointer transition-all
@@ -383,46 +383,23 @@ export function CustomDocumentUploadPage() {
             </div>
           </div>
         ) : (
-          <>
-            {/* Desktop: show PDF iframe */}
-            <div className="hidden lg:flex flex-1 overflow-hidden relative bg-slate-50">
-              {pdfPreviewUrl ? (
-                <iframe
-                  src={pdfPreviewUrl}
-                  className="w-full h-full border-0"
-                  title="Vista previa del PDF"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-                </div>
-              )}
-            </div>
-            {/* Mobile: show compact file confirmation */}
-            <div className="flex lg:hidden items-center justify-center py-8 bg-slate-50">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-legal-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <Check className="w-8 h-8 text-legal-emerald-600" />
-                </div>
-                <p className="font-medium text-navy-900 text-sm">Documento cargado</p>
-                <p className="text-xs text-slate-500 mt-1">{pdfFile.name}</p>
+          <div className="flex-1 overflow-hidden relative bg-slate-50">
+            {pdfPreviewUrl ? (
+              <iframe
+                src={pdfPreviewUrl}
+                className="w-full h-full border-0"
+                title="Vista previa del PDF"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
               </div>
-            </div>
-          </>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Right column - Options (scrollable) */}
-      <div className="w-full lg:w-96 flex flex-col gap-4 lg:order-last overflow-y-auto max-h-[calc(100vh-280px)] lg:max-h-none custom-scrollbar">
-
-        {/* Base service info */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-navy-900">Servicio base</h3>
-            <span className="text-lg font-bold text-navy-900">{formatPrice(pricingOptions?.base_price || 10000)}</span>
-          </div>
-          <p className="text-xs text-slate-500">Incluye gestión documental, procesamiento y almacenamiento seguro.</p>
-        </div>
+      <div className="w-full lg:w-96 flex flex-col gap-4 lg:order-last overflow-y-auto lg:max-h-none custom-scrollbar pb-4">
 
         {/* Signature options */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
@@ -951,7 +928,7 @@ export function CustomDocumentUploadPage() {
                 <div className="w-12 h-12 rounded-lg bg-legal-emerald-600 flex items-center justify-center">
                   <User className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-serif font-bold text-navy-900">Datos de contacto</h3>
+                <h3 className="text-lg font-serif font-bold text-navy-900">Tus datos de contacto</h3>
               </div>
               <button
                 onClick={() => setShowContactModal(false)}

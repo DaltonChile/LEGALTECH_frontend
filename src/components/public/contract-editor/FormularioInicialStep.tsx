@@ -328,7 +328,7 @@ export function FormularioInicialStep({
                 <div className="group relative">
                   <Info className="w-4 h-4 text-slate-400 cursor-help" />
                   <div className="hidden group-hover:block absolute left-0 top-6 z-50 w-72 p-3 bg-navy-900 text-white text-xs rounded-lg shadow-lg">
-                    <strong>FES:</strong> Firma electrónica simple, rápida y válida para la mayoría de contratos.<br/>
+                    <strong>FES:</strong> Firma electrónica simple, rápida y válida para la mayoría de contratos.<br />
                     <strong>FEA:</strong> Firma electrónica avanzada con validación de identidad, máxima seguridad legal.
                     <div className="absolute -top-1 left-4 w-2 h-2 bg-navy-900 transform rotate-45"></div>
                   </div>
@@ -408,7 +408,7 @@ export function FormularioInicialStep({
                 <div className="w-12 h-12 rounded-lg bg-legal-emerald-600 flex items-center justify-center">
                   <User className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-serif font-bold text-navy-900">Datos de contacto</h3>
+                <h3 className="text-lg font-serif font-bold text-navy-900">Tus datos de contacto</h3>
               </div>
               <button
                 onClick={() => setShowContactModal(false)}
