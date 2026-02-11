@@ -1,6 +1,6 @@
 import { Navbar } from '../../components/landing/Navbar';
 import { PageFooter } from '../../components/shared/PageFooter';
-import { Scale, FileText, CheckCircle, UserCheck, Clock, Lock, Award, ShieldCheck, Gavel, ArrowRight } from 'lucide-react';
+import { Scale, FileText, CheckCircle, UserCheck, Clock, Lock, Award, Gavel, ArrowRight } from 'lucide-react';
 import { Button } from '../../components/ui/primitives/Button';
 import { Text } from '../../components/ui/primitives/Text';
 import { Box } from '../../components/ui/primitives/Box';
