@@ -453,7 +453,7 @@ export function CustomDocumentStatusPage() {
             <div className="space-y-2">
               {document.status === 'pending_payment' && (
                 <button
-                  onClick={() => navigate(`/payment/${document.id}?tracking_code=${document.tracking_code}&rut=${encodeURIComponent(buyerRut || '')}`)}
+                  onClick={() => window.location.href = `/payment/${document.id}?tracking_code=${document.tracking_code}&rut=${encodeURIComponent(buyerRut || '')}`}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
                 >
                   <CreditCard className="w-4 h-4" />

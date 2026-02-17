@@ -12,6 +12,67 @@ const api = axios.create({
   },
 });
 
+const csrfClient = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+type CsrfConfig = { skipCsrf?: boolean; _retry?: boolean };
+
+let csrfTokenCache: string | null = null;
+let csrfTokenPromise: Promise<string> | null = null;
+
+const fetchCsrfToken = async (): Promise<string> => {
+  const response = await csrfClient.get<{ data: { csrfToken: string } }>('/auth/csrf');
+  const token = response.data.data.csrfToken;
+  csrfTokenCache = token;
+  return token;
+};
+
+const getCsrfToken = async () => {
+  if (csrfTokenCache) return csrfTokenCache;
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = fetchCsrfToken().finally(() => {
+      csrfTokenPromise = null;
+    });
+  }
+  return csrfTokenPromise;
+};
+
+api.interceptors.request.use(async (config) => {
+  const method = (config.method || 'get').toLowerCase();
+  const isMutating = ['post', 'put', 'patch', 'delete'].includes(method);
+  const skipCsrf = (config as typeof config & CsrfConfig).skipCsrf;
+
+  if (!isMutating || skipCsrf) return config;
+
+  const token = await getCsrfToken();
+  config.headers = config.headers || {};
+  config.headers['X-CSRF-Token'] = token;
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { response, config } = error || {};
+    const isCsrfError = response?.status === 403 && response?.data?.error === 'CSRF token inválido';
+    if (!isCsrfError || !config || (config as typeof config & CsrfConfig)._retry) {
+      return Promise.reject(error);
+    }
+
+    (config as typeof config & CsrfConfig)._retry = true;
+    csrfTokenCache = null;
+    const token = await getCsrfToken();
+    config.headers = config.headers || {};
+    config.headers['X-CSRF-Token'] = token;
+    return api.request(config);
+  }
+);
+
 export interface Template {
   id: string;
   title: string;

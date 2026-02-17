@@ -3,15 +3,16 @@ import { Badge, type BadgeVariant } from '@/components/ui/primitives/Badge';
 /**
  * Contract status type
  */
-export type ContractStatus = 
-  | 'draft' 
-  | 'pending_payment' 
-  | 'paid' 
-  | 'waiting_signatures' 
-  | 'waiting_notary' 
-  | 'completed' 
+export type ContractStatus =
+  | 'draft'
+  | 'pending_payment'
+  | 'paid'
+  | 'waiting_signatures'
+  | 'waiting_notary'
+  | 'completed'
   | 'rejected'
-  | 'expired';
+  | 'expired'
+  | 'failed';
 
 interface StatusConfig {
   label: string;
@@ -19,38 +20,42 @@ interface StatusConfig {
 }
 
 const statusConfig: Record<ContractStatus, StatusConfig> = {
-  draft: { 
-    label: 'Borrador', 
-    variant: 'draft' 
+  draft: {
+    label: 'Borrador',
+    variant: 'draft'
   },
-  pending_payment: { 
-    label: 'Pago Pendiente', 
-    variant: 'pending' 
+  pending_payment: {
+    label: 'Pend. Pago',
+    variant: 'pending'
   },
-  paid: { 
-    label: 'Pagado', 
-    variant: 'success' 
+  paid: {
+    label: 'Pagado',
+    variant: 'success'
   },
-  waiting_signatures: { 
-    label: 'Esperando Firmas', 
-    variant: 'info' 
+  waiting_signatures: {
+    label: 'Esp. Firmas',
+    variant: 'info'
   },
-  waiting_notary: { 
-    label: 'Esperando Notario', 
-    variant: 'warning' 
+  waiting_notary: {
+    label: 'Esp. Notario',
+    variant: 'warning'
   },
-  completed: { 
-    label: 'Completado', 
-    variant: 'success' 
+  completed: {
+    label: 'Completado',
+    variant: 'success'
   },
-  rejected: { 
-    label: 'Rechazado', 
-    variant: 'error' 
+  rejected: {
+    label: 'Rechazado',
+    variant: 'error'
   },
-  expired: { 
-    label: 'Expirado', 
-    variant: 'draft' 
+  expired: {
+    label: 'Expirado',
+    variant: 'draft'
   },
+  failed: {
+    label: 'Fallido',
+    variant: 'error'
+  }
 };
 
 interface StatusBadgeProps {
@@ -71,18 +76,18 @@ interface StatusBadgeProps {
  * <StatusBadge status="completed" />
  * <StatusBadge status="pending_payment" size="sm" />
  */
-export function StatusBadge({ 
-  status, 
-  dot = true, 
+export function StatusBadge({
+  status,
+  dot = true,
   size = 'md',
-  className 
+  className
 }: StatusBadgeProps) {
   const config = statusConfig[status] || statusConfig.draft;
-  
+
   return (
-    <Badge 
-      variant={config.variant} 
-      dot={dot} 
+    <Badge
+      variant={config.variant}
+      dot={dot}
       size={size}
       className={className}
     >

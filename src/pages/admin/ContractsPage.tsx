@@ -25,12 +25,11 @@ export function ContractsPage() {
   const statusOptions = [
     { value: '', label: 'Todos los estados' },
     { value: 'draft', label: 'Borrador' },
-    { value: 'pending_payment', label: 'Pago Pendiente' },
-    { value: 'paid', label: 'Pagado' },
-    { value: 'waiting_signatures', label: 'Esperando Firmas' },
-    { value: 'waiting_notary', label: 'Esperando Notario' },
+    { value: 'pending_payment', label: 'Pend. Pago' },
+    { value: 'waiting_signatures', label: 'Esp. Firmas' },
+    { value: 'waiting_notary', label: 'Esp. Notario' },
     { value: 'completed', label: 'Completado' },
-    { value: 'rejected', label: 'Rechazado' }
+    { value: 'failed', label: 'Fallido' }
   ];
 
   return (
@@ -50,7 +49,7 @@ export function ContractsPage() {
             <Filter className="w-4 h-4 text-slate-600" />
             <Text variant="body-sm" weight="medium">Filtros:</Text>
           </div>
-          
+
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -89,7 +88,7 @@ export function ContractsPage() {
             <Text variant="body-sm" color="muted">
               Mostrando {contracts.length} de {pagination.total} contratos
             </Text>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
@@ -100,7 +99,7 @@ export function ContractsPage() {
                 <ChevronLeft className="w-4 h-4" />
                 Anterior
               </Button>
-              
+
               <div className="flex items-center gap-1">
                 {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
                   let pageNum;
@@ -113,7 +112,7 @@ export function ContractsPage() {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <Button
                       key={pageNum}
@@ -126,7 +125,7 @@ export function ContractsPage() {
                   );
                 })}
               </div>
-              
+
               <Button
                 variant="secondary"
                 size="sm"

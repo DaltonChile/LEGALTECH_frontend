@@ -293,9 +293,9 @@ export function CustomDocumentUploadPage() {
       };
       
       const result = await customDocumentService.createCustomDocument(params);
-      
-      // Redirect to unified payment page
-      navigate(`/payment/${result.id}?tracking_code=${result.tracking_code}&rut=${buyerRut}`);
+
+      // Redirect to unified payment page (use window.location for full page reload to prevent Payment Brick state issues)
+      window.location.href = `/payment/${result.id}?tracking_code=${result.tracking_code}&rut=${buyerRut}`;
     } catch (err: any) {
       console.error('Error creating custom document:', err);
       // Handle both string and object error formats
