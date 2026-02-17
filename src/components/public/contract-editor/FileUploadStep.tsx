@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Upload, FileText, Check, AlertCircle, Trash2, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import { Upload, FileText, Check, AlertCircle, Trash2, Loader2, CreditCard, FileCheck, Shield, IdCard } from 'lucide-react';
+import api from '../../../services/api';
+import { getErrorMessage } from '../../../utils/validators';
 
 interface FileConfig {
   slug: string;
@@ -62,9 +63,8 @@ export function FileUploadStep({
 
     try {
       setError(null);
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const response = await axios.get(
-        `${apiUrl}/contracts/${trackingCode}/files?rut=${encodeURIComponent(buyerRut)}`
+      const response = await api.get(
+        `/contracts/${trackingCode}/files?rut=${encodeURIComponent(buyerRut)}`
       );
 
       if (response.data.success) {
@@ -109,12 +109,7 @@ export function FileUploadStep({
         return;
       }
       
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al cargar los archivos');
-      } else {
-        setError(errorData || 'Error al cargar los archivos');
-      }
+      setError(getErrorMessage(err, 'Error al cargar los archivos'));
     } finally {
       setLoading(false);
     }
@@ -134,9 +129,8 @@ export function FileUploadStep({
       formData.append('file', file);
       formData.append('fileSlug', fileSlug);
 
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const response = await axios.post(
-        `${apiUrl}/contracts/${trackingCode}/files?rut=${encodeURIComponent(buyerRut)}`,
+      const response = await api.post(
+        `/contracts/${trackingCode}/files?rut=${encodeURIComponent(buyerRut)}`,
         formData,
         {
           headers: {
@@ -158,12 +152,7 @@ export function FileUploadStep({
         return;
       }
       
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al subir el archivo');
-      } else {
-        setError(errorData || 'Error al subir el archivo');
-      }
+      setError(getErrorMessage(err, 'Error al subir el archivo'));
     } finally {
       setUploadingSlug(null);
     }
@@ -176,9 +165,8 @@ export function FileUploadStep({
     setError(null);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
-      await axios.delete(
-        `${apiUrl}/contracts/${trackingCode}/files/${fileId}?rut=${encodeURIComponent(buyerRut)}`
+      await api.delete(
+        `/contracts/${trackingCode}/files/${fileId}?rut=${encodeURIComponent(buyerRut)}`
       );
 
       // Recargar la lista de archivos
@@ -192,12 +180,7 @@ export function FileUploadStep({
         return;
       }
       
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al eliminar el archivo');
-      } else {
-        setError(errorData || 'Error al eliminar el archivo');
-      }
+      setError(getErrorMessage(err, 'Error al eliminar el archivo'));
     } finally {
       setUploadingSlug(null);
     }
@@ -210,16 +193,18 @@ export function FileUploadStep({
   };
 
   const getFileTypeIcon = (fileType: string) => {
+    const iconClass = "w-5 h-5";
     switch (fileType) {
       case 'identification':
+        return <IdCard className={iconClass} />;
       case 'passport':
-        return '🪪';
+        return <CreditCard className={iconClass} />;
       case 'certificate':
-        return '📜';
+        return <FileCheck className={iconClass} />;
       case 'authorization':
-        return '📋';
+        return <Shield className={iconClass} />;
       default:
-        return '📄';
+        return <FileText className={iconClass} />;
     }
   };
 
@@ -238,32 +223,24 @@ export function FileUploadStep({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-document border border-slate-200 p-4 md:p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-lg border border-slate-200 p-4 md:p-5">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
         <div className="flex items-center gap-2">
-          <Upload className="w-5 h-5 text-navy-900" />
-          <h3 className="text-base font-semibold text-navy-900 font-sans">
+          <Upload className="w-5 h-5 text-slate-600" />
+          <h3 className="text-base font-semibold text-slate-900 font-sans">
             Documentos Requeridos
           </h3>
         </div>
         {progress && (
-          <div className="flex items-center gap-2">
-            <div className="text-sm text-slate-600 font-sans">
-              {progress.total_uploaded} de {progress.total_required}
-            </div>
-            <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-legal-emerald-500 transition-all duration-300"
-                style={{ width: `${progress.percentage}%` }}
-              />
-            </div>
+          <div className="text-sm text-slate-600 font-sans">
+            {progress.total_uploaded} de {progress.total_required}
           </div>
         )}
       </div>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
@@ -274,20 +251,24 @@ export function FileUploadStep({
             key={fileConfig.slug}
             className={`border rounded-lg p-4 transition-all ${
               fileConfig.uploaded
-                ? 'border-legal-emerald-200 bg-legal-emerald-50/50'
-                : 'border-slate-200 bg-slate-50 hover:border-navy-300'
+                ? 'border-emerald-200 bg-emerald-50/30'
+                : 'border-slate-200 bg-white hover:border-slate-300'
             }`}
           >
             <div className="flex items-start gap-3">
               {/* Icon */}
-              <div className="text-2xl shrink-0">
+              <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                fileConfig.uploaded
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-slate-100 text-slate-600'
+              }`}>
                 {getFileTypeIcon(fileConfig.file_type)}
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-navy-900 font-sans text-sm">
+                  <h4 className="font-medium text-slate-900 font-sans text-sm">
                     {fileConfig.title}
                   </h4>
                   {fileConfig.required && (
@@ -296,14 +277,12 @@ export function FileUploadStep({
                 </div>
                 
                 <p className="text-xs text-slate-500 mt-1 font-sans">
-                  Formatos: {fileConfig.accepted_formats.replace(/\./g, '').toUpperCase()} 
-                  {' · '}
-                  Máx: {fileConfig.max_size_mb}MB
+                  Formatos: {fileConfig.accepted_formats.replace(/\./g, '').toUpperCase()} · Máx: {fileConfig.max_size_mb}MB
                 </p>
 
                 {fileConfig.uploaded && fileConfig.original_filename && (
                   <div className="mt-2 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-legal-emerald-600" />
+                    <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span className="text-sm text-slate-700 truncate">
                       {fileConfig.original_filename}
                     </span>
@@ -326,12 +305,12 @@ export function FileUploadStep({
               <div className="shrink-0">
                 {uploadingSlug === fileConfig.slug ? (
                   <div className="w-10 h-10 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-navy-600" />
+                    <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
                   </div>
                 ) : fileConfig.uploaded ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-legal-emerald-100 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-legal-emerald-600" />
+                    <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                      <Check className="w-4 h-4 text-emerald-600" />
                     </div>
                     <button
                       onClick={() => handleDelete(fileConfig.file_id!, fileConfig.slug)}
@@ -352,10 +331,10 @@ export function FileUploadStep({
                         if (file) {
                           handleFileSelect(fileConfig.slug, file);
                         }
-                        e.target.value = ''; // Reset para permitir subir el mismo archivo
+                        e.target.value = '';
                       }}
                     />
-                    <div className="px-4 py-2 bg-navy-900 text-white text-sm font-medium rounded-lg hover:bg-navy-800 transition-colors flex items-center gap-2">
+                    <div className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2">
                       <Upload className="w-4 h-4" />
                       Subir
                     </div>
@@ -366,12 +345,6 @@ export function FileUploadStep({
           </div>
         ))}
       </div>
-
-      {progress && !progress.all_required_uploaded && (
-        <p className="mt-4 text-xs text-amber-700 bg-amber-50 p-3 rounded-lg font-sans">
-          ⚠️ Debes subir todos los documentos requeridos para poder continuar.
-        </p>
-      )}
     </div>
   );
 }

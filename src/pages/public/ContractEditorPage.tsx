@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { ReviewStep } from '../../components/public/contract-editor/ReviewStep';
 import { PaymentStep } from '../../components/public/contract-editor/PaymentStep';
 import { SignatureStep } from '../../components/public/contract-editor/SignatureStep';
@@ -130,7 +130,7 @@ export function ContractEditorPage() {
   const loadTemplate = async () => {
     try {
       console.log('🔍 Intentando cargar template con slug:', slug);
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/templates/${slug}`);
+      const response = await api.get(`/templates/${slug}`);
       const templateData = response.data.data;
       console.log('📄 Template loaded:', templateData);
       console.log('🆔 Template ID:', templateData.id);
@@ -161,7 +161,7 @@ export function ContractEditorPage() {
     }
     
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/templates/${slug}/signature-info`);
+      const response = await api.get(`/templates/${slug}/signature-info`);
       if (response.data.success) {
         setSignatureInfo(response.data.data);
         console.log('📝 Signature info loaded:', response.data.data);
@@ -175,8 +175,8 @@ export function ContractEditorPage() {
 
   const loadContractByCode = async (code: string, rut: string, step: string) => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/contracts/resume?code=${code}&rut=${encodeURIComponent(rut)}`
+      const response = await api.get(
+        `/contracts/resume?code=${code}&rut=${encodeURIComponent(rut)}`
       );
       
       if (response.data.success) {
@@ -206,8 +206,8 @@ export function ContractEditorPage() {
 
   const loadExistingContract = async (id: string, rut: string, step: string) => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/contracts/resume?id=${id}&rut=${encodeURIComponent(rut)}`
+      const response = await api.get(
+        `/contracts/resume?id=${id}&rut=${encodeURIComponent(rut)}`
       );
       
       if (response.data.success) {
@@ -251,8 +251,8 @@ export function ContractEditorPage() {
 
     try {
       // Aprobar revisión - el backend genera el PDF
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/contracts/${contractId}/approve-review`,
+      const response = await api.post(
+        `/contracts/${contractId}/approve-review`,
         {
           tracking_code: trackingCode,
           rut: buyerRut

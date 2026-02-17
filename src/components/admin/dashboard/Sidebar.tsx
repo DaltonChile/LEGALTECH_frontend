@@ -70,7 +70,7 @@ const RouteSelect = ({ onClose }: { onClose?: () => void }) => {
   const adminRoutes = [
     { icon: Home, label: 'Dashboard', path: '/admin' },
     { icon: FileText, label: 'Plantillas', path: '/admin/templates' },
-    { icon: FileCheck, label: 'Contratos', path: '/admin/contracts' },
+    { icon: FileCheck, label: 'Historial', path: '/admin/history' },
     { icon: Users, label: 'Usuarios', path: '/admin/users' },
     { icon: Settings, label: 'Configuración', path: '/admin/settings' },
   ];

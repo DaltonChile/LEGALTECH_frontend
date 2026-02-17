@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FileText, CheckCircle, AlertCircle, Shield, Zap, RefreshCw, ArrowRight } from 'lucide-react';
+import api from '../../../services/api';
+import { formatPrice } from './utils/formatPrice';
 import { EditorHeader } from './EditorHeader';
 
 interface ReviewStepProps {
@@ -53,17 +55,12 @@ export function ReviewStep({
     try {
       console.log('📄 Solicitando PDF preview del backend...');
       
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const url = `${apiUrl}/contracts/${contractId}/preview-pdf?tracking_code=${trackingCode}&rut=${encodeURIComponent(buyerRut)}`;
+      const response = await api.get(
+        `/contracts/${contractId}/preview-pdf?tracking_code=${trackingCode}&rut=${encodeURIComponent(buyerRut)}`,
+        { responseType: 'blob' }
+      );
       
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-        throw new Error(errorData.error || `Error ${response.status}`);
-      }
-      
-      const pdfBlob = await response.blob();
+      const pdfBlob = response.data;
       const blobUrl = URL.createObjectURL(pdfBlob);
       setPdfUrl(blobUrl);
       
@@ -79,13 +76,6 @@ export function ReviewStep({
   const handleApprove = () => {
     if (loading || isProcessing) return;
     onApprove();
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-    }).format(price);
   };
 
   return (

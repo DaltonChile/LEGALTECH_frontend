@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getErrorMessage } from '../../utils/validators';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Scale, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
@@ -30,12 +31,7 @@ export function LoginPage() {
       }
     } catch (err: any) {
       // Handle both string and object error formats
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al iniciar sesión');
-      } else {
-        setError(errorData || 'Error al iniciar sesión');
-      }
+      setError(getErrorMessage(err, 'Error al iniciar sesión'));
     } finally {
       setLoading(false);
     }

@@ -1,195 +1,233 @@
 import { Navbar } from '../../components/landing/Navbar';
 import { PageFooter } from '../../components/shared/PageFooter';
-import { Scale, FileText, CheckCircle, UserCheck, Clock, Lock, Award } from 'lucide-react';
+import { Scale, FileText, CheckCircle, UserCheck, Clock, Lock, Award, Gavel, ArrowRight } from 'lucide-react';
+import { Button } from '../../components/ui/primitives/Button';
+import { Text } from '../../components/ui/primitives/Text';
+import { Box } from '../../components/ui/primitives/Box';
+import { Card } from '../../components/ui/primitives/Card';
 
 export function ValidezLegalPage() {
   return (
     <div className="min-h-screen relative bg-slate-50">
-      {/* Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-      
       {/* Gradient Overlay */}
       <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none"></div>
 
       <div className="relative z-10">
         <Navbar />
-        
-        {/* Hero Section */}
 
+        {/* Modern Hero Section */}
+        <section className="relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
+            <div className="max-w-3xl space-y-8">
 
-        {/* Ley Section */}
-        <section className="py-20 px-6 lg:px-8 bg-slate-50">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-serif font-bold text-navy-900 mb-3">
-                Respaldo Legal
-              </h2>
-              <p className="text-slate-600 font-sans text-lg max-w-2xl mx-auto">
-                Cumplimos con la normativa chilena para documentos electrónicos y firma digital
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg p-8 md:p-12 border border-slate-200 shadow-document">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="flex-shrink-0 w-12 h-12 bg-navy-900 rounded-lg flex items-center justify-center">
-                  <Scale className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-serif font-bold text-navy-900 mb-2">
-                    Ley Nº 19.799 de Firma Electrónica
-                  </h3>
-                  <p className="text-slate-600 font-sans">
-                    Vigente en Chile desde abril de 2002
-                  </p>
-                </div>
+              <div className="space-y-6">
+                <Text as="h1" variant="display" className="text-balance">
+                  Validez Legal y <br />
+                  <span className="text-legal-emerald-700">Seguridad Jurídica</span>
+                </Text>
+                <Text variant="body-lg" color="muted" className="max-w-2xl leading-relaxed">
+                  Nuestra plataforma está construida bajo los más altos estándares de seguridad y en estricto cumplimiento con la normativa legal vigente en Chile.
+                </Text>
               </div>
-              
-              <div className="bg-navy-900 text-white rounded-xl p-8">
-                <p className="text-base leading-relaxed mb-6 text-slate-200 font-sans">
-                  Los documentos electrónicos tienen la misma validez legal que los documentos en papel, 
-                  siempre que cumplan con requisitos de seguridad y autenticidad.
-                </p>
-                <div className="border-l-4 border-legal-emerald-600 pl-6">
-                  <p className="font-semibold mb-2 text-slate-100 font-sans">Artículo 3º</p>
-                  <p className="text-slate-200 italic leading-relaxed text-sm font-sans">
-                    "Los actos y contratos otorgados o celebrados por personas naturales o jurídicas, 
-                    suscritos por medio de firma electrónica, serán válidos de la misma manera y producirán 
-                    los mismos efectos que los celebrados por escrito y en soporte de papel."
-                  </p>
-                </div>
+              <div className="flex items-center gap-3 pt-4">
+                <ArrowRight className="w-5 h-5 text-legal-emerald-700" />
+                <Text variant="body">Explora nuestra base legal detallada abajo</Text>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Security Features */}
-        <section className="py-20 px-6 lg:px-8 bg-slate-50">
+        {/* Ley Section */}
+        <section className="py-20 px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-serif font-bold text-navy-900 mb-3">
-                Características de Seguridad
-              </h2>
-              <p className="text-slate-600 font-sans text-lg max-w-2xl mx-auto">
+              <Text variant="h2" className="mb-3">Respaldo Legal</Text>
+              <Text variant="body" color="muted" className="max-w-2xl mx-auto">
+                Cumplimos con la normativa chilena para documentos electrónicos y firma digital
+              </Text>
+            </div>
+
+            <Box variant="document" padding="lg" className="md:p-12">
+              <div className="flex flex-col md:flex-row items-start gap-6 mb-8">
+                <div className="flex-shrink-0 w-14 h-14 bg-navy-900 rounded-xl flex items-center justify-center shadow-lg">
+                  <Gavel className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <Text variant="h3" className="mb-2">
+                    Ley Nº 19.799 de Firma Electrónica
+                  </Text>
+                  <Text variant="body-sm" color="muted">
+                    Vigente en Chile desde abril de 2002
+                  </Text>
+                </div>
+              </div>
+
+              <div className="bg-navy-900 text-white rounded-xl p-8 shadow-sm">
+                <Text variant="body" className="leading-relaxed mb-8 text-slate-200" color="inherit">
+                  Los documentos electrónicos tienen la misma validez legal que los documentos en papel,
+                  siempre que cumplan con requisitos de seguridad y autenticidad.
+                </Text>
+                <div className="border-l-4 border-legal-emerald-600 pl-6">
+                  <Text variant="body" weight="bold" className="mb-2 text-slate-100" color="inherit">
+                    Artículo 3º
+                  </Text>
+                  <Text variant="body" className="italic leading-relaxed text-slate-200" color="inherit">
+                    "Los actos y contratos otorgados o celebrados por personas naturales o jurídicas,
+                    suscritos por medio de firma electrónica, serán válidos de la misma manera y producirán
+                    los mismos efectos que los celebrados por escrito y en soporte de papel."
+                  </Text>
+                </div>
+              </div>
+
+
+            </Box>
+          </div>
+        </section>
+
+        {/* Security Features */}
+        <section className="py-20 px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <Text variant="h2" className="mb-3">Características de Seguridad</Text>
+              <Text variant="body" color="muted" className="max-w-2xl mx-auto">
                 Múltiples capas de protección para garantizar la validez de cada documento
-              </p>
+              </Text>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 {
                   icon: UserCheck,
-                  title: 'Autenticación de Identidad',
-                  description: 'Verificamos la identidad mediante RUT y validación de datos personales'
+                  title: 'Identidad Validada',
+                  description: 'Verificación multifactorial con el Registro Civil y validación de datos personales.'
                 },
                 {
                   icon: Clock,
-                  title: 'Timestamp de Firma',
-                  description: 'Sello de tiempo que certifica la fecha y hora exacta de cada firma'
+                  title: 'Timestamping',
+                  description: 'Sello de tiempo que certifica la fecha y hora exacta de cada firma e inalterabilidad.'
                 },
                 {
                   icon: Lock,
                   title: 'Hash Criptográfico',
-                  description: 'Identificador único que garantiza la integridad del documento'
+                  description: 'Identificador único que garantiza la integridad absoluta del documento firmado.'
                 },
                 {
                   icon: Award,
-                  title: 'Trazabilidad Completa',
-                  description: 'Registro de cada acción para auditorías futuras'
+                  title: 'Trazabilidad Judicial',
+                  description: 'Registro auditable de cada acción para respaldo probatorio ante tribunales.'
                 }
               ].map((feature, idx) => (
-                <div 
-                  key={idx} 
-                  className="bg-white rounded-lg p-6 border border-slate-200 shadow-document hover:shadow-document-hover transition-shadow"
+                <Card
+                  key={idx}
+                  variant="document"
+                  hover
+                  padding="md"
+                  className="group"
                 >
-                  <div className="w-12 h-12 bg-legal-emerald-50 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-legal-emerald-600" />
+                  <div className="w-12 h-12 bg-legal-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-legal-emerald-600 transition-colors duration-300">
+                    <feature.icon className="w-6 h-6 text-legal-emerald-600 group-hover:text-white transition-colors duration-300" />
                   </div>
-                  <h3 className="font-serif font-bold text-navy-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-slate-600 font-sans">{feature.description}</p>
-                </div>
+                  <Text variant="h4" className="mb-2">{feature.title}</Text>
+                  <Text variant="body-sm" color="muted">{feature.description}</Text>
+                </Card>
               ))}
             </div>
           </div>
         </section>
 
         {/* Document Types */}
-        <section className="py-20 px-6 lg:px-8 bg-slate-50">
+        <section className="py-20 px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-serif font-bold text-navy-900 mb-3">
-                Tipos de Documentos
-              </h2>
-              <p className="text-slate-600 font-sans text-lg max-w-2xl mx-auto">
+              <Text variant="h2" className="mb-3">Tipos de Documentos</Text>
+              <Text variant="body" color="muted" className="max-w-2xl mx-auto">
                 Ofrecemos diferentes niveles de validación según tus necesidades
-              </p>
+              </Text>
             </div>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg p-8 border border-slate-200 shadow-document hover:shadow-document-hover transition-shadow">
-                <div className="w-12 h-12 bg-navy-900 rounded-lg flex items-center justify-center mb-4">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-navy-900 mb-3 font-serif">Firma Electrónica Avanzada</h3>
-                <p className="text-slate-600 mb-4 font-sans text-sm">
-                  Válidos para contratos privados entre particulares y empresas. Incluyen arriendos, servicios, acuerdos comerciales y más.
-                </p>
-                <div className="flex items-center gap-2 text-sm text-slate-500 font-sans">
-                  <CheckCircle className="w-4 h-4 text-legal-emerald-600" />
-                  <span>Mayoría de contratos</span>
-                </div>
-              </div>
 
-              <div className="bg-white rounded-lg p-8 border-2 border-legal-emerald-600 shadow-document hover:shadow-document-hover transition-shadow">
-                <div className="w-12 h-12 bg-legal-emerald-600 rounded-lg flex items-center justify-center mb-4">
-                  <Scale className="w-6 h-6 text-white" />
+            <div className="grid md:grid-cols-3 gap-8">
+              <Card variant="document" hover padding="lg" className="flex flex-col items-center text-center">
+                <div className="w-14 h-14 bg-navy-50 rounded-xl flex items-center justify-center mb-6">
+                  <FileText className="w-7 h-7 text-navy-900" />
                 </div>
-                <h3 className="text-xl font-bold text-navy-900 mb-3 font-serif">Validación Notarial</h3>
-                <p className="text-slate-600 mb-4 font-sans text-sm">
-                  Con validación de notario público digital. Misma validez que firma presencial ante notario.
-                </p>
-                <div className="flex items-center gap-2 text-sm text-slate-500 font-sans">
+                <Text variant="h3" className="mb-4">Firma Electrónica</Text>
+                <Text variant="body-sm" color="muted" className="mb-6 leading-relaxed">
+                  Válidos para contratos privados: arriendos, servicios, acuerdos comerciales y NDAs estándar.
+                </Text>
+                <div className="mt-auto pt-6 border-t border-slate-100 w-full flex items-center justify-center gap-2">
                   <CheckCircle className="w-4 h-4 text-legal-emerald-600" />
-                  <span>Mayor formalidad legal</span>
+                  <Text variant="body-sm" weight="medium">Plena validez civil</Text>
                 </div>
-              </div>
+              </Card>
 
-              <div className="bg-white rounded-lg p-8 border border-slate-200 shadow-document hover:shadow-document-hover transition-shadow">
-                <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center mb-4">
-                  <FileText className="w-6 h-6 text-white" />
+              <Card variant="document" accent accentColor="emerald" hover padding="lg" className="flex flex-col items-center text-center relative shadow-xl">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-legal-emerald-600 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                  Recomendado
                 </div>
-                <h3 className="text-xl font-bold text-navy-900 mb-3 font-serif">Documentos Personalizados</h3>
-                <p className="text-slate-600 mb-4 font-sans text-sm">
-                  Sube tu PDF y recolecta firmas electrónicas con validez legal, manteniendo tu formato.
-                </p>
-                <div className="flex items-center gap-2 text-sm text-slate-500 font-sans">
+                <div className="w-14 h-14 bg-legal-emerald-50 rounded-xl flex items-center justify-center mb-6">
+                  <Scale className="w-7 h-7 text-legal-emerald-600" />
+                </div>
+                <Text variant="h3" className="mb-4">Validación Notarial</Text>
+                <Text variant="body-sm" color="muted" className="mb-6 leading-relaxed">
+                  Certificación ante Notario Público Digital. Máxima fuerza probatoria para trámites legales complejos.
+                </Text>
+                <div className="mt-auto pt-6 border-t border-slate-100 w-full flex items-center justify-center gap-2">
                   <CheckCircle className="w-4 h-4 text-legal-emerald-600" />
-                  <span>Tu propio documento</span>
+                  <Text variant="body-sm" weight="medium">Fuerza Probatoria Superior</Text>
                 </div>
-              </div>
+              </Card>
+
+              <Card variant="document" hover padding="lg" className="flex flex-col items-center text-center">
+                <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center mb-6">
+                  <FileText className="w-7 h-7 text-slate-500" />
+                </div>
+                <Text variant="h3" className="mb-4">Documento Propio</Text>
+                <Text variant="body-sm" color="muted" className="mb-6 leading-relaxed">
+                  Sube tu PDF original y recolecta firmas electrónicas certificadas manteniendo tu formato intacto.
+                </Text>
+                <div className="mt-auto pt-6 border-t border-slate-100 w-full flex items-center justify-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-legal-emerald-600" />
+                  <Text variant="body-sm" weight="medium">Flexibilidad Total</Text>
+                </div>
+              </Card>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 px-6 lg:px-8 bg-slate-50">
+        <section className="py-24 px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="bg-white rounded-lg shadow-document border border-slate-200 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div>
-                <h3 className="font-serif font-bold text-navy-900 mb-1">¿Tienes dudas legales?</h3>
-                <p className="text-slate-500 text-sm font-sans">Nuestro equipo está disponible para resolver consultas sobre validez legal</p>
+            <Box variant="document" padding="lg" className="bg-navy-900 border-none shadow-2xl relative overflow-hidden">
+              {/* Decorative background element */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-legal-emerald-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+                <div className="space-y-2">
+                  <Text variant="h2" className="text-white" color="inherit">¿Tienes dudas legales?</Text>
+                  <Text variant="body" className="text-slate-300" color="inherit">Nuestro equipo está disponible para resolver consultas sobre validez legal.</Text>
+                </div>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  <Button
+                    variant="success"
+                    size="lg"
+                    onClick={() => window.location.href = '/'}
+                  >
+                    Comenzar ahora
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => window.location.href = '/ayuda'}
+                    className="bg-navy-800 border-navy-700 text-white hover:bg-navy-700"
+                  >
+                    Centro de ayuda
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => window.location.href = '/ayuda'}
-                  className="px-4 py-2 text-sm font-medium font-sans text-navy-900 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
-                >
-                  Ver centro de ayuda
-                </button>
-              </div>
-            </div>
+            </Box>
           </div>
         </section>
-        
+
         <PageFooter />
       </div>
     </div>

@@ -1,13 +1,17 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Payment } from '@mercadopago/sdk-react';
 import { CreditCard, Shield, AlertTriangle, Loader2, FileText, PenTool, Package, Users, CheckCircle2, Upload } from 'lucide-react';
 import paymentService from '../../services/paymentService';
+import { formatPrice } from '../../components/public/contract-editor/utils/formatPrice';
+import { getErrorMessage } from '../../utils/validators';
 import mercadoPagoConfig, { initMPWithKey } from '../../config/mercadopago';
 import { Navbar } from '../../components/landing/Navbar';
 import { EditorHeader } from '../../components/public/contract-editor/EditorHeader';
 import { getStepsForFlow, getCustomDocumentSteps } from '../../utils/flowConfig';
-import { getContractDetails } from '../../services/api';
+import api, { getContractDetails } from '../../services/api';
+import BillingTypeSelector from '../../components/public/contract-editor/BillingTypeSelector';
+import type { BillingData } from '../../types/billing';
 
 interface Signer {
   id: string;
@@ -51,11 +55,16 @@ const PaymentPage: React.FC = () => {
   const [contractDetails, setContractDetails] = useState<ContractDetails | null>(null);
   const [mpPublicKey, setMpPublicKey] = useState<string | null>(null);
   const [isMpReady, setIsMpReady] = useState(false);
+  const billingDataRef = useRef<BillingData>({ billing_type: 'boleta' });
   const [brickKey, setBrickKey] = useState(0);
   const brickReady = useRef(false);
   const preferenceCreated = useRef(false);
   const mpKeyInitialized = useRef<string | null>(null);
   const brickRetryCount = useRef(0);
+
+  const handleBillingChange = useCallback((data: BillingData) => {
+    billingDataRef.current = data;
+  }, []);
 
   // Calcular los pasos basándose en el tipo de documento y si hay firmantes
   const PROGRESS_STEPS = useMemo(() => {
@@ -81,21 +90,19 @@ const PaymentPage: React.FC = () => {
       return;
     }
 
-    console.log('🔧 Inicializando MercadoPago SDK con clave:', keyToUse.substring(0, 20) + '...');
+    console.log('Inicializando MercadoPago SDK');
     initMPWithKey(keyToUse);
     mpKeyInitialized.current = keyToUse;
 
     // Give SDK extra time to fully initialize before marking as ready
     setTimeout(() => {
       setIsMpReady(true);
-      console.log('✅ MercadoPago SDK listo');
     }, 300);
   }, [mpPublicKey, mercadoPagoConfig.publicKey]);
 
   const loadContractAndPreference = async () => {
     // Prevent duplicate calls (React Strict Mode or re-renders)
     if (preferenceCreated.current) {
-      console.log('⚠️  Preference already created, skipping duplicate call');
       return;
     }
 
@@ -106,25 +113,19 @@ const PaymentPage: React.FC = () => {
       preferenceCreated.current = true;
 
       // Cargar detalles del contrato y preferencia en paralelo
-      console.log('📞 Calling getContractDetails:', { contractId, trackingCode, rut });
-      console.log('📞 Calling createPreference:', { contractId, trackingCode, rut });
-
       const [contractResponse, preferenceResponse] = await Promise.all([
         getContractDetails(contractId!, trackingCode, rut),
         paymentService.createPreference({
           contract_id: contractId!,
           tracking_code: trackingCode,
-          rut: rut
+          rut: rut,
+          billing_data: billingDataRef.current
         })
       ]);
-
-      console.log('✅ Contract details response:', contractResponse.data);
-      console.log('✅ Preference response:', preferenceResponse);
 
       // Procesar respuesta del contrato
       if (contractResponse.data?.success && contractResponse.data?.data) {
         const contract = contractResponse.data.data;
-        console.log('📄 Contract details:', contract);
         
         // Check if it's a custom document
         if (contract.is_custom_document) {
@@ -177,22 +178,9 @@ const PaymentPage: React.FC = () => {
     } catch (err: any) {
       console.error('Error cargando datos:', err);
       preferenceCreated.current = false; // Reset flag to allow retry
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al iniciar el pago');
-      } else {
-        setError(errorData || err.message || 'Error al iniciar el pago');
-      }
+      setError(getErrorMessage(err, 'Error al iniciar el pago'));
       setLoading(false);
     }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-    }).format(price);
   };
 
   const getSignatureLabel = (type: string) => {
@@ -398,6 +386,12 @@ const PaymentPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Selector de tipo de documento tributario */}
+                <BillingTypeSelector
+                  buyerRut={rut}
+                  onChange={handleBillingChange}
+                />
+
                 {/* Advertencia de modo test */}
                 {mercadoPagoConfig.isTestMode && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -463,25 +457,16 @@ const PaymentPage: React.FC = () => {
                             }
                           }
                         }}
-                        onSubmit={async ({ selectedPaymentMethod, formData }) => {
-                          console.log('💳 Procesando pago:', { selectedPaymentMethod, formData });
-                          
+                        onSubmit={async ({ formData }) => {
                           return new Promise(async (resolve, reject) => {
                             try {
-                              const response = await fetch(`${import.meta.env.VITE_API_URL}/payments/process`, {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                  ...formData,
-                                  contract_id: contractId,
-                                  tracking_code: trackingCode,
-                                  rut: rut
-                                }),
-                              });
-
-                              const result = await response.json();
+                              const { data: result } = await api.post('/payments/process', {
+                                ...formData,
+                                contract_id: contractId,
+                                tracking_code: trackingCode,
+                                rut: rut,
+                                billing_data: billingDataRef.current
+                              }, { skipCsrf: true } as any);
                               
                               if (result.success) {
                                 resolve(undefined);
@@ -500,14 +485,12 @@ const PaymentPage: React.FC = () => {
                                   navigate(`/payment/success?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
                                 } else if (paymentStatus === 'pending' || paymentStatus === 'in_process') {
                                   // Pago pendiente - redirigir a página de espera
-                                  console.log(`⏳ Pago en estado: ${paymentStatus}, redirigiendo a página de pendiente`);
                                   navigate(`/payment/pending?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
                                 } else if (paymentStatus === 'rejected') {
                                   // Pago rechazado
                                   navigate(`/payment/failure?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
                                 } else {
                                   // Estado desconocido - ir a página de pendiente por seguridad
-                                  console.log(`⚠️ Estado de pago desconocido: ${paymentStatus}, redirigiendo a página de pendiente`);
                                   navigate(`/payment/pending?contract_id=${contractId}&tracking_code=${trackingCode}&rut=${encodeURIComponent(rut)}&hasSigners=${hasSigners}${customParams}`);
                                 }
                               } else {
@@ -515,30 +498,25 @@ const PaymentPage: React.FC = () => {
                                 setError(result.error || 'Error procesando el pago');
                               }
                             } catch (error: any) {
-                              console.error('❌ Error procesando pago:', error);
                               reject();
-                              setError(error.message);
+                              setError(getErrorMessage(error));
                             }
                           });
                         }}
                         onReady={() => {
                            brickReady.current = true;
-                           console.log('✅ Payment Brick listo');
                         }}
                         onError={(error) => {
                            const errorText = typeof error === 'string' ? error : JSON.stringify(error || {});
                            const isIdentificationError = /identification|indetification|installment/i.test(errorText);
 
                            if (!isIdentificationError) {
-                             console.error('❌ Error en Payment Brick:', error);
-                           } else {
-                             console.log('⚠️  Identificación/cuotas error detectado (común en primera carga), reintentando...');
+                             console.error('Error en Payment Brick:', error);
                            }
 
                            // Auto-retry on first identification/installments error (SDK timing issue)
                            if (isIdentificationError && brickRetryCount.current < 2) {
                              brickRetryCount.current += 1;
-                             console.log(`🔄 Retry ${brickRetryCount.current}/2 del brick...`);
                              setError(null);
                              setIsMpReady(false);
                              setTimeout(() => {

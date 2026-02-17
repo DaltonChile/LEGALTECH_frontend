@@ -1,20 +1,12 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import api from './api';
+import type { BillingData } from '../types/billing';
 
 // Interfaces
 export interface CreatePreferenceRequest {
   contract_id: string;
   tracking_code: string;
   rut: string;
+  billing_data?: BillingData;
 }
 
 export interface CreatePreferenceResponse {
@@ -97,24 +89,21 @@ class PaymentService {
             onStatusChange(response.data);
           }
 
-          // VALIDACIÓN ESTRICTA: Esperamos confirmación del WEBHOOK
-          // El pago debe estar 'approved' Y el contrato debe estar 'draft'
-          // Esto garantiza que el webhook ya procesó todo correctamente
+          // VALIDACIÓN: Esperamos confirmación del WEBHOOK
+          // El pago debe estar 'approved' Y el contrato debe haber avanzado
+          // de 'pending_payment' a cualquier estado posterior (draft, waiting_notary, etc.)
           const isPaymentApproved = response.data.payment_status === 'approved';
-          const isContractReady = response.data.contract_status === 'draft';
+          const postPaymentStatuses = ['draft', 'waiting_notary', 'waiting_signatures', 'completed'];
+          const isContractReady = postPaymentStatuses.includes(response.data.contract_status);
           
           if (isPaymentApproved && isContractReady) {
-            console.log('✅ Pago confirmado por webhook de MercadoPago:', { 
-              payment_status: response.data.payment_status,
-              contract_status: response.data.contract_status
-            });
             resolve(response.data);
             return;
           }
           
-          // Log intermedio para debugging
+          // Wait for webhook to update contract status
           if (isPaymentApproved && !isContractReady) {
-            console.log('⏳ Pago aprobado, esperando que webhook actualice contrato...');
+            // Payment approved but contract not ready yet - webhook still processing
           }
 
           // Si el pago fue rechazado

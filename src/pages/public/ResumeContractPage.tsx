@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { getErrorMessage } from '../../utils/validators';
+import api from '../../services/api';
 
 export function ResumeContractPage() {
   const [searchParams] = useSearchParams();
@@ -30,8 +31,8 @@ export function ResumeContractPage() {
       if (code) params.append('code', code);
       params.append('rut', rut);
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/contracts/resume?${params.toString()}`
+      const response = await api.get(
+        `/contracts/resume?${params.toString()}`
       );
 
       if (response.data.success) {
@@ -84,12 +85,7 @@ export function ResumeContractPage() {
       }
     } catch (err: any) {
       console.error('Error loading contract:', err);
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error cargando contrato. Verifica los datos ingresados.');
-      } else {
-        setError(errorData || 'Error cargando contrato. Verifica los datos ingresados.');
-      }
+      setError(getErrorMessage(err, 'Error cargando contrato. Verifica los datos ingresados.'));
       setLoading(false);
     }
   };

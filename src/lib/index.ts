@@ -1,7 +1,6 @@
 /**
  * Lib exports
- * Utility functions and design tokens
+ * Utility functions
  */
 
 export { cn } from './cn';
-export * from './design-tokens';

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatPrice } from '../contract-editor/utils/formatPrice';
 import { 
   Home, 
   Briefcase, 
@@ -101,14 +102,6 @@ export function ContractCatalog() {
     
     return matchesSearch && matchesCategory;
   });
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
 
   const formatCategoryTitle = (category: string) => {
     return category.charAt(0).toUpperCase() + category.slice(1);

@@ -20,6 +20,7 @@ const PaymentFailurePage = lazy(() => import('../pages/public/PaymentFailurePage
 const PaymentPendingPage = lazy(() => import('../pages/public/PaymentPendingPage'));
 
 // Custom document pages - lazy loaded
+const CustomDocumentInfoPage = lazy(() => import('../pages/public/CustomDocumentInfoPage'));
 const CustomDocumentUploadPage = lazy(() => import('../pages/public/CustomDocumentUploadPage'));
 const CustomDocumentStatusPage = lazy(() => import('../pages/public/CustomDocumentStatusPage'));
 
@@ -29,7 +30,7 @@ const TemplatesPage = lazy(() => import('../pages/admin/TemplatesPage').then(m =
 const TemplateEditPage = lazy(() => import('../pages/admin/TemplateEditPage').then(m => ({ default: m.TemplateEditPage })));
 const UsersPage = lazy(() => import('../pages/admin/UsersPage').then(m => ({ default: m.UsersPage })));
 const SettingsPage = lazy(() => import('../pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })));
-const ContractsPage = lazy(() => import('../pages/admin/ContractsPage').then(m => ({ default: m.ContractsPage })));
+const HistoryPage = lazy(() => import('../pages/admin/HistoryPage').then(m => ({ default: m.HistoryPage })));
 
 // Notary pages - lazy loaded
 const NotaryInboxPage = lazy(() => import('../pages/notary/NotaryInboxPage').then(m => ({ default: m.NotaryInboxPage })));
@@ -55,50 +56,52 @@ export function AppRoutes() {
         <Route path="/retomar" element={<ResumeContractPage />} />
         <Route path="/contracts/resume" element={<ResumeContractPage />} />
         <Route path="/contracts/success" element={<ContractSuccessPage />} />
-        
+
         {/* Payment routes */}
         <Route path="/payment/:contractId" element={<PaymentPage />} />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
         <Route path="/payment/pending" element={<PaymentPendingPage />} />
-        
-        {/* Custom document routes */}
-        <Route path="/documento-personalizado" element={<CustomDocumentUploadPage />} />
-        <Route path="/documento-personalizado/estado/:trackingCode" element={<CustomDocumentStatusPage />} />
-        
-      {/* Admin Routes with Layout */}
-      <Route
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/templates" element={<TemplatesPage />} />
-        <Route path="/admin/templates/:id/edit" element={<TemplateEditPage />} />
-        <Route path="/admin/contracts" element={<ContractsPage />} />
-        <Route path="/admin/users" element={<UsersPage />} />
-        <Route path="/admin/settings" element={<SettingsPage />} />
-      </Route>
 
-      {/* Notary routes - use same AdminLayout */}
-      <Route
-        element={
-          <ProtectedRoute requiredRole="notario">
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/notary" element={<Navigate to="/notary/inbox" replace />} />
-        <Route path="/notary/inbox" element={<NotaryInboxPage />} />
-      </Route>
+        {/* Custom document routes */}
+        <Route path="/documento-personalizado" element={<CustomDocumentInfoPage />} />
+        <Route path="/documento-personalizado/subir" element={<CustomDocumentUploadPage />} />
+        <Route path="/documento-personalizado/estado/:trackingCode" element={<CustomDocumentStatusPage />} />
+
+        {/* Admin Routes with Layout */}
+        <Route
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/templates" element={<TemplatesPage />} />
+          <Route path="/admin/templates/:id/edit" element={<TemplateEditPage />} />
+          <Route path="/admin/contracts" element={<Navigate to="/admin/history" replace />} />
+          <Route path="/admin/history" element={<HistoryPage />} />
+          <Route path="/admin/users" element={<UsersPage />} />
+          <Route path="/admin/settings" element={<SettingsPage />} />
+        </Route>
+
+        {/* Notary routes - use same AdminLayout */}
+        <Route
+          element={
+            <ProtectedRoute requiredRole="notario">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/notary" element={<Navigate to="/notary/inbox" replace />} />
+          <Route path="/notary/inbox" element={<NotaryInboxPage />} />
+        </Route>
 
         {/* Template editor - must be before catch-all */}
         <Route path="/:slug" element={<ContractEditorPage />} />
 
-      {/* Catch-all 404 - must be last */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Catch-all 404 - must be last */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

@@ -237,7 +237,7 @@ export const reactivateUser = async (userId: string) => {
 };
 
 // ============================================
-// APIs para Admin Contracts
+// APIs para Admin Contracts / History
 // ============================================
 
 export const getAdminContracts = async (params?: { status?: string; page?: number; limit?: number }) => {
@@ -246,6 +246,17 @@ export const getAdminContracts = async (params?: { status?: string; page?: numbe
 
 export const getAdminContractById = async (contractId: string) => {
   return await api.get(`/admin/contracts/${contractId}`);
+};
+
+export const getAdminHistory = async (params?: {
+  status?: string;
+  payment_status?: string;
+  billing_type?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  return await api.get('/admin/contracts/history', { params });
 };
 
 // ============================================
@@ -354,11 +365,7 @@ export const createContractRequest = async (data: {
 };
 
 export const updateTemplateStatus = async (templateId: string, isActive: boolean) => {
-  console.log('📤 API: Updating template', { templateId, isActive, type: typeof templateId });
-  console.log('📤 API: Base URL:', API_BASE_URL);
-  console.log('📤 API: Full URL will be:', `${API_BASE_URL}/admin/templates/${templateId}`);
   const response = await api.put(`/admin/templates/${templateId}`, { is_active: isActive });
-  console.log('📥 API: Response:', response.data);
   return response.data;
 };
 

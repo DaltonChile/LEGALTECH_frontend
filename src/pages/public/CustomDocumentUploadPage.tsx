@@ -1,26 +1,28 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Upload, 
-  FileText, 
-  Users, 
-  CreditCard, 
-  Check, 
-  X, 
-  Plus, 
+import { formatPrice } from '../../components/public/contract-editor/utils/formatPrice';
+import { getErrorMessage, formatRut } from '../../utils/validators';
+import {
+  Upload,
+  FileText,
+  Users,
+  CreditCard,
+  Check,
+  X,
+  Plus,
   Trash2,
   AlertCircle,
   Loader2,
   ChevronRight,
-  Shield,
+
   User,
   PenTool
 } from 'lucide-react';
 import { Navbar } from '../../components/landing/Navbar';
 import { PageFooter } from '../../components/shared/PageFooter';
 import customDocumentService from '../../services/customDocumentService';
-import type { 
-  SignatureType, 
+import type {
+  SignatureType,
   PricingOptions,
   CreateCustomDocumentParams
 } from '../../services/customDocumentService';
@@ -52,7 +54,7 @@ const PROGRESS_STEPS: { key: string; label: string; icon: React.ReactNode }[] = 
 export function CustomDocumentUploadPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // State
   const [currentStep, setCurrentStep] = useState<Step>('upload');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -64,12 +66,12 @@ export function CustomDocumentUploadPage() {
   const [customNotary, setCustomNotary] = useState(false);
   const [buyerEmail, setBuyerEmail] = useState('');
   const [buyerRut, setBuyerRut] = useState('');
-  
+
   // Pricing
   const [pricingOptions, setPricingOptions] = useState<PricingOptions | null>(null);
   const [totalPrice, setTotalPrice] = useState(0);
   const [loadingPrice, setLoadingPrice] = useState(false);
-  
+
   // UI State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +136,7 @@ export function CustomDocumentUploadPage() {
       setError('El archivo no puede superar los 10MB');
       return;
     }
-    
+
     setPdfFile(file);
     setPdfPreviewUrl(URL.createObjectURL(file));
     setError(null);
@@ -143,7 +145,7 @@ export function CustomDocumentUploadPage() {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    
+
     const file = e.dataTransfer.files[0];
     if (file) handleFileSelect(file);
   }, [handleFileSelect]);
@@ -168,7 +170,7 @@ export function CustomDocumentUploadPage() {
   };
 
   const updateSigner = (id: string, field: keyof Signer, value: string) => {
-    setSigners(signers.map(s => 
+    setSigners(signers.map(s =>
       s.id === id ? { ...s, [field]: value } : s
     ));
   };
@@ -177,9 +179,9 @@ export function CustomDocumentUploadPage() {
   // Must have PDF and at least one service selected (signatures or notary)
   const hasServiceSelected = signatureType !== 'none' || customNotary;
   const canProceedFromUpload = !!pdfFile && hasServiceSelected;
-  
+
   // Validation for contact info (used in modal)
-  const hasValidContactInfo = buyerEmail.trim() !== '' && 
+  const hasValidContactInfo = buyerEmail.trim() !== '' &&
     buyerRut.trim() !== '' &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail);
 
@@ -194,9 +196,9 @@ export function CustomDocumentUploadPage() {
           return true;
         }
         // Otherwise, at least one valid signer is required
-        return signers.length > 0 && signers.every(s => 
-          s.full_name.trim() && 
-          s.email.trim() && 
+        return signers.length > 0 && signers.every(s =>
+          s.full_name.trim() &&
+          s.email.trim() &&
           s.rut.trim() &&
           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email)
         );
@@ -218,29 +220,29 @@ export function CustomDocumentUploadPage() {
       (currentStep === 'upload' && signatureType === 'none') ||
       (currentStep === 'signers' && signatureType !== 'none')
     );
-    
+
     if (shouldShowModal) {
       setShowContactModal(true);
       return;
     }
-    
+
     const currentIndex = STEPS.findIndex(s => s.key === currentStep);
     if (currentIndex < STEPS.length - 1) {
       let nextIndex = currentIndex + 1;
-      
+
       // Skip 'signers' step if signature_type is 'none'
       if (STEPS[nextIndex].key === 'signers' && signatureType === 'none') {
         // Clear signers when skipping
         setSigners([]);
         nextIndex = nextIndex + 1;
       }
-      
+
       if (nextIndex < STEPS.length) {
         setCurrentStep(STEPS[nextIndex].key);
       }
     }
   };
-  
+
   // Handle contact modal confirmation
   const handleContactModalConfirm = () => {
     if (hasValidContactInfo) {
@@ -253,12 +255,12 @@ export function CustomDocumentUploadPage() {
     const currentIndex = STEPS.findIndex(s => s.key === currentStep);
     if (currentIndex > 0) {
       let prevIndex = currentIndex - 1;
-      
+
       // Skip 'signers' step if signature_type is 'none'
       if (STEPS[prevIndex].key === 'signers' && signatureType === 'none') {
         prevIndex = prevIndex - 1;
       }
-      
+
       if (prevIndex >= 0) {
         setCurrentStep(STEPS[prevIndex].key);
       }
@@ -268,19 +270,19 @@ export function CustomDocumentUploadPage() {
   // Submit
   const handleSubmit = async () => {
     if (!pdfFile) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Build signers array only if signature_type requires it
-      const signersToSend = signatureType !== 'none' 
+      const signersToSend = signatureType !== 'none'
         ? signers.map(s => ({
-            full_name: s.full_name,
-            email: s.email,
-            rut: s.rut,
-            role: s.role
-          }))
+          full_name: s.full_name,
+          email: s.email,
+          rut: s.rut,
+          role: s.role
+        }))
         : [];
 
       const params: CreateCustomDocumentParams = {
@@ -291,7 +293,7 @@ export function CustomDocumentUploadPage() {
         custom_notary: signatureType === 'none' ? true : customNotary, // Always true for 'none'
         signers: signersToSend
       };
-      
+
       const result = await customDocumentService.createCustomDocument(params);
 
       // Redirect to unified payment page (use window.location for full page reload to prevent Payment Brick state issues)
@@ -299,45 +301,17 @@ export function CustomDocumentUploadPage() {
     } catch (err: any) {
       console.error('Error creating custom document:', err);
       // Handle both string and object error formats
-      const errorData = err.response?.data?.error;
-      if (typeof errorData === 'object' && errorData !== null) {
-        setError(errorData.message || 'Error al crear el documento');
-      } else {
-        setError(errorData || 'Error al crear el documento');
-      }
+      setError(getErrorMessage(err, 'Error al crear el documento'));
     } finally {
       setLoading(false);
     }
   };
 
-  const formatPrice = (price: number | undefined | null) => {
-    const numPrice = typeof price === 'number' && !isNaN(price) ? price : 0;
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-    }).format(numPrice);
-  };
-
-  const formatRut = (value: string) => {
-    // Remove non-alphanumeric characters
-    let rut = value.replace(/[^0-9kK]/g, '');
-    
-    if (rut.length > 1) {
-      // Add dots and dash
-      const dv = rut.slice(-1);
-      const body = rut.slice(0, -1);
-      rut = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
-    }
-    
-    return rut.toUpperCase();
-  };
-
   // Render steps
   const renderUploadStep = () => (
-    <div className="flex flex-col lg:flex-row gap-6 h-full min-h-[600px]">
-      {/* Left column - PDF Preview (half screen) */}
-      <div className="flex-1 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden flex flex-col min-h-[400px] lg:min-h-0">
+    <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 lg:min-h-[600px]">
+      {/* Left column - PDF Preview (hidden on mobile when file is selected, full on desktop) */}
+      <div className="flex-1 bg-white rounded-lg shadow-document border border-slate-200 overflow-hidden flex flex-col min-h-[300px] lg:min-h-0">
         {/* Header */}
         <div className="border-b border-slate-200 p-4 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
@@ -349,8 +323,8 @@ export function CustomDocumentUploadPage() {
                 {pdfFile ? pdfFile.name : 'Tu documento'}
               </h2>
               <p className="text-sm text-slate-500 font-sans">
-                {pdfFile 
-                  ? `${(pdfFile.size / 1024 / 1024).toFixed(2)} MB` 
+                {pdfFile
+                  ? `${(pdfFile.size / 1024 / 1024).toFixed(2)} MB`
                   : 'Sube un archivo PDF para continuar'
                 }
               </p>
@@ -370,9 +344,9 @@ export function CustomDocumentUploadPage() {
           )}
         </div>
 
-        {/* PDF Content */}
-        <div className="flex-1 overflow-hidden relative bg-slate-50">
-          {!pdfFile ? (
+        {/* PDF Content - Upload zone always visible, preview only on desktop */}
+        {!pdfFile ? (
+          <div className="flex-1 overflow-hidden relative bg-slate-50 min-h-[200px]">
             <div
               className={`
                 absolute inset-0 flex flex-col items-center justify-center cursor-pointer transition-all
@@ -407,45 +381,39 @@ export function CustomDocumentUploadPage() {
                 <span>Solo archivos PDF • Máximo 10MB</span>
               </div>
             </div>
-          ) : pdfPreviewUrl ? (
-            <iframe
-              src={pdfPreviewUrl}
-              className="w-full h-full border-0"
-              title="Vista previa del PDF"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-hidden relative bg-slate-50">
+            {pdfPreviewUrl ? (
+              <iframe
+                src={pdfPreviewUrl}
+                className="w-full h-full border-0"
+                title="Vista previa del PDF"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Right column - Options (scrollable) */}
-      <div className="w-full lg:w-96 flex flex-col gap-4 lg:order-last overflow-y-auto max-h-[calc(100vh-280px)] lg:max-h-none custom-scrollbar">
-        
-        {/* Base service info */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-navy-900">Servicio base</h3>
-            <span className="text-lg font-bold text-navy-900">{formatPrice(pricingOptions?.base_price || 10000)}</span>
-          </div>
-          <p className="text-xs text-slate-500">Incluye gestión documental, procesamiento y almacenamiento seguro.</p>
-        </div>
+      <div className="w-full lg:w-96 flex flex-col gap-4 lg:order-last overflow-y-auto lg:max-h-none custom-scrollbar pb-4">
 
         {/* Signature options */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
           <h3 className="font-semibold text-navy-900 mb-4">¿Necesitas firmas electrónicas?</h3>
           <p className="text-xs p-1 text-slate-500">Podras elegir quienes deben firmar el documento electrónicamente.</p>
-          
+
           <div className="space-y-3">
             {/* Firma Simple option */}
             <div
               onClick={() => setSignatureType(signatureType === 'simple' ? 'none' : 'simple')}
               className={`
                 p-4 rounded-lg border-2 cursor-pointer transition-all
-                ${signatureType === 'simple' 
-                  ? 'border-legal-emerald-500 bg-legal-emerald-50' 
+                ${signatureType === 'simple'
+                  ? 'border-legal-emerald-500 bg-legal-emerald-50'
                   : 'border-slate-200 hover:border-slate-300'
                 }
               `}
@@ -453,8 +421,8 @@ export function CustomDocumentUploadPage() {
               <div className="flex items-center gap-3">
                 <div className={`
                   w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
-                  ${signatureType === 'simple' 
-                    ? 'border-legal-emerald-500 bg-legal-emerald-500' 
+                  ${signatureType === 'simple'
+                    ? 'border-legal-emerald-500 bg-legal-emerald-500'
                     : 'border-slate-300'
                   }
                 `}>
@@ -483,8 +451,8 @@ export function CustomDocumentUploadPage() {
               onClick={() => setSignatureType(signatureType === 'fea' ? 'none' : 'fea')}
               className={`
                 p-4 rounded-lg border-2 cursor-pointer transition-all
-                ${signatureType === 'fea' 
-                  ? 'border-legal-emerald-500 bg-legal-emerald-50' 
+                ${signatureType === 'fea'
+                  ? 'border-legal-emerald-500 bg-legal-emerald-50'
                   : 'border-slate-200 hover:border-slate-300'
                 }
               `}
@@ -492,8 +460,8 @@ export function CustomDocumentUploadPage() {
               <div className="flex items-center gap-3">
                 <div className={`
                   w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
-                  ${signatureType === 'fea' 
-                    ? 'border-legal-emerald-500 bg-legal-emerald-500' 
+                  ${signatureType === 'fea'
+                    ? 'border-legal-emerald-500 bg-legal-emerald-500'
                     : 'border-slate-300'
                   }
                 `}>
@@ -526,8 +494,8 @@ export function CustomDocumentUploadPage() {
             onClick={() => setCustomNotary(!customNotary)}
             className={`
               p-4 rounded-lg border-2 cursor-pointer transition-all
-              ${customNotary 
-                ? 'border-legal-emerald-500 bg-legal-emerald-50' 
+              ${customNotary
+                ? 'border-legal-emerald-500 bg-legal-emerald-50'
                 : 'border-slate-200 hover:border-slate-300'
               }
             `}
@@ -535,19 +503,21 @@ export function CustomDocumentUploadPage() {
             <div className="flex items-center gap-3">
               <div className={`
                 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
-                ${customNotary 
-                  ? 'border-legal-emerald-500 bg-legal-emerald-500' 
+                ${customNotary
+                  ? 'border-legal-emerald-500 bg-legal-emerald-500'
                   : 'border-slate-300'
                 }
               `}>
                 {customNotary && <Check className="w-3 h-3 text-white" />}
               </div>
-              
+
               <div className="flex-1">
                 <h4 className="font-medium text-navy-900 text-sm">Agregar visación notarial</h4>
                 <p className="text-xs text-slate-500">Un notario revisará y visará tu documento</p>
               </div>
-              <Shield className="w-5 h-5 text-slate-400 shrink-0" />
+              <span className="text-sm font-bold text-legal-emerald-600 shrink-0">
+                +{formatPrice(pricingOptions?.notary_price || 0)}
+              </span>
             </div>
           </div>
         </div>
@@ -556,10 +526,10 @@ export function CustomDocumentUploadPage() {
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Servicio base</span>
+              <span className="text-slate-600">Valor documento</span>
               <span className="font-medium text-navy-900">{formatPrice(pricingOptions?.base_price || 0)}</span>
             </div>
-            
+
             {signatureType !== 'none' && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">
@@ -570,14 +540,16 @@ export function CustomDocumentUploadPage() {
                 </span>
               </div>
             )}
-            
+
             {customNotary && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">Visación notarial</span>
-                <span className="font-medium text-slate-500">Incluido</span>
+                <span className="font-medium text-legal-emerald-600">
+                  +{formatPrice(pricingOptions?.notary_price || 0)}
+                </span>
               </div>
             )}
-            
+
             {/* Warning when nothing selected */}
             {!hasServiceSelected && (
               <div className="pt-2 border-t border-slate-100">
@@ -587,7 +559,7 @@ export function CustomDocumentUploadPage() {
               </div>
             )}
           </div>
-          
+
           <div className="bg-navy-900 px-4 py-3">
             <div className="flex items-center justify-between">
               <span className="text-white text-sm font-medium">Total</span>
@@ -618,7 +590,7 @@ export function CustomDocumentUploadPage() {
 
       <div className="space-y-4">
         {signers.map((signer, index) => (
-          <div 
+          <div
             key={signer.id}
             className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm"
           >
@@ -635,7 +607,7 @@ export function CustomDocumentUploadPage() {
                 </button>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -649,7 +621,7 @@ export function CustomDocumentUploadPage() {
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-legal-emerald-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   RUT *
@@ -662,7 +634,7 @@ export function CustomDocumentUploadPage() {
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-legal-emerald-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Email *
@@ -675,7 +647,7 @@ export function CustomDocumentUploadPage() {
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-legal-emerald-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Rol (opcional)
@@ -720,7 +692,7 @@ export function CustomDocumentUploadPage() {
             Confirma tu solicitud
           </h2>
           <p className="text-slate-600 font-sans">
-            {totalPrice > 0 
+            {totalPrice > 0
               ? 'Revisa los datos antes de continuar al pago.'
               : 'Revisa los datos antes de continuar.'
             }
@@ -859,7 +831,7 @@ export function CustomDocumentUploadPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
-      
+
       {/* Progress header with actions */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="w-full px-4 md:px-6 lg:px-8 py-3 md:py-4">
@@ -879,7 +851,7 @@ export function CustomDocumentUploadPage() {
                 {filteredSteps.map((step, index) => {
                   const isActive = step.key === currentStep;
                   const isPast = currentStepIndex > index;
-                  
+
                   return (
                     <div key={step.key} className="flex items-center">
                       <div className={`
@@ -956,7 +928,7 @@ export function CustomDocumentUploadPage() {
                 <div className="w-12 h-12 rounded-lg bg-legal-emerald-600 flex items-center justify-center">
                   <User className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-serif font-bold text-navy-900">Datos de contacto</h3>
+                <h3 className="text-lg font-serif font-bold text-navy-900">Tus datos de contacto</h3>
               </div>
               <button
                 onClick={() => setShowContactModal(false)}

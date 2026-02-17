@@ -1,9 +1,9 @@
 /**
  * Reusable page footer component for Contrato Seguro
- * Displays "Contrato Seguro" branding with "powered by Dalton" text
+ * Displays "Contrato Seguro" branding with "powered by Dalton" logo
  */
 
-import { Scale, Mail, ExternalLink } from 'lucide-react';
+import { Scale, Mail } from 'lucide-react';
 
 interface PageFooterProps {
   /** Additional CSS classes for the footer container */
@@ -101,10 +101,15 @@ export function PageFooter({ className = '' }: PageFooterProps) {
               href="https://dalton.cl" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-slate-500 hover:text-slate-400 text-xs font-sans flex items-center gap-1 transition-colors"
+              className="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity group"
+              title="Powered by Dalton"
             >
-              powered by Dalton
-              <ExternalLink className="w-3 h-3" />
+              <span className="text-slate-500 text-sm font-sans">powered by</span>
+              <img 
+                src="/assets/logo_dalton.png" 
+                alt="Dalton" 
+                className="h-10 w-auto rounded-lg shadow-md"
+              />
             </a>
           </div>
         </div>

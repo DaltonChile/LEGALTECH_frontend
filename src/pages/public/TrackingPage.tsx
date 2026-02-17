@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Package, XCircle, FileText, Users, AlertCircle, Scale, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import { Navbar } from '../../components/landing/Navbar';
 import { PageFooter } from '../../components/shared/PageFooter';
 import { formatRut, isValidRut } from '../../utils/validators';
@@ -111,8 +111,8 @@ export function TrackingPage() {
     setSearched(true);
 
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/contracts/track/${trackingCode.trim().toUpperCase()}`
+      const response = await api.get(
+        `/contracts/track/${trackingCode.trim().toUpperCase()}`
       );
 
       if (response.data.success) {
@@ -120,8 +120,8 @@ export function TrackingPage() {
       } else {
         // Try searching in custom documents
         try {
-          const customResponse = await axios.get(
-            `${import.meta.env.VITE_API_URL}/custom-documents/${trackingCode.trim().toUpperCase()}/status`
+          const customResponse = await api.get(
+            `/custom-documents/${trackingCode.trim().toUpperCase()}/status`
           );
           if (customResponse.data.success) {
             // Redirect to custom document status page
@@ -137,8 +137,8 @@ export function TrackingPage() {
       if (err.response?.status === 404) {
         // Try searching in custom documents
         try {
-          const customResponse = await axios.get(
-            `${import.meta.env.VITE_API_URL}/custom-documents/${trackingCode.trim().toUpperCase()}/status`
+          const customResponse = await api.get(
+            `/custom-documents/${trackingCode.trim().toUpperCase()}/status`
           );
           if (customResponse.data.success) {
             // Redirect to custom document status page
