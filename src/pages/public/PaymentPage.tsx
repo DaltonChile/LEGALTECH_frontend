@@ -394,16 +394,10 @@ const PaymentPage: React.FC = () => {
 
               {/* Advertencia de modo test */}
               {mercadoPagoConfig.isTestMode && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-amber-800 text-sm font-sans">Modo de Prueba</p>
-                      <p className="text-xs text-amber-700 mt-1 font-sans">
-                        Usa las tarjetas de test de Mercado Pago. No se cobrará dinero real.
-                      </p>
-                    </div>
-                  </div>
+                <div className="bg-slate-100 rounded-md px-3 py-2 text-center">
+                  <p className="text-xs text-slate-500 font-sans">
+                    🧪 Modo de prueba · No se cobrará dinero real
+                  </p>
                 </div>
               )}
 
