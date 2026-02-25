@@ -1,4 +1,4 @@
-import { Scale, ChevronDown, Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { Text } from '../ui/primitives/Text';
@@ -65,9 +65,7 @@ export function Navbar() {
               onClick={() => navigate('/')}
               className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             >
-              <div className="w-9 h-9 bg-navy-900 rounded-lg flex items-center justify-center shadow-sm">
-                <Scale className="w-5 h-5 text-white" />
-              </div>
+              <img src="/assets/logo_contratoseguro.png" alt="Contrato Seguro" className="w-10 h-10 object-contain" />
               <Text as="span" variant="h4" className="text-xl tracking-tight">Contrato Seguro</Text>
             </button>
 
