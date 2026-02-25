@@ -7,7 +7,6 @@ import {
   Settings, 
   LogOut,
   ClipboardCheck,
-  Scale,
   X,
   FileCheck
 } from 'lucide-react';
@@ -22,9 +21,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
       {/* Header / Logo */}
       <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 via-cyan-500 to-lime-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
-            <Scale className="w-5 h-5 text-white" />
-          </div>
+          <img src="/assets/logo_contratoseguro.png" alt="Contrato Seguro" className="w-10 h-10 object-contain" />
           <span className="text-lg font-bold text-slate-900 tracking-tight">Contrato Seguro</span>
         </div>
         {/* Close button only visible on mobile context (handled by parent logic typically, but added here for safety) */}
