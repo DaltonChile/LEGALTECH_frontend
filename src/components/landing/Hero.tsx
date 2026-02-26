@@ -41,9 +41,14 @@ export function Hero() {
               </div>
             </Box>
 
-            <div className="flex items-center gap-3 pt-4">
-              <ArrowRight className="w-5 h-5 text-legal-emerald-700" />
-              <Text variant="body">Explora los contratos disponibles abajo</Text>
+            <div className="pt-4">
+              <button
+                onClick={() => document.getElementById('documentos')?.scrollIntoView({ behavior: 'smooth' })}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-legal-emerald-700 text-white font-medium rounded-lg hover:bg-legal-emerald-800 transition-colors"
+              >
+                Ver plantillas
+                <ArrowRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
 

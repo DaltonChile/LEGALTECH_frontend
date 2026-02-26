@@ -295,22 +295,30 @@ export function ContractCatalog() {
                     </div>
 
                     {/* Features */}
-                    <div className="hidden md:flex md:col-span-2 items-center justify-center gap-3">
-                      {template.has_signers && (
-                        <div className="flex items-center gap-1 text-xs text-slate-500" title="Requiere firmas">
-                          <Users className="w-3.5 h-3.5" />
-                          <span>Firmas</span>
-                        </div>
-                      )}
-                      {template.requires_notary && (
-                        <div className="flex items-center gap-1 text-xs text-slate-500" title="Validación notarial">
-                          <Scale className="w-3.5 h-3.5" />
-                          <span>Notario</span>
-                        </div>
-                      )}
-                      {!template.has_signers && !template.requires_notary && (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
+                    <div className="hidden md:flex md:col-span-2 items-center justify-center">
+                      <div className="flex flex-col gap-1">
+                        {template.has_signers && (
+                          <div className="flex items-center gap-1 text-xs text-slate-500" title="Requiere firmas">
+                            <Users className="w-3.5 h-3.5 shrink-0" />
+                            <span>Firmas</span>
+                          </div>
+                        )}
+                        {template.requires_notary && (
+                          <div className="flex items-center gap-1 text-xs text-slate-500" title="Incluye visación notarial">
+                            <Scale className="w-3.5 h-3.5 shrink-0" />
+                            <span>Visación notarial</span>
+                          </div>
+                        )}
+                        {template.capsules && template.capsules.length > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-slate-500" title="Cláusulas opcionales disponibles">
+                            <FileText className="w-3.5 h-3.5 shrink-0" />
+                            <span>Cláusulas opcionales</span>
+                          </div>
+                        )}
+                        {!template.has_signers && !template.requires_notary && (!template.capsules || template.capsules.length === 0) && (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Price */}
