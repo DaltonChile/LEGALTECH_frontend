@@ -14,6 +14,22 @@ export function HomePage() {
       <div className="relative z-10">
         <Navbar />
         <Hero />
+
+        {/* Video Section */}
+        <section className="bg-slate-50 py-16 lg:py-20">
+          <div className="max-w-6xl mx-auto px-6 lg:px-8">
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg">
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/8F30mLa_P9g"
+                title="YouTube video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </section>
+
         <HowItWorks />
         <ContractCatalog />
         
