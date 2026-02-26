@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Package, XCircle, FileText, Users, AlertCircle, Scale, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Package, XCircle, FileText, Users, AlertCircle, Copy, ArrowRight, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../../services/api';
 import { Navbar } from '../../components/landing/Navbar';
 import { PageFooter } from '../../components/shared/PageFooter';
@@ -220,8 +220,8 @@ export function TrackingPage() {
             <div className="border-t-4 border-t-navy-900 p-6 border-b border-slate-100">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-navy-900 rounded-lg flex items-center justify-center">
-                    <Scale className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    <img src="/assets/logo_contratoseguro.png" alt="Contrato Seguro" className="w-12 h-12 object-contain" />
                   </div>
                   <div>
                     <h3 className="font-serif font-bold text-navy-900 text-lg">Contrato Seguro</h3>

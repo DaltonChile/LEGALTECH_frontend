@@ -3,7 +3,7 @@
  * Displays "Contrato Seguro" branding with "powered by Dalton" logo
  */
 
-import { Scale, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 interface PageFooterProps {
   /** Additional CSS classes for the footer container */
@@ -18,9 +18,7 @@ export function PageFooter({ className = '' }: PageFooterProps) {
           {/* Logo y descripción */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-legal-emerald-600 rounded-lg flex items-center justify-center">
-                <Scale className="w-5 h-5 text-white" />
-              </div>
+              <img src="/assets/logo_contratoseguro.png" alt="Contrato Seguro" className="w-10 h-10 object-contain" />
               <span className="text-xl font-serif font-bold">Contrato Seguro</span>
             </div>
             <p className="text-slate-400 text-sm font-sans leading-relaxed">

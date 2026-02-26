@@ -36,8 +36,8 @@ export function Hero() {
               </div>
               <div className="w-px h-12 bg-slate-300"></div>
               <div className="text-center">
-                <Text variant="h3" className="text-3xl font-sans">100%</Text>
-                <Text variant="body-sm" color="muted">Validez legal</Text>
+                <Text variant="h3" className="text-3xl font-sans">Notario incluído</Text>
+                <Text variant="body-sm" color="muted">Firma y validez ante notario</Text>
               </div>
             </Box>
 

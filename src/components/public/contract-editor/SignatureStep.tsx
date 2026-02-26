@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import { 
-  FileSignature, 
-  Mail, 
-  Clock, 
-  Scale, 
-  Copy, 
+import {
+  FileSignature,
+  Mail,
+  Clock,
+  Copy,
   ArrowRight,
   CheckCircle2,
   Circle,
@@ -205,8 +204,8 @@ export function SignatureStep({
               {/* Card Header */}
               <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <Scale className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    <img src="/assets/logo_contratoseguro.png" alt="Contrato Seguro" className="w-12 h-12 object-contain" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 text-lg">Contrato Seguro Signature</h3>
