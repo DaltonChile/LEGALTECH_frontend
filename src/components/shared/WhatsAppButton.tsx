@@ -18,11 +18,11 @@ export function WhatsAppButton() {
   const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
-      {/* Tooltip bubble */}
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-end gap-2 sm:gap-3">
+      {/* Tooltip bubble — hidden on small mobile */}
       {showTooltip && (
-        <div className="animate-fade-in-up mb-2 max-w-[220px] relative">
-          <div className="bg-white rounded-xl shadow-lg border border-slate-200 px-4 py-3 relative">
+        <div className="animate-fade-in-up mb-1 sm:mb-2 max-w-[180px] sm:max-w-[220px] relative hidden sm:block">
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 px-3 py-2.5 sm:px-4 sm:py-3 relative">
             <button
               onClick={() => setShowTooltip(false)}
               className="absolute -top-2 -right-2 w-5 h-5 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-colors"
@@ -30,12 +30,12 @@ export function WhatsAppButton() {
             >
               <X className="w-3 h-3 text-slate-500" />
             </button>
-            <p className="text-sm font-sans text-slate-700 leading-snug">
+            <p className="text-xs sm:text-sm font-sans text-slate-700 leading-snug">
               ¿Necesitas ayuda? <span className="font-medium text-slate-900">Escríbenos por WhatsApp</span>
             </p>
           </div>
           {/* Arrow pointing right toward the button */}
-          <div className="absolute right-[-6px] bottom-4 w-3 h-3 bg-white border-r border-b border-slate-200 rotate-[-45deg]" />
+          <div className="absolute right-[-6px] bottom-3 sm:bottom-4 w-3 h-3 bg-white border-r border-b border-slate-200 rotate-[-45deg]" />
         </div>
       )}
 
@@ -44,7 +44,7 @@ export function WhatsAppButton() {
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex items-center justify-center w-14 h-14 bg-[#25D366] hover:bg-[#1ebe57] rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+        className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-[#25D366] hover:bg-[#1ebe57] rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
         aria-label="Contactar por WhatsApp"
       >
         <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
