@@ -2,6 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Edit, Eye, EyeOff, UserPlus, X } from 'lucide-react';
 import { getAdminUsers, createUser, updateUser, deleteUser, reactivateUser } from '../../services/api';
+import { Text } from '../../components/ui/primitives/Text';
+import { Box } from '../../components/ui/primitives/Box';
+import { Button } from '../../components/ui/primitives/Button';
+import { Badge } from '../../components/ui/primitives/Badge';
 
 interface User {
   id: string;
@@ -82,14 +86,14 @@ export function UsersPage() {
   const getAvatarColor = (role: string, isActive: boolean) => {
     if (!isActive) return 'bg-slate-200 text-slate-500';
     return role === 'admin' 
-      ? 'bg-amber-100 text-amber-700' 
-      : 'bg-purple-100 text-purple-700';
+      ? 'bg-navy-100 text-navy-700' 
+      : 'bg-legal-emerald-100 text-legal-emerald-700';
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy-900"></div>
       </div>
     );
   }
@@ -99,21 +103,22 @@ export function UsersPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Usuarios</h1>
-          <p className="text-slate-500 text-sm mt-1">Gestiona los administradores y notarios del sistema</p>
+          <Text variant="h2">Usuarios</Text>
+          <Text variant="body-sm" color="muted" className="mt-1">Gestiona los administradores y notarios del sistema</Text>
         </div>
         
-        <button 
+        <Button
+          variant="primary"
+          size="md"
           onClick={() => setShowNewUserModal(true)}
-          className="px-4 py-2.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 flex items-center gap-2 text-sm"
+          leftIcon={<UserPlus className="w-4 h-4" />}
         >
-          <UserPlus className="w-4 h-4" />
           Nuevo Usuario
-        </button>
+        </Button>
       </div>
 
       {/* Toolbar: Search & Filter */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6 flex flex-wrap items-center gap-4 shadow-sm">
+      <Box variant="document" padding="md" className="mb-6 flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-[240px] relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -121,7 +126,7 @@ export function UsersPage() {
             placeholder="Buscar por nombre, email o RUT..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:border-navy-900 focus:ring-2 focus:ring-navy-900 transition-all"
           />
         </div>
 
@@ -130,10 +135,10 @@ export function UsersPage() {
             <button 
               key={role}
               onClick={() => setFilterRole(role)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium font-sans rounded-md transition-all ${
                 filterRole === role 
-                  ? 'bg-white text-slate-900 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-white text-navy-900 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {role === 'all' && 'Todos'}
@@ -142,66 +147,62 @@ export function UsersPage() {
             </button>
           ))}
         </div>
-      </div>
+      </Box>
 
       {/* Users Table */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <Box variant="document" padding="none" className="overflow-hidden">
         {filteredUsers.length === 0 ? (
           <div className="text-center py-16 px-6">
-            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+            <div className="w-16 h-16 bg-slate-50 rounded-lg flex items-center justify-center mx-auto mb-4 border border-slate-200">
               <UserPlus className="w-8 h-8 text-slate-300" />
             </div>
-            <h3 className="text-slate-900 font-medium text-lg mb-1">No se encontraron usuarios</h3>
-            <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">
+            <Text variant="h4" className="mb-1">No se encontraron usuarios</Text>
+            <Text variant="body-sm" color="muted" className="max-w-sm mx-auto mb-6">
               {searchQuery ? 'Intenta ajustar tus filtros o búsqueda' : 'Crea tu primer usuario'}
-            </p>
+            </Text>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50/50 border-b border-slate-100">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[30%]">Usuario</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Rol</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalles</th>
-                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                  <th className="text-left px-6 py-4 w-[30%]"><Text variant="caption" color="muted">USUARIO</Text></th>
+                  <th className="text-left px-6 py-4"><Text variant="caption" color="muted">ROL</Text></th>
+                  <th className="text-left px-6 py-4"><Text variant="caption" color="muted">EMAIL</Text></th>
+                  <th className="text-left px-6 py-4"><Text variant="caption" color="muted">DETALLES</Text></th>
+                  <th className="text-right px-6 py-4"><Text variant="caption" color="muted">ACCIONES</Text></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${getAvatarColor(user.role, user.is_active)}`}>
                           {getInitials(user.full_name)}
                         </div>
                         <div>
-                          <h3 className={`text-sm font-bold ${user.is_active ? 'text-slate-900' : 'text-slate-400'}`}>
+                          <Text variant="body-sm" weight="bold" color={user.is_active ? 'primary' : 'muted'}>
                             {user.full_name}
-                          </h3>
+                          </Text>
                         </div>
                       </div>
                     </td>
                     
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-50 text-purple-700 border-purple-100' 
-                          : 'bg-blue-50 text-blue-700 border-blue-100'
-                      }`}>
-                         {user.role === 'admin' ? 'Administrador' : 'Notario'}
-                      </span>
+                      <Badge variant={user.role === 'admin' ? 'info' : 'success'} size="sm">
+                        {user.role === 'admin' ? 'Administrador' : 'Notario'}
+                      </Badge>
                     </td>
 
                     <td className="px-6 py-4">
-                      <span className="text-sm text-slate-600">{user.email}</span>
+                      <Text variant="body-sm" color="secondary">{user.email}</Text>
                     </td>
 
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="text-xs text-slate-500 uppercase tracking-wider">RUT</span>
-                        <span className="text-sm font-mono text-slate-700">{user.rut || '—'}</span>
+                        <Text variant="caption" color="muted">RUT</Text>
+                        <Text variant="body-sm" color="secondary" className="font-mono">{user.rut || '—'}</Text>
                       </div>
                     </td>
 
@@ -209,7 +210,7 @@ export function UsersPage() {
                       <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setSelectedUser(user)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-navy-700 hover:bg-navy-50 rounded-lg transition-colors"
                           title="Editar usuario"
                         >
                           <Edit className="w-4 h-4" />
@@ -234,7 +235,7 @@ export function UsersPage() {
             </table>
           </div>
         )}
-      </div>
+      </Box>
 
       {/* New User Modal */}
       {showNewUserModal && (
@@ -307,8 +308,8 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ onClose, onSuccess }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-900">Nuevo Usuario</h2>
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+          <Text variant="h4">Nuevo Usuario</Text>
           <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
             <X className="w-5 h-5 text-slate-400" />
           </button>
@@ -316,35 +317,35 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ onClose, onSuccess }) => {
         
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Nombre Completo</label>
+            <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">Nombre Completo</label>
             <input
               type="text"
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900"
               placeholder="Juan Pérez"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+            <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">Email</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900"
               placeholder="juan@ejemplo.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Contraseña</label>
+            <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">Contraseña</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent pr-11"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900 pr-11"
                 placeholder="••••••••"
               />
               <button
@@ -358,11 +359,11 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ onClose, onSuccess }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Rol</label>
+            <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">Rol</label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'notario' })}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900"
             >
               <option value="admin">Administrador</option>
               <option value="notario">Notario</option>
@@ -371,32 +372,34 @@ const NewUserModal: React.FC<NewUserModalProps> = ({ onClose, onSuccess }) => {
 
           {formData.role === 'notario' && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">RUT</label>
+              <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">RUT</label>
               <input
                 type="text"
                 value={formData.rut}
                 onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900"
                 placeholder="12.345.678-9"
               />
             </div>
           )}
 
           <div className="flex gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              fullWidth
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+              variant="primary"
+              fullWidth
+              isLoading={saving}
             >
-              {saving ? 'Creando...' : 'Crear Usuario'}
-            </button>
+              Crear Usuario
+            </Button>
           </div>
         </form>
       </div>
@@ -454,8 +457,8 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-900">Editar Usuario</h2>
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+          <Text variant="h4">Editar Usuario</Text>
           <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
             <X className="w-5 h-5 text-slate-400" />
           </button>
@@ -463,58 +466,58 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
         
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* User Info Header */}
-          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
             <div className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold ${
-              user.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'
+              user.role === 'admin' ? 'bg-navy-100 text-navy-700' : 'bg-legal-emerald-100 text-legal-emerald-700'
             }`}>
               {getInitials(user.full_name)}
             </div>
             <div>
-              <p className="font-medium text-slate-900 text-sm">{user.role === 'admin' ? 'Administrador' : 'Notario'}</p>
-              <p className="text-xs text-slate-500">Rol no editable</p>
+              <Text variant="body-sm" weight="medium" color="primary">{user.role === 'admin' ? 'Administrador' : 'Notario'}</Text>
+              <Text variant="caption" color="muted">Rol no editable</Text>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Nombre Completo</label>
+            <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">Nombre Completo</label>
             <input
               type="text"
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+            <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">Email</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900"
             />
           </div>
 
           {user.role === 'notario' && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">RUT</label>
+              <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">RUT</label>
               <input
                 type="text"
                 value={formData.rut}
                 onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Nueva Contraseña <span className="text-slate-400 font-normal">(opcional)</span></label>
+            <label className="block text-sm font-medium font-sans text-slate-700 mb-1.5">Nueva Contraseña <span className="text-slate-400 font-normal">(opcional)</span></label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent pr-11"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-sans focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-navy-900 pr-11"
                 placeholder="Dejar vacío para mantener actual"
               />
               <button
@@ -528,20 +531,22 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              fullWidth
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
+              variant="primary"
+              fullWidth
+              isLoading={saving}
             >
-              {saving ? 'Guardando...' : 'Guardar Cambios'}
-            </button>
+              Guardar Cambios
+            </Button>
           </div>
         </form>
       </div>

@@ -3,18 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   getAdminTemplates, 
-  publishVersion,
   getTemplateVersionDownloadUrl,
-  deleteTemplateVersion,
   deleteTemplate,
   updateTemplateStatus,
   getTemplateCategories
 } from '../../services/api';
 import { Search, Plus, FileText, Edit, Eye, EyeOff, Download, Trash2 } from 'lucide-react';
-import { 
-  CreateTemplateModal, 
-  TemplateDetailModal 
-} from '../../components/admin/templates';
 import type { Template, FilterType } from '../../types/templates';
 import { Text } from '../../components/ui/primitives/Text';
 import { Box } from '../../components/ui/primitives/Box';
@@ -25,12 +19,11 @@ export const TemplatesPage: React.FC = () => {
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showNewTemplateForm, setShowNewTemplateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterType>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+
 
   useEffect(() => {
     loadTemplates();
@@ -56,33 +49,6 @@ export const TemplatesPage: React.FC = () => {
       console.error('Error loading templates:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePublishVersion = async (versionId: string) => {
-    try {
-      await publishVersion(versionId);
-      
-      // Recargar templates inmediatamente
-      await loadTemplates();
-      
-      // Actualizar template seleccionado si está abierto
-      if (selectedTemplate) {
-        // Esperar un momento para que la base de datos se actualice
-        setTimeout(async () => {
-          const response = await getAdminTemplates();
-          const updated = response.data.data.find((t: Template) => t.id === selectedTemplate.id);
-          if (updated) {
-            setSelectedTemplate(updated);
-          }
-        }, 500);
-      }
-      
-      alert('Versión publicada exitosamente');
-    } catch (error: any) {
-      console.error('Error publishing version:', error);
-      const errorMessage = error.response?.data?.error || 'Error al publicar la versión';
-      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -112,37 +78,6 @@ export const TemplatesPage: React.FC = () => {
     } catch (error) {
       console.error('Error downloading version:', error);
       alert('Error al descargar el template');
-    }
-  };
-
-  const handleDeleteVersion = async (versionId: string, versionNumber: number) => {
-    if (!confirm(`¿Estás seguro de eliminar la versión ${versionNumber}? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
-    try {
-      console.log('Deleting version with ID:', versionId, 'type:', typeof versionId);
-      await deleteTemplateVersion(versionId);
-      
-      // Recargar templates inmediatamente
-      await loadTemplates();
-      
-      // Actualizar template seleccionado si está abierto
-      if (selectedTemplate) {
-        setTimeout(async () => {
-          const response = await getAdminTemplates();
-          const updated = response.data.data.find((t: Template) => t.id === selectedTemplate.id);
-          if (updated) {
-            setSelectedTemplate(updated);
-          }
-        }, 500);
-      }
-      
-      alert('Versión eliminada exitosamente');
-    } catch (error: any) {
-      console.error('Error deleting version:', error);
-      const errorMessage = error.response?.data?.error || 'Error al eliminar la versión';
-      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -178,7 +113,6 @@ export const TemplatesPage: React.FC = () => {
     try {
       await deleteTemplate(templateId, isHardDelete);
       loadTemplates();
-      setSelectedTemplate(null);
       const successMessage = isHardDelete ? 'Template eliminado permanentemente' : 'Template desactivado exitosamente';
       alert(successMessage);
     } catch (error: any) {
@@ -273,7 +207,7 @@ export const TemplatesPage: React.FC = () => {
           <Button
             variant="primary"
             size="md"
-            onClick={() => setShowNewTemplateForm(true)}
+            onClick={() => navigate('/admin/templates/new')}
             leftIcon={<Plus className="w-4 h-4" />}
           >
             Nueva Plantilla
@@ -342,7 +276,7 @@ export const TemplatesPage: React.FC = () => {
               <Button
                 variant="secondary"
                 size="md"
-                onClick={() => setShowNewTemplateForm(true)}
+                onClick={() => navigate('/admin/templates/new')}
               >
                 Crear Plantilla
               </Button>
@@ -487,39 +421,7 @@ export const TemplatesPage: React.FC = () => {
         )}
       </Box>
 
-      {/* New Template Modal - Now with file upload */}
-      {showNewTemplateForm && (
-        <CreateTemplateModal
-          onClose={() => setShowNewTemplateForm(false)}
-          onSuccess={() => {
-            setShowNewTemplateForm(false);
-            loadTemplates();
-          }}
-          existingSlugs={templates.map(t => t.slug)}
-        />
-      )}
 
-      {/* Template Detail/Edit Modal */}
-      {selectedTemplate && (
-        <TemplateDetailModal
-          template={selectedTemplate}
-          onClose={() => {
-            setSelectedTemplate(null);
-          }}
-          onPublish={handlePublishVersion}
-          onDownload={handleDownloadVersion}
-          onDelete={handleDeleteVersion}
-          onUpdate={() => {
-            loadTemplates();
-            // Refresh the selected template data
-            setTimeout(async () => {
-              const response = await getAdminTemplates();
-              const updated = response.data.data.find((t: Template) => t.id === selectedTemplate.id);
-              if (updated) setSelectedTemplate(updated);
-            }, 500);
-          }}
-        />
-      )}
     </div>
   );
 };

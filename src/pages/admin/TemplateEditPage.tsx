@@ -1,14 +1,14 @@
 // LEGALTECH_frontend/src/pages/admin/TemplateEditPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { 
   getAdminTemplates, 
   publishVersion,
   getTemplateVersionDownloadUrl,
   deleteTemplateVersion
 } from '../../services/api';
-import { TemplateDetailModal } from '../../components/admin/templates';
+import { TemplateEditor } from '../../components/admin/templates';
 import type { Template } from '../../types/templates';
 
 export const TemplateEditPage: React.FC = () => {
@@ -100,10 +100,6 @@ export const TemplateEditPage: React.FC = () => {
     }
   };
 
-  const handleClose = () => {
-    navigate('/admin/templates');
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -114,35 +110,49 @@ export const TemplateEditPage: React.FC = () => {
 
   if (!template) {
     return (
-      <div className="p-8">
-        <div className="text-center py-16">
-          <p className="text-slate-500 text-lg">Template no encontrado</p>
-          <button
-            onClick={() => navigate('/admin/templates')}
-            className="mt-4 px-6 py-3 bg-navy-900 text-white rounded-md font-medium hover:bg-navy-800 transition-all"
-          >
-            Volver a Templates
-          </button>
-        </div>
+      <div className="text-center py-16">
+        <p className="text-slate-500 text-lg">Template no encontrado</p>
+        <button
+          onClick={() => navigate('/admin/templates')}
+          className="mt-4 px-6 py-3 bg-navy-900 text-white rounded-md font-medium hover:bg-navy-800 transition-all"
+        >
+          Volver a Plantillas
+        </button>
       </div>
     );
   }
 
-  return (
-    <div className="p-8">
-      {/* Back Button */}
-      <button
-        onClick={handleClose}
-        className="mb-6 flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Volver a Templates
-      </button>
+  const publishedVersion = template.versions?.find(v => v.is_published);
 
-      {/* Template Detail in Page */}
-      <TemplateDetailModal
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/admin/templates')}
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            title="Volver a Plantillas"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              publishedVersion ? 'bg-navy-100 text-navy-700' : 'bg-slate-100 text-slate-500'
+            }`}>
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">{template.title}</h1>
+              <p className="text-sm text-slate-500 font-mono">{template.slug}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Editor */}
+      <TemplateEditor
         template={template}
-        onClose={handleClose}
         onPublish={handlePublishVersion}
         onDownload={handleDownloadVersion}
         onDelete={handleDeleteVersion}

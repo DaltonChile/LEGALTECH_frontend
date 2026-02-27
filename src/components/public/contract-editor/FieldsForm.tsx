@@ -10,6 +10,7 @@ import {
   validateRutFormat,
   validateEmail,
   validatePhone,
+  formatRut,
 } from '../../../utils/validators';
 
 interface FieldsFormProps {
@@ -136,7 +137,10 @@ export function FieldsForm({
                 ref={(el) => { inputRefs.current[variable] = el; }}
                 type="text"
                 value={formData[variable] || ''}
-                onChange={(e) => onFormChange({ ...formData, [variable]: e.target.value })}
+                onChange={(e) => {
+                  const value = isRutField(variable) ? formatRut(e.target.value) : e.target.value;
+                  onFormChange({ ...formData, [variable]: value });
+                }}
                 onFocus={() => onFieldFocus(variable)}
                 onBlur={() => handleFieldBlur(variable)}
                 onKeyDown={(e) => handleKeyDown(e, variable)}
