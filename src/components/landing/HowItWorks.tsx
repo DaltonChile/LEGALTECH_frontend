@@ -37,7 +37,7 @@ const features = [
   {
     icon: Shield,
     title: 'Seguro y Confidencial',
-    description: 'Encriptación de nivel bancario. Tus datos están protegidos en todo momento.'
+    description: 'Tus datos están protegidos en todo momento.'
   }
 ];
 

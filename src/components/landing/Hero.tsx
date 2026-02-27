@@ -1,7 +1,6 @@
 import { ContractMockup } from '../public/contracts/ContractMockup';
 import { ArrowRight } from 'lucide-react';
 import { Text } from '../ui/primitives/Text';
-import { Box } from '../ui/primitives/Box';
 
 export function Hero() {
   return (
@@ -11,7 +10,7 @@ export function Hero() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8 lg:space-y-10">
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               <Text as="h1" variant="h1" className="max-w-xl text-5xl md:text-6xl leading-tight text-balance">
                 Contratos legales{' '}
                 <span className="text-legal-emerald-700">
@@ -19,35 +18,17 @@ export function Hero() {
                 </span>
               </Text>
               <Text variant="body-lg" color="muted" className="max-w-lg leading-relaxed">
-                Sin trámites burocráticos. Genera y personaliza tus contratos en minutos, con opción de Firma Electrónica Avanzada o Validación Notarial integrada. Todo en un solo lugar.
+                Genera y firma contratos con validación notarial. En minutos.
               </Text>
             </div>
 
-            {/* Stats */}
-            <Box className="flex items-center gap-4 pt-2 bg-transparent border-none shadow-none">
-              <div className="text-center">
-                <Text variant="h3" className="text-3xl font-sans">10 min</Text>
-                <Text variant="body-sm" color="muted">Tiempo promedio</Text>
-              </div>
-              <div className="w-px h-12 bg-slate-300"></div>
-              <div className="text-center">
-                <Text variant="h3" className="text-3xl font-sans">138</Text>
-                <Text variant="body-sm" color="muted">Contratos disponibles</Text>
-              </div>
-              <div className="w-px h-12 bg-slate-300"></div>
-              <div className="text-center">
-                <Text variant="h3" className="text-3xl font-sans">Notario incluído</Text>
-                <Text variant="body-sm" color="muted">Firma y validez ante notario</Text>
-              </div>
-            </Box>
-
-            <div className="pt-4">
+            <div>
               <button
                 onClick={() => document.getElementById('documentos')?.scrollIntoView({ behavior: 'smooth' })}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-legal-emerald-700 text-white font-medium rounded-lg hover:bg-legal-emerald-800 transition-colors"
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-navy-900 text-white text-lg font-semibold rounded-xl hover:bg-navy-800 transition-all duration-200 shadow-lg shadow-navy-900/25 hover:shadow-xl hover:shadow-navy-900/30 hover:-translate-y-0.5 active:translate-y-0"
               >
                 Ver plantillas
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </button>
             </div>
           </div>
