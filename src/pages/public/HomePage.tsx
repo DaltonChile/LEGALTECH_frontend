@@ -16,9 +16,9 @@ export function HomePage() {
         <Hero />
 
         {/* Video Section */}
-        <section className="bg-slate-50 py-16 lg:py-20">
-          <div className="max-w-6xl mx-auto px-6 lg:px-8">
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg">
+        <section className="bg-slate-50 py-10 sm:py-16 lg:py-20">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative w-full aspect-video rounded-xl sm:rounded-2xl overflow-hidden shadow-lg">
               <iframe
                 className="absolute inset-0 w-full h-full"
                 src="https://www.youtube.com/embed/8F30mLa_P9g"

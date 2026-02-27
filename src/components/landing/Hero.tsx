@@ -6,18 +6,18 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden bg-slate-50">
       
-      <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
+      <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 pb-10 sm:pt-14 sm:pb-14 lg:pt-24 lg:pb-28">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div className="space-y-8 lg:space-y-10">
+          <div className="space-y-6 sm:space-y-8 lg:space-y-10">
 
-            <div className="space-y-5">
-              <Text as="h1" variant="h1" className="max-w-xl text-5xl md:text-6xl leading-tight text-balance">
+            <div className="space-y-3 sm:space-y-5">
+              <Text as="h1" variant="h1" className="max-w-xl text-[2.25rem] sm:text-5xl md:text-6xl leading-[1.15] sm:leading-tight text-balance">
                 Contratos legales{' '}
                 <span className="text-legal-emerald-700">
                   al instante
                 </span>
               </Text>
-              <Text variant="body-lg" color="muted" className="max-w-lg leading-relaxed">
+              <Text variant="body-lg" color="muted" className="max-w-lg leading-relaxed text-base sm:text-lg">
                 Genera y firma contratos con validación notarial. En minutos.
               </Text>
             </div>
@@ -25,7 +25,7 @@ export function Hero() {
             <div>
               <button
                 onClick={() => document.getElementById('documentos')?.scrollIntoView({ behavior: 'smooth' })}
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-navy-900 text-white text-lg font-semibold rounded-xl hover:bg-navy-800 transition-all duration-200 shadow-lg shadow-navy-900/25 hover:shadow-xl hover:shadow-navy-900/30 hover:-translate-y-0.5 active:translate-y-0"
+                className="group inline-flex items-center gap-3 px-6 py-3 sm:px-8 sm:py-4 bg-navy-900 text-white text-base sm:text-lg font-semibold rounded-xl hover:bg-navy-800 transition-all duration-200 shadow-lg shadow-navy-900/25 hover:shadow-xl hover:shadow-navy-900/30 hover:-translate-y-0.5 active:translate-y-0"
               >
                 Ver plantillas
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
