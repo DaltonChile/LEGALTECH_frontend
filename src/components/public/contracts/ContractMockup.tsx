@@ -50,9 +50,9 @@ export function ContractMockup() {
         </div>
         
         <div className="px-6 pb-6">
-          <button className="w-full bg-navy-900 text-white py-2.5 rounded-md text-sm font-medium font-sans hover:bg-navy-800 transition-all">
+          <div className="w-full bg-slate-100 text-slate-500 py-2.5 rounded-md text-sm font-medium font-sans text-center border border-slate-200">
             Firmar electrónicamente
-          </button>
+          </div>
         </div>
       </div>
       

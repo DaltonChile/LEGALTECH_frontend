@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getErrorMessage } from '../../utils/validators';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Scale, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 import { Navbar } from '../../components/landing';
 import { PageFooter } from '../../components/shared/PageFooter';
 
@@ -46,9 +46,7 @@ export function LoginPage() {
             {/* Header */}
             <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/30">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                  <Scale className="w-5 h-5 text-blue-600" />
-                </div>
+                <img src="/assets/logo_contratoseguro.png" alt="Contrato Seguro" className="w-10 h-10 object-contain" />
                 <h2 className="text-xl font-bold text-slate-900">Iniciar Sesión</h2>
               </div>
               <p className="text-sm text-slate-500">Accede a tu panel de administración o notaría</p>

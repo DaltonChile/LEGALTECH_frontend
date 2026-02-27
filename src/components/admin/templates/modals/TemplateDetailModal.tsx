@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Download, Play, CheckCircle, Plus, History, Save, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Download, Play, CheckCircle, Plus, History, Save, Trash2, FileText, DollarSign, Layers, Package, ChevronDown } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import NewVersionUploader from '../NewVersionUploader';
 import DescriptionEditor from '../DescriptionEditor';
 import api, { getTemplateCategories } from '../../../../services/api';
 import type { Template } from '../../../../types/templates';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+type TabId = 'general' | 'pricing' | 'versions';
 
 interface TemplateDetailModalProps {
   template: Template;
@@ -15,6 +18,14 @@ interface TemplateDetailModalProps {
   onUpdate: () => void;
 }
 
+// ─── Tab config ──────────────────────────────────────────────────────────────
+const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
+  { id: 'general', label: 'General', icon: <FileText className="w-4 h-4" /> },
+  { id: 'pricing', label: 'Precios', icon: <DollarSign className="w-4 h-4" /> },
+  { id: 'versions', label: 'Versiones', icon: <Layers className="w-4 h-4" /> },
+];
+
+// ─── Component ───────────────────────────────────────────────────────────────
 const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   template,
   onClose,
@@ -23,38 +34,143 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   onDownload,
   onDelete
 }) => {
-  const [showVersions, setShowVersions] = useState(false);
+  // Tab & sub-views
+  const [activeTab, setActiveTab] = useState<TabId>('general');
   const [showUploader, setShowUploader] = useState(false);
-  const [editingField, setEditingField] = useState<'title' | 'description' | 'short_description' | 'price' | 'category' | string | null>(null);
-  const [editData, setEditData] = useState({
+
+  // Form state — always editable, no per-field "edit" mode
+  const [formData, setFormData] = useState({
     title: template.title,
     description: template.description || '',
     short_description: template.short_description || '',
+    category: template.category || '',
   });
-  const [editPrice, setEditPrice] = useState('');
-  const [editCapsulePrice, setEditCapsulePrice] = useState('');
-  const [editCategory, setEditCategory] = useState(template.category || '');
+  const [basePrice, setBasePrice] = useState('');
+  const [capsulePrices, setCapsulePrices] = useState<Record<number, string>>({});
+  const [showDescriptionEditor, setShowDescriptionEditor] = useState(true);
+
   const [categories, setCategories] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Load categories on mount
+  // Derived
+  const publishedVersion = template.versions?.find(v => v.is_published);
+  const latestVersion = template.versions?.[0];
+  const activeVersion = publishedVersion || latestVersion;
+
+  // Load categories
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const cats = await getTemplateCategories();
         setCategories(cats);
-      } catch (error) {
-        console.error('Error loading categories:', error);
+      } catch {
         setCategories(['laboral', 'arrendamiento', 'compraventa', 'servicios', 'otros']);
       }
     };
     loadCategories();
   }, []);
 
-  const publishedVersion = template.versions?.find(v => v.is_published);
-  // Usar la versión publicada, o si no hay, la última versión (para editar cápsulas)
-  const latestVersion = template.versions?.[0];
-  const activeVersion = publishedVersion || latestVersion;
+  // Sync form when template prop changes (after save)
+  useEffect(() => {
+    setFormData({
+      title: template.title,
+      description: template.description || '',
+      short_description: template.short_description || '',
+      category: template.category || '',
+    });
+    setBasePrice(activeVersion?.base_price?.toString() || '0');
+    // Reset capsule prices
+    const cp: Record<number, string> = {};
+    activeVersion?.capsules?.forEach((c, i) => {
+      cp[i] = c.price?.toString() || '0';
+    });
+    setCapsulePrices(cp);
+  }, [template, activeVersion]);
+
+  // ─── Dirty detection ────────────────────────────────────────────────────────
+  const isDirty = useMemo(() => {
+    const generalDirty =
+      formData.title !== template.title ||
+      formData.description !== (template.description || '') ||
+      formData.short_description !== (template.short_description || '') ||
+      formData.category !== (template.category || '');
+
+    const priceDirty = activeVersion
+      ? parseFloat(basePrice) !== activeVersion.base_price
+      : false;
+
+    const capsuleDirty = activeVersion?.capsules?.some((c, i) => {
+      return parseFloat(capsulePrices[i] || '0') !== c.price;
+    }) || false;
+
+    return generalDirty || priceDirty || capsuleDirty;
+  }, [formData, template, basePrice, capsulePrices, activeVersion]);
+
+  // ─── Completeness score ─────────────────────────────────────────────────────
+  const completeness = useMemo(() => {
+    const checks = [
+      { label: 'Título', done: !!formData.title.trim() },
+      { label: 'Descripción', done: !!formData.description.trim() },
+      { label: 'Descripción corta', done: !!formData.short_description.trim() },
+      { label: 'Categoría', done: !!formData.category },
+      { label: 'Precio base', done: parseFloat(basePrice) > 0 },
+      { label: 'Versión publicada', done: !!publishedVersion },
+    ];
+    const done = checks.filter(c => c.done).length;
+    return { checks, done, total: checks.length, pct: Math.round((done / checks.length) * 100) };
+  }, [formData, basePrice, publishedVersion]);
+
+  // ─── Save all changes ───────────────────────────────────────────────────────
+  const handleSaveAll = useCallback(async () => {
+    if (saving || !isDirty) return;
+    setSaving(true);
+    try {
+      // Save template fields (title, description, short_description, category)
+      const templateUpdates: Record<string, any> = {};
+      if (formData.title !== template.title) templateUpdates.title = formData.title;
+      if (formData.description !== (template.description || '')) templateUpdates.description = formData.description;
+      if (formData.short_description !== (template.short_description || '')) templateUpdates.short_description = formData.short_description;
+      if (formData.category !== (template.category || '')) templateUpdates.category = formData.category || null;
+
+      if (Object.keys(templateUpdates).length > 0) {
+        await api.put(`/admin/templates/${template.id}`, templateUpdates);
+      }
+
+      // Save base price
+      if (activeVersion && parseFloat(basePrice) !== activeVersion.base_price) {
+        const newPrice = parseFloat(basePrice);
+        if (!isNaN(newPrice) && newPrice >= 0) {
+          await api.put(`/admin/templates/${template.id}/versions/${activeVersion.id}/price`, {
+            base_price: newPrice
+          });
+        }
+      }
+
+      // Save capsule prices
+      if (activeVersion?.capsules) {
+        for (let i = 0; i < activeVersion.capsules.length; i++) {
+          const capsule = activeVersion.capsules[i];
+          const newPrice = parseFloat(capsulePrices[i] || '0');
+          if (!isNaN(newPrice) && newPrice >= 0 && newPrice !== capsule.price) {
+            await api.put(`/admin/templates/${template.id}/versions/${activeVersion.id}/capsule-price`, {
+              capsule_slug: capsule.slug,
+              price: newPrice
+            });
+          }
+        }
+      }
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+      onUpdate();
+    } catch (error) {
+      console.error('Error saving:', error);
+      alert('Error al guardar los cambios');
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, isDirty, formData, template, basePrice, capsulePrices, activeVersion, onUpdate]);
 
   const handleDeleteVersion = async (versionId: string, versionNumber: number) => {
     if (onDelete) {
@@ -62,704 +178,421 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
     }
   };
 
-  const handleStartEdit = (field: 'title' | 'description' | 'short_description') => {
-    // Restaurar valores actuales del template al empezar a editar
-    setEditData({
-      title: template.title,
-      description: template.description || '',
-      short_description: template.short_description || '',
-    });
-    setEditingField(field);
-  };
-
-  const handleStartEditPrice = () => {
-    const currentPrice = activeVersion?.base_price?.toString() || '0';
-    console.log('Starting edit price:', currentPrice, 'from:', activeVersion?.base_price);
-    setEditPrice(currentPrice);
-    setEditingField('price');
-  };
-
-  const handleStartEditCapsule = (capsuleIndex: number, currentPrice: number) => {
-    setEditCapsulePrice(currentPrice?.toString() || '');
-    setEditingField(`capsule-${capsuleIndex}`);
-  };
-
-  const handleStartEditCategory = () => {
-    setEditCategory(template.category || '');
-    setEditingField('category');
-  };
-
-  const handleCancelEdit = () => {
-    // Restaurar valores originales
-    setEditData({
-      title: template.title,
-      description: template.description || '',
-      short_description: template.short_description || '',
-    });
-    setEditPrice('');
-    setEditCapsulePrice('');
-    setEditCategory(template.category || '');
-    setEditingField(null);
-  };
-
-  const handleSaveField = async (field: 'title' | 'description' | 'short_description' | 'price') => {
-    if (saving) return;
-    
-    setSaving(true);
-    try {
-      await api.put(`/admin/templates/${template.id}`, {
-        [field]: editData[field as keyof typeof editData]
-      });
-      setEditingField(null);
-      onUpdate();
-    } catch (error) {
-      console.error('Error updating template:', error);
-      alert('Error al actualizar el template');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSavePrice = async () => {
-    if (saving || !activeVersion) return;
-    
-    const newPrice = parseFloat(editPrice);
-    if (isNaN(newPrice) || newPrice < 0) {
-      alert('Ingresa un precio válido');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await api.put(`/admin/templates/${template.id}/versions/${activeVersion.id}/price`, {
-        base_price: newPrice
-      });
-      setEditingField(null);
-      setEditPrice('');
-      onUpdate();
-    } catch (error) {
-      console.error('Error updating price:', error);
-      alert('Error al actualizar el precio');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveCategory = async () => {
-    if (saving) return;
-    
-    setSaving(true);
-    try {
-      await api.put(`/admin/templates/${template.id}`, {
-        category: editCategory || null
-      });
-      setEditingField(null);
-      onUpdate();
-    } catch (error) {
-      console.error('Error updating category:', error);
-      alert('Error al actualizar la categoría');
-    } finally {
-      setSaving(false);;
-    }
-  };
-
-  const handleSaveCapsulePrice = async (capsuleIndex: number) => {
-    if (saving || !activeVersion?.capsules?.[capsuleIndex]) return;
-    
-    const newPrice = parseFloat(editCapsulePrice);
-    if (isNaN(newPrice) || newPrice < 0) {
-      alert('Ingresa un precio válido');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const capsule = activeVersion.capsules[capsuleIndex];
-      await api.put(`/admin/templates/${template.id}/versions/${activeVersion.id}/capsule-price`, {
-        capsule_slug: capsule.slug,
-        price: newPrice
-      });
-      setEditingField(null);
-      setEditCapsulePrice('');
-      onUpdate();
-    } catch (error) {
-      console.error('Error updating capsule price:', error);
-      alert('Error al actualizar el precio de la cápsula');
-    } finally {
-      setSaving(false);
-    }
-  };
-
+  // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <Modal onClose={onClose} extraWide>
-      <div className="space-y-6">
-        {/* Vista de versiones anteriores */}
-        {showVersions && (
-          <>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Gestión de Versiones</h2>
-                <p className="text-slate-600">{template.title}</p>
-              </div>
-            </div>
+      <div className="flex flex-col" style={{ minHeight: '60vh' }}>
+        {/* ─── Tab Navigation ─────────────────────────────────────────── */}
+        {!showUploader && (
+          <div className="border-b border-slate-200 -mx-6 -mt-6 px-6">
+            <nav className="flex gap-0">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors
+                    ${activeTab === tab.id
+                      ? 'text-navy-900'
+                      : 'text-slate-500 hover:text-slate-700'
+                    }
+                  `}
+                >
+                  {tab.icon}
+                  {tab.label}
+                  {tab.id === 'versions' && template.versions?.length ? (
+                    <span className="ml-1 text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">
+                      {template.versions.length}
+                    </span>
+                  ) : null}
+                  {/* Active indicator line */}
+                  {activeTab === tab.id && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-navy-900 rounded-full" />
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
 
-            {/* Lista de versiones */}
-            {template.versions && template.versions.length > 0 ? (
-              <div className="space-y-4">
-                {template.versions.map((version) => (
-                  <div
-                    key={version.id}
-                    className={`border-2 rounded-2xl overflow-hidden transition-all ${
-                      version.is_published
-                        ? 'bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 border-emerald-300 shadow-lg ring-2 ring-emerald-200'
-                        : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'
-                    }`}
+        {/* ─── Completeness Bar ───────────────────────────────────────── */}
+        {!showUploader && (
+          <div className="pt-5 pb-1">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-slate-700">
+                {completeness.done} /{completeness.total} campos completos
+              </p>
+              <span className="text-sm text-slate-500">{completeness.pct}%</span>
+            </div>
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  completeness.pct === 100
+                    ? 'bg-emerald-500'
+                    : completeness.pct >= 60
+                    ? 'bg-blue-600'
+                    : 'bg-amber-500'
+                }`}
+                style={{ width: `${completeness.pct}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ─── Tab Content ────────────────────────────────────────────── */}
+        <div className="flex-1 py-5 space-y-6">
+          {/* Upload overlay */}
+          {showUploader && (
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Subir Nueva Versión</h2>
+              <NewVersionUploader
+                templateId={template.id}
+                onSuccess={() => {
+                  setShowUploader(false);
+                  onUpdate();
+                }}
+                onCancel={() => setShowUploader(false)}
+              />
+            </div>
+          )}
+
+          {/* ═══ GENERAL TAB ═══ */}
+          {!showUploader && activeTab === 'general' && (
+            <>
+              {/* Title */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700">
+                  Título <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2.5 text-base text-slate-900 bg-white border border-slate-300 rounded-md transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
+                  placeholder="Nombre de la plantilla"
+                />
+              </div>
+
+              {/* Category */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700">Categoría</label>
+                <div className="relative">
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-4 py-2.5 pr-10 text-base text-slate-900 bg-white border border-slate-300 rounded-md transition-shadow appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
                   >
-                    {/* Header con gradiente para versión publicada */}
-                    {version.is_published && (
-                      <div className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="font-semibold">Versión Activa en el Catálogo</span>
+                    <option value="">Seleccionar categoría</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Short Description */}
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700">
+                  Descripción Corta
+                  <span className="text-xs font-normal text-slate-400 ml-2">Preview en catálogo, máx 255 chars</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.short_description}
+                  onChange={(e) => setFormData({ ...formData, short_description: e.target.value.slice(0, 255) })}
+                  maxLength={255}
+                  className="w-full px-4 py-2.5 text-base text-slate-900 bg-white border border-slate-300 rounded-md transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
+                  placeholder="Breve resumen para mostrar en el catálogo"
+                />
+                <p className="text-xs text-slate-400 text-right">{formData.short_description.length}/255</p>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Descripción
+                    <span className="text-xs font-normal text-slate-400 ml-2">Markdown</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowDescriptionEditor(!showDescriptionEditor)}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    {showDescriptionEditor ? 'Editor simple' : 'Editor avanzado'}
+                  </button>
+                </div>
+                {showDescriptionEditor ? (
+                  <DescriptionEditor
+                    value={formData.description}
+                    onChange={(value) => setFormData({ ...formData, description: value })}
+                  />
+                ) : (
+                  <div className="space-y-1">
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={5}
+                      className="w-full px-4 py-2.5 text-base text-slate-900 bg-white border border-slate-300 rounded-md transition-shadow resize-y placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
+                      placeholder="Descripción detallada de la plantilla..."
+                    />
+                    <p className="text-xs text-slate-400 text-right">{formData.description.length} caracteres</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ═══ PRICING TAB ═══ */}
+          {!showUploader && activeTab === 'pricing' && (
+            <>
+              {/* Active version line */}
+              {activeVersion && (
+                <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-md px-4 py-2.5">
+                  <Layers className="w-4 h-4" />
+                  <span>
+                    Editando precios de la{' '}
+                    <span className="font-semibold text-slate-900">
+                      {publishedVersion ? 'versión publicada' : 'última versión'}
+                    </span>
+                    {' '}
+                    <span className="text-blue-600 font-semibold">v{activeVersion.version_number}</span>
+                  </span>
+                </div>
+              )}
+
+              {!activeVersion && (
+                <div className="text-center py-12 text-slate-400">
+                  <DollarSign className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium">Sin versiones para editar precios</p>
+                  <p className="text-sm mt-1">Sube una versión primero</p>
+                </div>
+              )}
+
+              {/* Base Price */}
+              {activeVersion && (
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Precio Base (CLP) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">$</span>
+                    <input
+                      type="number"
+                      value={basePrice}
+                      onChange={(e) => setBasePrice(e.target.value)}
+                      className="w-full pl-8 pr-4 py-2.5 text-base text-slate-900 bg-white border border-slate-300 rounded-md transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
+                      placeholder="0"
+                      min="0"
+                      step="1"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Capsule Prices */}
+              {activeVersion?.capsules && activeVersion.capsules.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-slate-500" />
+                    <h3 className="text-sm font-medium text-slate-700">Cápsulas Opcionales</h3>
+                    <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
+                      {activeVersion.capsules.length}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {activeVersion.capsules.map((capsule: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-md p-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">{capsule.title}</p>
+                          <p className="text-xs text-slate-500">{capsule.slug}</p>
+                        </div>
+                        <div className="relative shrink-0" style={{ width: '140px' }}>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">$</span>
+                          <input
+                            type="number"
+                            value={capsulePrices[index] || '0'}
+                            onChange={(e) => setCapsulePrices({ ...capsulePrices, [index]: e.target.value })}
+                            className="w-full pl-7 pr-3 py-2 text-sm text-right text-slate-900 bg-white border border-slate-300 rounded-md transition-shadow focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent"
+                            min="0"
+                            step="1"
+                          />
                         </div>
                       </div>
-                    )}
-                    
-                    <div className="p-6">
-                      {/* Header con versión y estado */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-3">
-                            <span className="text-3xl font-bold text-slate-900">v{version.version_number}</span>
-                            {!version.is_published && (
-                              <span className="px-3 py-1 rounded-full text-sm font-bold bg-slate-100 border-2 border-slate-300 text-slate-600">
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ═══ VERSIONS TAB ═══ */}
+          {!showUploader && activeTab === 'versions' && (
+            <>
+              {/* Upload button */}
+              <button
+                onClick={() => setShowUploader(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-300 rounded-md text-sm font-medium text-slate-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Subir nueva versión
+              </button>
+
+              {/* Version table */}
+              {template.versions && template.versions.length > 0 ? (
+                <div className="border border-slate-200 rounded-md overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-500 text-xs uppercase tracking-wider">Versión</th>
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-500 text-xs uppercase tracking-wider">Estado</th>
+                        <th className="text-left px-4 py-2.5 font-medium text-slate-500 text-xs uppercase tracking-wider">Detalles</th>
+                        <th className="text-right px-4 py-2.5 font-medium text-slate-500 text-xs uppercase tracking-wider">Precio</th>
+                        <th className="text-right px-4 py-2.5 font-medium text-slate-500 text-xs uppercase tracking-wider">Fecha</th>
+                        <th className="text-right px-4 py-2.5 font-medium text-slate-500 text-xs uppercase tracking-wider">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {template.versions.map((version) => (
+                        <tr key={version.id} className="hover:bg-slate-50/50 transition-colors">
+                          {/* Version number */}
+                          <td className="px-4 py-3">
+                            <span className="font-semibold text-slate-900">v{version.version_number}</span>
+                          </td>
+                          {/* Status */}
+                          <td className="px-4 py-3">
+                            {version.is_published ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                Publicada
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
                                 Borrador
                               </span>
                             )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-3xl font-bold text-slate-900 mb-1">${version.base_price?.toLocaleString()}</div>
-                          <div className="text-sm text-slate-500">{new Date(version.created_at).toLocaleDateString('es-ES')}</div>
-                        </div>
-                      </div>
-
-                      {/* Metadata con iconos */}
-                      <div className="flex items-center gap-6 text-sm mb-6">
-                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border">
-                          <span className="text-slate-500">📝</span>
-                          <span className="font-medium text-slate-700">{version.base_form_schema?.length || 0} campos</span>
-                        </div>
-                        {version.capsules && version.capsules.length > 0 && (
-                          <div className="flex items-center gap-2 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
-                            <span className="text-amber-600">📦</span>
-                            <span className="font-medium text-amber-700">{version.capsules.length} cápsulas</span>
-                          </div>
-                        )}
-                        {template.requires_notary && (
-                          <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                            <span className="text-blue-600">⚖️</span>
-                            <span className="font-medium text-blue-700">Requiere notario</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Botones de acción */}
-                      <div className="flex items-center gap-3">
-                        {!version.is_published ? (
-                          <button
-                            onClick={() => {
-                              if (confirm(`¿Estás seguro de publicar la versión ${version.version_number}?\n\nEsto hará que esta versión sea la que ven los usuarios en el catálogo.`)) {
-                                onPublish?.(version.id);
-                                setShowVersions(false);
-                              }
-                            }}
-                            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-300 rounded-xl text-emerald-700 font-semibold hover:from-emerald-200 hover:to-green-200 transition-all shadow-sm"
-                            title="Publicar esta versión en el catálogo"
-                          >
-                            <Play className="w-5 h-5" />
-                            Publicar Versión
-                          </button>
-                        ) : (
-                          <div className="flex items-center gap-2 px-5 py-3 bg-emerald-100 border-2 border-emerald-300 rounded-xl text-emerald-700 font-semibold">
-                            <CheckCircle className="w-5 h-5" />
-                            Versión Publicada
-                          </div>
-                        )}
-                        
-                        <button
-                          onClick={() => onDownload?.(version.id)}
-                          className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-slate-300 rounded-xl text-slate-600 font-semibold hover:border-cyan-400 hover:text-cyan-600 hover:bg-cyan-50 transition-all"
-                          title="Descargar archivo .docx"
-                        >
-                          <Download className="w-5 h-5" />
-                          Descargar
-                        </button>
-                        
-                        {/* Botón eliminar - solo para versiones no publicadas y sin contratos */}
-                        {!version.is_published && !version.has_contracts && onDelete && (
-                          <button
-                            onClick={() => handleDeleteVersion(version.id, version.version_number)}
-                            className="flex items-center gap-2 px-4 py-3 bg-white border-2 border-red-200 rounded-xl text-red-600 font-semibold hover:border-red-400 hover:bg-red-50 transition-all group"
-                            title="Eliminar esta versión permanentemente"
-                          >
-                            <Trash2 className="w-4 h-4 group-hover:animate-pulse" />
-                          </button>
-                        )}
-                        
-                        {/* Indicador de contratos asociados - para versiones no publicadas con contratos */}
-                        {!version.is_published && version.has_contracts && (
-                          <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border-2 border-amber-200 rounded-xl text-amber-700 font-medium">
-                            <span className="text-amber-600">🔒</span>
-                            <span className="text-sm">
-                              {version.contract_count} contrato{version.contract_count !== 1 ? 's' : ''} en uso
-                            </span>
-                          </div>
-                        )}
-                        
-                        <div className="flex-1"></div>
-                        
-                        {version.is_published && (
-                          <div className="text-sm font-medium text-emerald-600 flex items-center gap-2 bg-emerald-50 px-3 py-2 rounded-lg">
-                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                            En uso por usuarios
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16 border-2 border-dashed border-slate-300 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100">
-                <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <History className="w-10 h-10 text-slate-400" />
+                          </td>
+                          {/* Details chips */}
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-xs text-slate-600">
+                                {version.base_form_schema?.length || 0} campos
+                              </span>
+                              {version.capsules && version.capsules.length > 0 && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 rounded text-xs text-amber-700">
+                                  {version.capsules.length} cáps.
+                                </span>
+                              )}
+                              {!version.is_published && version.has_contracts && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 rounded text-xs text-amber-700">
+                                  🔒 {version.contract_count}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          {/* Price */}
+                          <td className="px-4 py-3 text-right">
+                            <span className="font-medium text-slate-900">${version.base_price?.toLocaleString()}</span>
+                          </td>
+                          {/* Date */}
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-xs text-slate-400">{new Date(version.created_at).toLocaleDateString('es-CL')}</span>
+                          </td>
+                          {/* Actions */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {!version.is_published && (
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`¿Publicar la versión ${version.version_number}?\nEsta será visible para los usuarios.`)) {
+                                      onPublish?.(version.id);
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded bg-navy-900 text-white hover:bg-navy-800 transition-colors"
+                                  title="Publicar"
+                                >
+                                  <Play className="w-3 h-3" />
+                                  Publicar
+                                </button>
+                              )}
+                              <button
+                                onClick={() => onDownload?.(version.id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors"
+                                title="Descargar .docx"
+                              >
+                                <Download className="w-3 h-3" />
+                              </button>
+                              {!version.is_published && !version.has_contracts && onDelete && (
+                                <button
+                                  onClick={() => handleDeleteVersion(version.id, version.version_number)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                                  title="Eliminar versión"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <h3 className="text-lg font-semibold text-slate-600 mb-2">No hay versiones</h3>
-                <p className="text-slate-500 mb-4">Este template necesita al menos una versión para funcionar.</p>
-                <button
-                  onClick={() => {
-                    setShowVersions(false);
-                    setShowUploader(true);
-                  }}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-300 text-blue-700 rounded-xl font-semibold hover:from-blue-200 hover:to-indigo-200 transition-all"
-                >
-                  <Plus className="w-5 h-5" />
-                  Crear primera versión
-                </button>
-              </div>
-            )}
-
-            <div className="pt-6 border-t border-slate-200">
-              <button
-                onClick={() => setShowVersions(false)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:from-slate-200 hover:to-slate-300 hover:border-slate-400 transition-all"
-              >
-                <span>←</span>
-                Volver al Template
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* Vista de subir nueva versión */}
-        {showUploader && (
-          <>
-            <h2 className="text-2xl font-bold text-slate-900">Nueva Versión</h2>
-            <NewVersionUploader
-              templateId={template.id}
-              onSuccess={() => {
-                setShowUploader(false);
-                onUpdate();
-              }}
-              onCancel={() => setShowUploader(false)}
-            />
-          </>
-        )}
-
-        {/* Vista principal */}
-        {!showVersions && !showUploader && (
-          <>
-        {/* Titulo */}
-        <div>
-          <label className="block text-sm font-medium text-slate-600 mb-2">Título</label>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              {editingField === 'title' ? (
-                <input
-                type="text"
-                value={editData.title}
-                onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 text-lg font-semibold"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveField('title');
-                  if (e.key === 'Escape') handleCancelEdit();
-                }}
-              />
-            ) : (
-              <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
-                <p className="text-lg font-semibold text-slate-900">{template.title}</p>
-              </div>
-            )}
-          </div>
-          {editingField === 'title' ? (
-            <div className="flex gap-2">
-              <button
-                onClick={handleCancelEdit}
-                disabled={saving}
-                className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => handleSaveField('title')}
-                disabled={saving}
-                className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
-              >
-                {saving ? '...' : 'Guardar'}
-              </button>
-            </div>
-          ) : (
-              <button
-                onClick={() => handleStartEdit('title')}
-                className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
-              >
-                editar
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Descripcion */}
-        <div>
-          <label className="block text-sm font-medium text-slate-600 mb-2">
-            Descripción
-            {editingField !== 'description' && (
-              <span className="text-xs font-normal text-slate-400 ml-2">
-                (Soporta formato Markdown)
-              </span>
-            )}
-          </label>
-          {editingField === 'description' ? (
-            <div className="space-y-3">
-              <DescriptionEditor
-                value={editData.description}
-                onChange={(value) => setEditData({ ...editData, description: value })}
-              />
-              <div className="flex gap-2 justify-end">
-                <button
-                  onClick={handleCancelEdit}
-                  disabled={saving}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => handleSaveField('description')}
-                  disabled={saving}
-                  className="px-5 py-2 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
-                >
-                  {saving ? 'Guardando...' : 'Guardar Descripción'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-start gap-3">
-              <div className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-h-[56px]">
-                <p className="text-slate-700 line-clamp-3 whitespace-pre-line">
-                  {template.description || 'Sin descripción'}
-                </p>
-                {template.description && template.description.length > 150 && (
-                  <p className="text-xs text-slate-400 mt-1">
-                    {template.description.length} caracteres • Click en editar para ver completo
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => handleStartEdit('description')}
-                className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
-              >
-                editar
-              </button>
-            </div>
+              ) : (
+                <div className="text-center py-12 border border-dashed border-slate-300 rounded-md bg-slate-50/50">
+                  <History className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="font-medium text-slate-500">No hay versiones aún</p>
+                  <p className="text-sm text-slate-400 mt-1">Sube un archivo .docx para crear la primera versión</p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
-        {/* Descripción Corta para Catálogo */}
-        <div>
-          <label className="block text-sm font-medium text-slate-600 mb-2">
-            Descripción Corta
-            <span className="text-xs font-normal text-slate-400 ml-2">
-              (Preview en catálogo, máx 255 caracteres)
-            </span>
-          </label>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              {editingField === 'short_description' ? (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={editData.short_description}
-                    onChange={(e) => setEditData({ ...editData, short_description: e.target.value.slice(0, 255) })}
-                    className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500"
-                    placeholder="Ej: Contrato para formalizar la relación entre arrendador e inquilino"
-                    maxLength={255}
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveField('short_description');
-                      if (e.key === 'Escape') handleCancelEdit();
-                    }}
-                  />
-                  <div className="text-xs text-slate-500 text-right">
-                    {editData.short_description.length}/255 caracteres
-                  </div>
-                </div>
-              ) : (
-                <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-h-[56px] flex items-center">
-                  <p className="text-slate-700">
-                    {template.short_description || <span className="text-slate-400 italic">Sin descripción corta (se usará la descripción completa)</span>}
-                  </p>
-                </div>
-              )}
-            </div>
-            {editingField === 'short_description' ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCancelEdit}
-                  disabled={saving}
-                  className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => handleSaveField('short_description')}
-                  disabled={saving}
-                  className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
-                >
-                  {saving ? '...' : 'Guardar'}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => handleStartEdit('short_description')}
-                className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
-              >
-                editar
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Categoría */}
-        <div>
-          <label className="block text-sm font-medium text-slate-600 mb-2">Categoría</label>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              {editingField === 'category' ? (
-                <select
-                  value={editCategory}
-                  onChange={(e) => setEditCategory(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 bg-white"
-                  autoFocus
-                >
-                  <option value="">Sin categoría</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
-                  <p className="text-slate-700">
-                    {template.category 
-                      ? template.category.charAt(0).toUpperCase() + template.category.slice(1)
-                      : 'Sin categoría'}
-                  </p>
-                </div>
-              )}
-            </div>
-            {editingField === 'category' ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCancelEdit}
-                  disabled={saving}
-                  className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSaveCategory}
-                  disabled={saving}
-                  className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
-                >
-                  {saving ? '...' : 'Guardar'}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleStartEditCategory}
-                className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
-              >
-                editar
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Precio */}
-        <div>
-          <label className="block text-sm font-medium text-slate-600 mb-2">Precio Base (CLP)</label>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              {editingField === 'price' ? (
-                <input
-                type="number"
-                value={editPrice}
-                onChange={(e) => setEditPrice(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 text-lg font-semibold"
-                placeholder="0"
-                min="0"
-                step="0.01"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSavePrice();
-                  if (e.key === 'Escape') handleCancelEdit();
-                }}
-              />
-            ) : (
-              <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50">
-                <p className="text-lg font-semibold text-slate-900">
-                  ${activeVersion?.base_price?.toLocaleString() || '0'}
-                </p>
-              </div>
-            )}
-          </div>
-          {editingField === 'price' ? (
-            <div className="flex gap-2">
-              <button
-                onClick={handleCancelEdit}
-                disabled={saving}
-                className="px-4 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSavePrice}
-                disabled={saving}
-                className="px-5 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50"
-              >
-                {saving ? '...' : 'Guardar'}
-              </button>
-            </div>
-          ) : (
+        {/* ─── Bottom Save Bar ────────────────────────────────────────── */}
+        {!showUploader && (
+          <div className="border-t border-slate-200 -mx-6 -mb-6 px-6 py-4 bg-slate-50/80">
             <button
-              onClick={handleStartEditPrice}
-              disabled={!activeVersion}
-              className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleSaveAll}
+              disabled={saving || !isDirty}
+              className={`
+                w-full flex items-center justify-center gap-2 px-6 py-3 rounded-md text-sm font-semibold transition-all
+                ${isDirty
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                  : saveSuccess
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }
+                disabled:opacity-60
+              `}
             >
-              editar
+              {saving ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Guardando...
+                </>
+              ) : saveSuccess ? (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Guardado correctamente
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Guardar cambios
+                </>
+              )}
             </button>
-          )}
           </div>
-        </div>
-
-        {/* Version Activa */}
-        {activeVersion && (
-          <div className="space-y-3">
-            <p className="text-slate-900 font-semibold">
-              {publishedVersion ? 'Versión Publicada' : 'Última Versión (Borrador)'}: <span className="text-cyan-600">v{activeVersion.version_number}</span>
-            </p>
-
-            {/* Capsulas */}
-            {activeVersion.capsules && activeVersion.capsules.length > 0 && (
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-slate-600">Cápsulas Opcionales</label>
-                {activeVersion.capsules.map((capsule: any, index: number) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="flex-1 px-4 py-3 border-2 border-slate-200 rounded-xl bg-white">
-                      <p className="text-slate-900 font-medium">{capsule.title}</p>
-                    </div>
-                    {editingField === `capsule-${index}` ? (
-                      <>
-                        <input
-                          type="number"
-                          value={editCapsulePrice}
-                          onChange={(e) => setEditCapsulePrice(e.target.value)}
-                          className="px-4 py-3 border-2 border-cyan-400 rounded-xl focus:outline-none focus:border-cyan-500 min-w-[120px] text-center font-semibold"
-                          placeholder="0"
-                          min="0"
-                          step="0.01"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveCapsulePrice(index);
-                            if (e.key === 'Escape') handleCancelEdit();
-                          }}
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleCancelEdit}
-                            disabled={saving}
-                            className="px-3 py-3 bg-slate-100 text-slate-700 border-2 border-slate-300 rounded-xl font-semibold hover:bg-slate-200 disabled:opacity-50 text-sm"
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            onClick={() => handleSaveCapsulePrice(index)}
-                            disabled={saving}
-                            className="px-4 py-3 bg-cyan-100 text-slate-700 border-2 border-cyan-300 rounded-xl font-semibold hover:bg-cyan-200 disabled:opacity-50 text-sm"
-                          >
-                            {saving ? '...' : 'Guardar'}
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="px-4 py-3 border-2 border-slate-200 rounded-xl bg-slate-50 min-w-[120px] text-center">
-                          <p className="text-slate-900 font-semibold">${capsule.price?.toLocaleString()}</p>
-                        </div>
-                        <button
-                          onClick={() => handleStartEditCapsule(index, capsule.price)}
-                          className="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-cyan-400 hover:bg-cyan-50 transition-colors"
-                        >
-                          editar
-                        </button>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Botones inferiores */}
-        <div className="flex gap-3 pt-6 border-t-2 border-slate-200">
-          <button
-            onClick={() => setShowUploader(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-300 text-blue-700 rounded-xl font-semibold hover:from-blue-200 hover:to-indigo-200 transition-all shadow-sm"
-          >
-            <Plus className="w-5 h-5" />
-            Nueva Versión
-          </button>
-          <button
-            onClick={() => setShowVersions(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:border-slate-400 hover:bg-slate-50 transition-all"
-            disabled={!template.versions || template.versions.length === 0}
-          >
-            <History className="w-5 h-5" />
-            Ver Versiones ({template.versions?.length || 0})
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-lime-100 to-cyan-100 text-slate-700 border-2 border-lime-400 rounded-xl font-semibold hover:from-lime-200 hover:to-cyan-200 transition-all shadow-sm"
-          >
-            <Save className="w-5 h-5" />
-            Cerrar
-          </button>
-        </div>
-        </>
         )}
       </div>
     </Modal>
