@@ -409,6 +409,32 @@ export const updateTemplate = async (templateId: string, data: {
 };
 
 // ============================================
+// APIs para Files Config (Archivos requeridos)
+// ============================================
+
+export interface FileConfigItem {
+  slug: string;
+  title: string;
+  file_type: 'identification' | 'passport' | 'certificate' | 'authorization' | 'document';
+  display_order: number;
+  required: boolean;
+  accepted_formats: string;
+  max_size_mb: number;
+  description: string;
+}
+
+export const getFilesConfig = async (templateId: string, versionId: string): Promise<FileConfigItem[]> => {
+  const response = await api.get(`/admin/templates/${templateId}/versions/${versionId}/files-config`);
+  return response.data.data;
+};
+
+export const updateFilesConfig = async (templateId: string, versionId: string, filesConfig: FileConfigItem[]) => {
+  return await api.put(`/admin/templates/${templateId}/versions/${versionId}/files-config`, {
+    files_config: filesConfig
+  });
+};
+
+// ============================================
 // APIs para Notario
 // ============================================
 

@@ -28,6 +28,7 @@ const CustomDocumentStatusPage = lazy(() => import('../pages/public/CustomDocume
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const TemplatesPage = lazy(() => import('../pages/admin/TemplatesPage').then(m => ({ default: m.TemplatesPage })));
 const TemplateEditPage = lazy(() => import('../pages/admin/TemplateEditPage').then(m => ({ default: m.TemplateEditPage })));
+const TemplateCreatePage = lazy(() => import('../pages/admin/TemplateCreatePage').then(m => ({ default: m.TemplateCreatePage })));
 const UsersPage = lazy(() => import('../pages/admin/UsersPage').then(m => ({ default: m.UsersPage })));
 const SettingsPage = lazy(() => import('../pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const HistoryPage = lazy(() => import('../pages/admin/HistoryPage').then(m => ({ default: m.HistoryPage })));
@@ -78,6 +79,7 @@ export function AppRoutes() {
         >
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/templates" element={<TemplatesPage />} />
+          <Route path="/admin/templates/new" element={<TemplateCreatePage />} />
           <Route path="/admin/templates/:id/edit" element={<TemplateEditPage />} />
           <Route path="/admin/contracts" element={<Navigate to="/admin/history" replace />} />
           <Route path="/admin/history" element={<HistoryPage />} />

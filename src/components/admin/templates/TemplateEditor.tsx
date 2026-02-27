@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Download, Play, CheckCircle, Plus, History, Save, Trash2, FileText, DollarSign, Layers, Package, ChevronDown, Upload } from 'lucide-react';
-import { Modal } from '../../../shared/Modal';
-import NewVersionUploader from '../NewVersionUploader';
-import DescriptionEditor from '../DescriptionEditor';
-import api, { getTemplateCategories } from '../../../../services/api';
-import type { Template } from '../../../../types/templates';
-import FilesConfigEditor from '../FilesConfigEditor';
+import NewVersionUploader from './NewVersionUploader';
+import DescriptionEditor from './DescriptionEditor';
+import api, { getTemplateCategories } from '../../../services/api';
+import type { Template } from '../../../types/templates';
+import FilesConfigEditor from './FilesConfigEditor';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type TabId = 'general' | 'pricing' | 'files' | 'versions';
 
-interface TemplateDetailModalProps {
+interface TemplateEditorProps {
   template: Template;
-  onClose: () => void;
   onPublish: (versionId: string) => void;
   onDownload: (versionId: string) => void;
   onDelete?: (versionId: string, versionNumber: number) => void;
@@ -28,9 +26,8 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
-const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
+const TemplateEditor: React.FC<TemplateEditorProps> = ({
   template,
-  onClose,
   onPublish,
   onUpdate,
   onDownload,
@@ -182,44 +179,45 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <Modal onClose={onClose} extraWide>
-      <div className="flex flex-col" style={{ minHeight: '60vh' }}>
-        {/* ─── Tab Navigation ─────────────────────────────────────────── */}
-        {!showUploader && (
-          <div className="border-b border-slate-200 -mx-6 -mt-6 px-6">
-            <nav className="flex gap-0">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`
-                    relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors
-                    ${activeTab === tab.id
-                      ? 'text-navy-900'
-                      : 'text-slate-500 hover:text-slate-700'
-                    }
-                  `}
-                >
-                  {tab.icon}
-                  {tab.label}
-                  {tab.id === 'versions' && template.versions?.length ? (
-                    <span className="ml-1 text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">
-                      {template.versions.length}
-                    </span>
-                  ) : null}
-                  {/* Active indicator line */}
-                  {activeTab === tab.id && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-navy-900 rounded-full" />
-                  )}
-                </button>
-              ))}
-            </nav>
-          </div>
-        )}
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+      {/* ─── Tab Navigation ─────────────────────────────────────────── */}
+      {!showUploader && (
+        <div className="border-b border-slate-200 px-6">
+          <nav className="flex gap-0">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors
+                  ${activeTab === tab.id
+                    ? 'text-navy-900'
+                    : 'text-slate-500 hover:text-slate-700'
+                  }
+                `}
+              >
+                {tab.icon}
+                {tab.label}
+                {tab.id === 'versions' && template.versions?.length ? (
+                  <span className="ml-1 text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">
+                    {template.versions.length}
+                  </span>
+                ) : null}
+                {/* Active indicator line */}
+                {activeTab === tab.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-navy-900 rounded-full" />
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
+      )}
 
+      {/* ─── Content area ─────────────────────────────────────────── */}
+      <div className="p-6">
         {/* ─── Completeness Bar ───────────────────────────────────────── */}
         {!showUploader && (
-          <div className="pt-5 pb-1">
+          <div className="pb-4 mb-4 border-b border-slate-100">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium text-slate-700">
                 {completeness.done} /{completeness.total} campos completos
@@ -242,7 +240,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
         )}
 
         {/* ─── Tab Content ────────────────────────────────────────────── */}
-        <div className="flex-1 py-5 space-y-6">
+        <div className="space-y-6">
           {/* Upload overlay */}
           {showUploader && (
             <div>
@@ -575,7 +573,7 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 
         {/* ─── Bottom Save Bar ────────────────────────────────────────── */}
         {!showUploader && (
-          <div className="border-t border-slate-200 -mx-6 -mb-6 px-6 py-4 bg-slate-50/80">
+          <div className="border-t border-slate-200 mt-6 pt-4">
             <button
               onClick={handleSaveAll}
               disabled={saving || !isDirty}
@@ -613,8 +611,8 @@ const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
           </div>
         )}
       </div>
-    </Modal>
+    </div>
   );
 };
 
-export default TemplateDetailModal;
+export default TemplateEditor;
