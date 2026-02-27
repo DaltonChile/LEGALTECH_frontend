@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Plus, Trash2, GripVertical, FileText, Save, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import { getFilesConfig, updateFilesConfig } from '../../../services/api';
 import type { FileConfigItem } from '../../../services/api';
